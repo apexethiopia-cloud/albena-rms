@@ -16,6 +16,7 @@ Quota preservation is a critical operational requirement for the Albena RMS proj
 | Timestamp (UTC+3) | Model / Group | Remaining Quota / Status | Reset Window | Work Completed Since Previous Check | Development Safe to Continue? |
 | :--- | :--- | :--- | :--- | :--- | :---: |
 | 2026-11-16 12:35 | Gemini 3.8 Flash (High) | User-Monitored (UI `/usage`) | Rolling window | Initial repository inspection, security setup (`.gitignore`, `.env.example`), governance initialization (`PROJECT_STATUS.md`, `ROADMAP.md`, `PROGRESS_LOG.md`, `DECISIONS.md`, `REQUIREMENTS_TRACEABILITY.md`, `QUOTA_LOG.md`). | **YES** (Phase 0 Setup complete) |
+| 2026-11-16 12:38 | Gemini 3.8 Flash (High) | User-Monitored (UI `/usage`) | Rolling window | Milestone M0 formal approval, progress status advancement to 5.0%. | **YES** (Ready for SRS ingestion) |
 
 ---
 
