@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 0 — Inception, Governance, & Requirements Discovery |
 | **Overall Completion** | **5.0%** (Milestone M0 completed and approved; 1 of 10 milestones) |
 | **Last Updated** | 2026-11-16 12:38 UTC+3 |
-| **Latest Git Commit** | `4563767` |
+| **Latest Git Commit** | `0907ed8` |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 
