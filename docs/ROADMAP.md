@@ -1,108 +1,215 @@
-# Albena RMS — Implementation Roadmap
+# Albena RMS — Implementation Roadmap (SRS v3.0 Aligned)
 
-## 1. Roadmap Overview & Strategic Objectives
+**Aligned with**: `docs/SRS_v3.0.md` Section 11, approved 2026-11-17
+**Last Updated**: 2026-11-17
 
-The Albena Restaurant Management System (RMS) is designed as a cloud-native, multi-branch, web-based prototype capable of supporting concurrent operation across **three geographically separated users** (e.g., Branch Manager, Head Chef/Storekeeper, Cashier/Server).
+---
 
-To safeguard AI quotas and guarantee architectural integrity, development proceeds strictly through verifiable, gate-controlled milestones.
+## Phase Overview
 
 ```mermaid
 flowchart LR
-    P0["Phase 0: Inception & Governance"] --> P1["Phase 1: Core Architecture & Multi-Tenant Auth"]
-    P1 --> P2["Phase 2: Supply Chain, Inventory & Costing"]
-    P2 --> P3["Phase 3: Tables, Live Orders & KDS"]
-    P3 --> P4["Phase 4: Reports, Audit & Geodistributed UAT"]
+    P0["Phase 0\nRequirements & Setup"] --> P1["Phase 1\nFoundation"]
+    P1 --> P2["Phase 2\nBackend & Identity"]
+    P2 --> P3["Phase 3\nMaster Data"]
+    P3 --> P4["Phase 4\nInventory & Purchasing"]
+    P4 --> P5["Phase 5\nRecipes & Production"]
+    P5 --> P6["Phase 6\nRestaurant Operations"]
+    P6 --> P7["Phase 7\nReporting"]
+    P7 --> P8["Phase 8\nValidation & Handover"]
 ```
 
 ---
 
-## 2. Phased Milestone Breakdown
+## Phase 0 — Requirements & Setup (5%)
+**SRS Reference**: Section 11, Phase 0
+**Status**: ✅ **COMPLETE** (approved 2026-11-17)
 
-### Phase 0: Inception, Governance & Requirements Discovery (Milestones M0–M1)
-- **Objective**: Establish development standards, security guardrails, AI quota monitoring, and SRS traceability.
-- **Key Deliverables**:
-  - `M0`: Governance framework (`PROJECT_STATUS.md`, `ROADMAP.md`, `QUOTA_LOG.md`, `.gitignore`, `.env.example`).
-  - `M1`: Ingest and analyze authoritative Software Requirements Specification (SRS), establishing initial requirement matrix in `docs/REQUIREMENTS_TRACEABILITY.md`.
-- **Exit Gate**: Owner signs off on Roadmap and provides official SRS.
+**Scope**:
+- Review SRS v3.0, confirm open decisions
+- Inspect repository and verify free-tier/no-card constraints
+- Establish all mandatory tracking documents
+- Create `.gitignore`, `.env.example`
 
----
+**Exit Condition**: Owner approves requirements baseline and architecture.
+**Completed**: 2026-11-17
 
-### Phase 1: Core Architecture, Multi-Tenant Hierarchy & 3-User Auth (Milestones M2–M3)
-- **Objective**: Establish client application skeleton, cloud database schema, authentication, and security policies.
-- **Key Deliverables**:
-  - `M2`:
-    - Vite + React + TypeScript + Tailwind CSS project initialization.
-    - Cloudflare Pages configuration & CI/CD workflow.
-    - Supabase PostgreSQL schema for Organization, Restaurant, Branch, and Outlets.
-  - `M3`:
-    - Supabase Auth integration (Email/Password & Session Management).
-    - Role-Based Access Control (RBAC) supporting at least 3 distinct personas:
-      1. **Administrator / General Manager** (Full control, reporting, audit).
-      2. **Inventory Controller / Head Chef** (Stock, SIV, GRN, Recipes).
-      3. **Floor Supervisor / Cashier** (Tables, Orders, POS, KDS).
-    - PostgreSQL Row-Level Security (RLS) policies enforcing multi-branch isolation. No frontend-only security.
-- **Exit Gate**: 3 separate users successfully authenticate from different sessions and confirm RLS boundaries.
+**Requirements addressed**: CON-01..08, CON-06✅, CON-07(open), ARC-08, ARC-09, DEV-01..08, QTA-01..06, NFR-14, DATA-03..07
 
 ---
 
-### Phase 2: Supply Chain, Inventory, SIV, GRN & Recipe Costing (Milestones M4–M5)
-- **Objective**: Build end-to-end stock and supply operations with accurate financial costing.
-- **Key Deliverables**:
-  - `M4`:
-    - Item master (raw materials, consumables, units of measure, conversions).
-    - Suppliers and purchase order tracking.
-    - Goods Received Notes (GRN) with stock level recalculation and moving average cost.
-    - Stock Issue Vouchers (SIV) for department/kitchen requisitions.
-    - Real-time stock balance and low-stock alerts.
-  - `M5`:
-    - Recipe engineering module with Bill of Materials (BOM).
-    - Portion sizing, theoretical food costing, and profit margin analysis.
-    - Menu item management, category taxonomy, and pricing engine.
-- **Exit Gate**: Simulated GRN intake updates stock quantities and recipe food costs propagate accurately.
+## Phase 1 — Foundation (10%)
+**SRS Reference**: Section 11, Phase 1
+**Status**: 🔜 **NEXT** (pending owner answers to critical OD-01, OD-02, OD-11, OD-13)
+
+**Scope**:
+- Initialize Vite + React 18 + TypeScript + Tailwind CSS project
+- Configure ESLint, Prettier, Vitest
+- Set up environment variable handling (`.env.local`, never committed)
+- Configure Cloudflare Pages deployment with GitHub CI/CD
+- Implement network connectivity error handling
+- Verify Supabase and Cloudflare free-tier/no-card eligibility (OD-13)
+- Document provider constraints in `docs/DEPLOYMENT.md`
+
+**Exit Condition**: A secure empty application is reachable on Cloudflare Pages.
+
+**Requirements addressed**: ARC-01, ARC-02, ARC-03, ARC-04, ARC-07, NFR-02, NFR-04, NFR-06, NFR-10, NFR-11, AC-15, AC-17, AC-18
 
 ---
 
-### Phase 3: Tables, Real-Time Ordering, POS & Kitchen Display (Milestones M6–M7)
-- **Objective**: Implement frontline dining and order management with live synchronization across locations.
-- **Key Deliverables**:
-  - `M6`:
-    - Visual floor and table layout management per outlet.
-    - Table status tracking (Available, Occupied, Billed, Reserved).
-    - Table reservations and customer party details.
-  - `M7`:
-    - Fast POS order entry interface optimized for touch/keyboard.
-    - Modifiers, special instructions, and split/merge bills.
-    - Kitchen Display System (KDS) powered by Supabase Realtime subscriptions.
-    - Kitchen order ticket (KOT) workflow: New $\rightarrow$ In Preparation $\rightarrow$ Ready $\rightarrow$ Served.
-- **Exit Gate**: Concurrent live test: User A places order from Location 1; User B sees KDS update instantly at Location 2.
+## Phase 2 — Backend & Identity (10%)
+**SRS Reference**: Section 11, Phase 2
+**Status**: ⏳ Planned
+
+**Scope**:
+- Supabase project initialization and schema migration setup
+- Database foundation: `user_profiles`, `roles`, `permissions`, `audit_logs`
+- Supabase Auth integration with individual user accounts
+- PostgreSQL RLS policies: auth, outlet isolation, role enforcement
+- Audit trigger functions (append-only audit log)
+- Three test user accounts provisioned and tested
+
+**Exit Condition**: Three test users authenticate and authorization tests pass (AC-01, AC-02).
+
+**Requirements addressed**: SEC-ROLE-01..06, ARC-05, ARC-06, USR-01..05, OUT-04, AUD-01..05, NFR-01, NFR-05..09, AC-01, AC-02, AC-13, AC-17
+
+**Blocked by**: OD-02 (tenancy model), OD-03 (test user role assignments)
 
 ---
 
-### Phase 4: Financial Analytics, Audit Trails & 3-User Acceptance Testing (Milestones M8–M9)
-- **Objective**: Provide executive reporting, complete audit compliance, and validate multi-location prototype readiness.
-- **Key Deliverables**:
-  - `M8`:
-    - Comprehensive audit trail table tracking all critical mutations (who, when, what, previous/new value).
-    - Sales reports (daily reconciliation, item sales velocity, category mix).
-    - Inventory reconciliation reports (stock variance, shrinkage, food cost variance).
-    - Executive dashboard with key performance indicators (RevPASH, average check, gross margin).
-  - `M9`:
-    - Cloudflare Pages production deployment on free tier.
-    - Structured 3-user User Acceptance Testing (UAT) protocol across 3 distinct physical/geographical connections.
-    - Handover documentation, architecture guides, and runbooks.
-- **Exit Gate**: Successful end-to-end business cycle executed simultaneously by 3 remote testers with zero data collisions.
+## Phase 3 — Master Data (10%)
+**SRS Reference**: Section 11, Phase 3
+**Status**: ⏳ Planned
+
+**Scope**:
+- Business workspace, outlets and location management UI
+- Supplier management (create, edit, deactivate)
+- Inventory item master (create, edit, categories, deactivate)
+- Stock location management
+- User management UI (assign roles, outlet scopes, disable/reactivate)
+
+**Exit Condition**: Master data CRUD and access scopes pass tests.
+
+**Requirements addressed**: OUT-01..03, SUP-01..02, INV-01..05, USR-01..05, SEC-ROLE-05
+
+**Blocked by**: OD-01, OD-02, OD-05 (unit conversions)
 
 ---
 
-## 3. Technology Stack Reference
+## Phase 4 — Inventory & Purchasing (20%)
+**SRS Reference**: Section 11, Phase 4
+**Status**: ⏳ Planned
 
-| Layer | Component | Target Version / Provider | Free Tier Compliance |
-| :--- | :--- | :--- | :--- |
-| **Frontend Framework** | React 18+ / TypeScript / Vite | Modern ESM | Free Open Source |
-| **Styling & UI Components**| Tailwind CSS + Lucide React | Modern Tailwind v3/v4 | Free Open Source |
-| **Backend / Database** | PostgreSQL 15+ | Supabase Cloud | Free Tier (500MB DB, 50k MAU) |
-| **Authentication** | Supabase Auth (JWT) | Supabase Auth | Included in Free Tier |
-| **Realtime Sync** | Supabase Realtime (WebSockets) | Supabase Realtime | Included in Free Tier |
-| **Authorization** | PostgreSQL Row Level Security | Native Postgres RLS | Native engine feature |
-| **Hosting & CDN** | Cloudflare Pages | Cloudflare | Free Tier (Unlimited bandwidth) |
-| **Source Control** | GitHub Public Repo | GitHub | Free Public Repository |
+**Scope**:
+- Purchase Request workflow (Draft → Submitted → Approved/Rejected → PO)
+- Purchase Order management
+- Goods Receiving Notes (GRN) with atomic stock increase and valuation update
+- Store Issue Vouchers (SIV) with atomic source/destination update
+- Stock ledger engine (transaction-based balances)
+- Inventory counting module with variance calculation and approval
+- Inventory adjustments (approved reasons, audit-trailed)
+- Waste recording and posting
+- Low-stock/reorder alert system
+
+**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07).
+
+**Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
+
+**Blocked by**: OD-04 (costing method), OD-05 (units), OD-06 (approval thresholds)
+
+---
+
+## Phase 5 — Recipes & Production (10%)
+**SRS Reference**: Section 11, Phase 5
+**Status**: ⏳ Planned
+
+**Scope**:
+- Recipe management (ingredients, quantities, yield, version history)
+- Food cost calculation engine (Food Cost % = Cost ÷ Price × 100)
+- Production order recording (raw → semi/finished goods)
+- Atomic production posting (consume inputs, produce outputs)
+- Theoretical consumption baseline for variance reporting
+
+**Exit Condition**: Costing and production calculations pass (AC-07, AC-08, AC-09).
+
+**Requirements addressed**: REC-01..07, PROD-01..04, COST-01..03
+
+**Blocked by**: OD-04 (costing method), OD-05 (units)
+
+---
+
+## Phase 6 — Restaurant Operations (15%)
+**SRS Reference**: Section 11, Phase 6
+**Status**: ⏳ Planned
+
+**Scope**:
+- Menu management (items, categories, pricing, deactivation)
+- Table layout and status management
+- Reservation workflow (Booked → Confirmed → Arrived → Cancelled/Completed)
+- Order taking (open, modify, cancel, transfer, split, close)
+- Kitchen Display System (KDS) with Supabase Realtime
+- Receipt generation (browser print + PDF)
+- Price snapshot preservation at order close
+
+**Exit Condition**: Three-user live workflows pass (AC-10, AC-11, AC-14, AC-15).
+
+**Requirements addressed**: MENU-01..03, TBL-01..04, RES-01..04, ORD-01..06, KDS-01..05, RCT-01..05, NFR-03
+
+**Blocked by**: OD-07 (taxes/discounts), OD-08 (receipt format), OD-09 (reservation rules), OD-10 (guest profiles), OD-12 (hotel features scope)
+
+---
+
+## Phase 7 — Reporting (10%)
+**SRS Reference**: Section 11, Phase 7
+**Status**: ⏳ Planned
+
+**Scope**:
+- Sales reports (daily, monthly, outlet, category, waiter)
+- Inventory reports (stock on hand, movement, valuation, slow-moving)
+- Purchasing reports (PR, PO, GRN)
+- Cost reports (recipe cost, food cost %, profitability)
+- Waste reports and trends
+- KDS / kitchen timing reports
+- Reservation reports and guest history
+- Management dashboard (KPIs: open tables, kitchen queue, low-stock, top items, food cost %, waste %)
+- All reports respect outlet scope and show applied filters
+
+**Exit Condition**: Report totals reconcile to test data (AC-12).
+
+**Requirements addressed**: RPT-01..09, COST-01..03, SUP-03, CNT-04, WST-04, KDS-04
+
+---
+
+## Phase 8 — Validation & Handover (10%)
+**SRS Reference**: Section 11, Phase 8
+**Status**: ⏳ Planned
+
+**Scope**:
+- Full security review (secrets, RLS, injection, broken access control)
+- Three-user concurrent end-to-end acceptance test across separate locations
+- Backup/export procedure documented and tested (DATA-03..07)
+- Restore test in Supabase if supported free
+- Performance test: <2s p95 response (NFR-03)
+- Final documentation: `docs/DEPLOYMENT.md`, `docs/TESTING.md`
+- Owner demo and prototype acceptance
+
+**Exit Condition**: Owner accepts prototype test results and known limitations (AC-01..AC-19).
+
+**Requirements addressed**: AC-01..19, NFR-01..14, DATA-01..07, ARC-09
+
+---
+
+## Completion Calculation
+
+| Phase | Weight | Status | Credit |
+|:---|:---:|:---:|:---:|
+| Phase 0 | 5% | ✅ Complete | 5.0% |
+| Phase 1 | 10% | 🔜 Next | 0% |
+| Phase 2 | 10% | ⏳ Planned | 0% |
+| Phase 3 | 10% | ⏳ Planned | 0% |
+| Phase 4 | 20% | ⏳ Planned | 0% |
+| Phase 5 | 10% | ⏳ Planned | 0% |
+| Phase 6 | 15% | ⏳ Planned | 0% |
+| Phase 7 | 10% | ⏳ Planned | 0% |
+| Phase 8 | 10% | ⏳ Planned | 0% |
+| **Total** | **100%** | | **5.0%** |

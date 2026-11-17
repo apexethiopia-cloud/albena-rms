@@ -1,76 +1,56 @@
 # Albena RMS — Progress Log
 
-This chronological log tracks all development sessions, completed tasks, validation results, and Git revisions.
-
----
-
 ## Session 1: 2026-11-16 — Project Initiation & Governance Baseline
 
-- **Date & Time**: 2026-11-16 12:35 UTC+3
-- **Current Phase**: Phase 0 (Inception & Governance)
-- **Cumulative Completion**: 0.0% (Milestone M0 in-progress)
-
-### 1. Context & Objectives
-- Launch development under Master Instructions.
-- Inspect initial repository state.
-- Establish public repository security controls (secrets isolation).
-- Setup governance and tracking documentation.
-- Inspect workspace for Software Requirements Specification (SRS).
-- Formulate phased implementation roadmap.
-
-### 2. Actions Completed
-1. **Repository Inspection**:
-   - Inspected repository structure at `C:\Users\Administrator\Projects\albena-rms`.
-   - Verified current branch is `main` and remote points to `https://github.com/apexethiopia-cloud/albena-rms.git`.
-   - Verified README.md contains only the repository title `# albena-rms`.
-2. **SRS Availability Search**:
-   - Searched local workspace and standard user directories (`$HOME`, `Downloads`, `Documents`, `Desktop`).
-   - Confirmed no SRS document is present. Logged formal dependency to request SRS from project owner.
-3. **Public Repository Security Setup**:
-   - Created `.gitignore` preventing commits of `.env`, `.env.*.local`, `node_modules/`, `dist/`, and debug logs.
-   - Created `.env.example` with non-sensitive placeholder configurations for Supabase.
-4. **Governance Framework Initialization**:
-   - Created `PROJECT_STATUS.md` with milestone weighting and completion formula.
-   - Created `docs/ROADMAP.md` covering Phase 0 through Phase 4.
-   - Created `docs/DECISIONS.md` establishing initial Architecture Decision Records (ADR 001–ADR 004).
-   - Created `docs/REQUIREMENTS_TRACEABILITY.md` setting up requirement mapping structure awaiting SRS input.
-   - Created `docs/QUOTA_LOG.md` establishing AI quota monitoring procedures with 25% warning and 15% stop thresholds.
-
-### 3. Verification & Validation
-- **Git status verified**: Repository clean prior to governance document addition.
-- **Security verified**: `.gitignore` confirmed to intercept `.env*` files.
-- **Quota status verified**: AI session running on Gemini 3.8 Flash (High); recorded in `docs/QUOTA_LOG.md`.
-
-### 4. Files Created / Modified
-- `.gitignore` (Created)
-- `.env.example` (Created)
-- `PROJECT_STATUS.md` (Created)
-- `docs/ROADMAP.md` (Created)
-- `docs/PROGRESS_LOG.md` (Created)
-- `docs/DECISIONS.md` (Created)
-- `docs/REQUIREMENTS_TRACEABILITY.md` (Created)
-- `docs/QUOTA_LOG.md` (Created)
-
-### 5. Next Steps
-- Present Phase 0 governance setup and initial roadmap to project owner for formal review and approval.
-- Request delivery of the official Albena RMS Software Requirements Specification (SRS).
-- Commit Phase 0 files to Git.
+- **Phase**: Phase 0 | **Completion**: 0% → in-progress
+- Repository inspection, security setup (`.gitignore`, `.env.example`), governance initialization (`PROJECT_STATUS.md`, `ROADMAP.md`, `DECISIONS.md`, `QUOTA_LOG.md`).
+- SRS search: not found locally.
+- Commits: `75c0a9f`, `4563767`, `0907ed8`, `bdcdef4`
 
 ---
 
-## Session 2: 2026-11-16 — Roadmap Approval & Milestone M0 Completion
+## Session 2: 2026-11-16 — Roadmap Approval
 
-- **Date & Time**: 2026-11-16 12:38 UTC+3
-- **Current Phase**: Phase 0 (Inception & Governance)
-- **Cumulative Completion**: **5.0%** (Milestone M0 completed and approved)
+- **Phase**: Phase 0 | **Completion**: → 5%
+- Owner formally approved Phase 0 Architecture and 10-milestone Implementation Roadmap.
+- Milestone M0 (now Phase 0) marked complete.
+- Formally requested SRS from owner.
 
-### 1. Actions Completed
-- Project owner reviewed and formally approved the Phase 0 Architecture and 10-milestone Implementation Roadmap.
-- Formally closed Milestone M0 (Inception, Security Guardrails & Governance Setup) with 100% acceptance criteria met.
-- Updated `PROJECT_STATUS.md` reflecting 5.0% project completion.
-- Advanced to Milestone M1 (SRS Integration & Requirements Traceability Baseline).
+---
 
-### 2. Next Steps
-- Await owner delivery of the authoritative Albena RMS Software Requirements Specification (SRS).
-- Once SRS is provided, populate `docs/REQUIREMENTS_TRACEABILITY.md` with requirement IDs and acceptance criteria.
+## Session 3: 2026-11-17 — SRS v3.0 Ingestion & Full Requirements Baseline
 
+- **Phase**: Phase 0 → Phase 0 complete | **Completion**: 5% (unchanged — Phase 1 pending OD resolution)
+- **Date**: 2026-11-17 10:10 UTC+3
+- **Model**: Claude Sonnet 4.6 (Thinking)
+
+### Actions Completed
+1. **SRS v3.0 Received**: Owner provided `Albena_RMS_SRS_v3.0_Cloud_Prototype.docx`. Verified it supersedes SRS v2.1.
+2. **SRS Committed**: Full SRS text committed to `docs/SRS_v3.0.md` as the authoritative requirements baseline (ADR-005).
+3. **Requirements Traceability Matrix Fully Populated**: All 160+ requirement IDs cataloged in `docs/REQUIREMENTS_TRACEABILITY.md` across 32 requirement categories (CON, SEC-ROLE, ARC, USR, OUT, SUP, INV, PR, PO, GRN, SIV, CNT, ADJ, WST, PROD, REC, MENU, TBL, RES, ORD, KDS, RCT, STK, COST, RPT, AUD, NFR, DATA, DEV, PRG, QTA, AC).
+4. **Roadmap Realigned to SRS Phases 0–8**: `docs/ROADMAP.md` updated from milestone M0–M9 to SRS-defined Phases 0–8 with weights, exit conditions and requirement cross-references (ADR-006).
+5. **New ADRs Added**: ADR-005 (SRS v3.0 baseline), ADR-006 (Phase alignment), ADR-007 (transaction-based stock ledger), ADR-008 (no auto stock deduction from menu sales).
+6. **13 Open Decisions Logged**: OD-01..13 formally recorded in `docs/DECISIONS.md` and `docs/REQUIREMENTS_TRACEABILITY.md`. Owner response required before affected phases begin.
+7. **New Mandatory Documents Created**:
+   - `docs/TESTING.md` — Test strategy, all 19 AC test cases, unit test cases, defect log (SRS PRG requirement).
+   - `docs/DEPLOYMENT.md` — Service overview, environment variables, Cloudflare Pages setup, Supabase config, backup/recovery, security checklist, free-tier limit monitoring (SRS PRG requirement).
+
+### Verification
+- All SRS requirement IDs cross-checked against section structure.
+- Key business rules confirmed in ADR-007 and ADR-008 (stock ledger, no auto-deduction).
+- Security requirements CON-06, ARC-03, DEV-02, DEV-03: `.gitignore` and `.env.example` confirmed implemented and committed.
+
+### Files Created / Modified
+- `docs/SRS_v3.0.md` (Created)
+- `docs/REQUIREMENTS_TRACEABILITY.md` (Fully populated)
+- `docs/ROADMAP.md` (Revised — SRS Phase 0–8 alignment)
+- `docs/DECISIONS.md` (Updated — ADR-005..008, OD-01..13)
+- `docs/TESTING.md` (Created)
+- `docs/DEPLOYMENT.md` (Created)
+- `PROJECT_STATUS.md` (Updated)
+- `docs/PROGRESS_LOG.md` (Updated)
+
+### Outstanding
+- Owner answers to OD-01..13 (at minimum OD-01, OD-02, OD-11, OD-13 to unblock Phase 1).
+- Commit and push to GitHub `origin/main` (requires owner terminal or token).
+- Phase 1 implementation start pending OD resolution.
