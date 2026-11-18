@@ -207,3 +207,28 @@
 - Authenticated end-to-end check of outlets, suppliers and items.
 - Item unit-conversion editor, stock-location screen, category CRUD, user administration.
 - AC-01/AC-02 evidence needs the two remaining test accounts.
+
+---
+
+## Session 9: 2026-11-18 — Stock Location Management Added
+
+- **Phase**: Phase 3 in progress | **Completion**: **25.0%** (unchanged; Phase 3 exit condition still open)
+- **Date**: 2026-11-18 14:05 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+
+### Actions Completed
+1. **Stock-location feature built**: validation (code pattern, name), data access (list/create/update) against `stock_locations`, and a full panel with list/create/edit/deactivate.
+2. **Inventory page updated**: `/inventory` now renders the items panel followed by the stock-locations panel.
+3. **Locations tests**: validation (3) and panel (5) suites, following the existing outlet/supplier/item patterns.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 79/79 pass across 12 suites
+- `npm run build` — pass (480 kB JS / 132 kB gzip, 19 kB CSS)
+
+### Outstanding
+- Item unit-conversion editor for box / carton / sack.
+- Stock locations: still need an authenticated check (the panel is written and unit-tested; seeded locations can only be read with a real session).
+- Category CRUD UI, user administration UI.
+- AC-01/AC-02 evidence needs the two remaining test accounts.

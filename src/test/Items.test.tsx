@@ -222,6 +222,6 @@ describe('Inventory — items', () => {
 
     expect(screen.queryByRole('button', { name: /new item/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /edit/i })).toBeNull()
-    expect(screen.getByText(/read-only/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/read-only/i).length).toBeGreaterThan(0)
   })
 })

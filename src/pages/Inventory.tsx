@@ -1,6 +1,7 @@
 import { Boxes, ClipboardCheck, Factory, Scale, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { ItemsPanel } from '@/features/items/ItemsPanel'
+import { LocationsPanel } from '@/features/locations/LocationsPanel'
 
 const PLANNED = [
   {
@@ -45,6 +46,8 @@ export function Inventory() {
 
       <div className="space-y-6">
         <ItemsPanel />
+
+        <LocationsPanel />
 
         <section
           aria-labelledby="inventory-planned-heading"

@@ -92,7 +92,7 @@
 |:---|:---|:---:|:---|:---|:---|:---:|
 | INV-01 | Item master data fields | 3 | `items` | `src/features/items/**`, `/inventory` | `Items.test.tsx` | **Implemented** — needs authenticated integration check |
 | INV-02 | Item categories (user-maintainable) | 3 | `item_categories` | Seed + RLS applied; selectable in the item form | — | **In Progress** — category CRUD UI pending |
-| INV-03 | Multiple stock locations | 3 | `stock_locations` | Seed + RLS applied; no UI yet | — | **In Progress** — location UI pending |
+| INV-03 | Multiple stock locations | 3 | `stock_locations` | `src/features/locations/**`, `/inventory` | `Locations.test.tsx` | **Implemented** - needs authenticated integration check |
 | INV-04 | Stock balances by item + location | 4 | `stock_balances` | Stock ledger view | AC-04,05 | Not Started |
 | INV-05 | Deactivate items; preserve history | 3 | `items.is_active` | `ItemsPanel.tsx` toggle | `Items.test.tsx` | **Implemented** |
 | INV-06 | Low-stock/reorder alerts | 4 | `inventory_items.reorder_level` | Alert component | RPT-08 | Not Started |

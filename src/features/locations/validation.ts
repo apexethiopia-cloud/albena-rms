@@ -1,0 +1,42 @@
+import { mapDbError, type DbErrorLike } from '@/lib/errors'
+
+export type LocationInput = {
+  code: string
+  name: string
+}
+
+export type ValidationResult = {
+  valid: boolean
+  errors: Record<string, string>
+  normalized: LocationInput
+}
+
+const CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,11}$/
+
+export function validateLocation(input: LocationInput): ValidationResult {
+  const errors: Record<string, string> = {}
+  const code = input.code.trim().toUpperCase()
+  const name = input.name.trim()
+
+  if (!code) {
+    errors.code = 'Code is required.'
+  } else if (!CODE_PATTERN.test(code)) {
+    errors.code = 'Use 2–12 characters: letters, digits, hyphen or underscore.'
+  }
+
+  if (!name) {
+    errors.name = 'Name is required.'
+  } else if (name.length > 80) {
+    errors.name = 'Keep the name under 80 characters.'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    normalized: { code, name },
+  }
+}
+
+export function describeLocationDbError(error: DbErrorLike): string {
+  return mapDbError(error, 'stock locations')
+}
