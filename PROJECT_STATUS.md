@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 3 — Master Data (in progress) |
 | **Overall Completion** | **25.0%** (Phases 0–2 complete; Phase 3 outlets delivered) |
 | **Last Updated** | 2026-11-18 13:15 UTC+3 |
-| **Latest Git Commit** | *(to be updated after commit)* |
+| **Latest Git Commit** | `8764a5a` (outlet management + master-data migrations) + `62763fc` (status docs) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
