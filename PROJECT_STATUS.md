@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 1 — Foundation (in progress) |
 | **Overall Completion** | **5.0%** (Phase 0 complete; Phase 1 local foundation done, deployment pending) |
 | **Last Updated** | 2026-11-18 10:35 UTC+3 |
-| **Latest Git Commit** | *(to be updated after commit)* |
+| **Latest Git Commit** | `6dce27c` (Phase 1 foundation docs) on top of `a7b2337` (foundation code) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Authoritative SRS** | `docs/SRS_v3.0.md` (approved 2026-11-17) |
