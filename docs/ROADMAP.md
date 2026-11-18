@@ -112,17 +112,21 @@ flowchart LR
 
 ## Phase 4 — Inventory & Purchasing (20%)
 **SRS Reference**: Section 11, Phase 4
-**Status**: 🚧 **In Progress** — GRN/SIV postings, FIFO ledger and derived balances delivered 2026-11-18; remaining scope below
+**Status**: 🚧 **In Progress** — GRN/SIV ledger and the PR/PO workflow delivered 2026-11-18; remaining scope below
 
 **Delivered (2026-11-18)**:
 - Goods Receiving Notes (GRN) with atomic stock increase, FIFO layer creation and duplicate-posting protection
 - Store Issue Vouchers (SIV) with atomic source/destination update and FIFO consumption
 - Stock ledger engine (append-only transactions, derived balances, movement history)
 - Base-unit conversion resolution in the database (ADR-010)
+- Purchase Requests: header/lines, Draft → Submitted → Approved/Rejected, approver + time + comment recorded
+- Purchase Orders: header/lines with unit costs, Draft → Approved → Ordered → Closed, one order per approved request
+- PROCUREMENT role gates: `system_admin`/`general_manager`/`purchasing_officer` manage; `system_admin`/`general_manager` approve
+- AC-04 and AC-05 verified against the live database by the owner (GRN 2,000 g / ETB 240.00 → SIV 500 g / ETB 180.00, over-issue rejected)
 
 **Remaining**:
-- Purchase Request workflow (Draft → Submitted → Approved/Rejected → PO)
-- Purchase Order management and GRN ↔ PO linkage
+- Apply migration `20261118000600_purchase_requests_orders.sql`, then run the live AC-03 workflow check
+- GRN ↔ PO linkage with shortage/over-receipt flags
 - Inventory counting module with variance calculation and approval
 - Inventory adjustments (approved reasons, audit-trailed)
 - Waste recording and posting
@@ -139,11 +143,11 @@ flowchart LR
 - Waste recording and posting
 - Low-stock/reorder alert system
 
-**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-04 and AC-05 remain unverified against the live database until migration 0005 is applied.
+**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-04 and AC-05 are verified live; AC-03 is built and awaits migration 0006 plus a live workflow run.
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 
-**Decisions**: OD-04 FIFO (ADR-009) and OD-05 unit model (ADR-010) both confirmed 2026-11-18. OD-06 approval thresholds remain undefined: postings are role-gated and record `posted_by`, with no approval chain invented.
+**Decisions**: OD-04 FIFO (ADR-009) and OD-05 unit model (ADR-010) both confirmed 2026-11-18. OD-06 approval thresholds remain undefined: postings are role-gated and record who acted; PR/PO approval is limited to System Administrator/General Manager, self-approval is not blocked, and no monetary thresholds exist.
 
 ---
 

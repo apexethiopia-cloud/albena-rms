@@ -122,9 +122,12 @@
 
 Approval workflows are required, but the owner has not defined thresholds, approver roles or separation-of-duties rules. Phase 4 therefore does **not** invent an approval chain:
 
-- Draft creation and posting are restricted to the roles named in the SRS role table (`can_post_grn()`, `can_post_siv()`).
-- Every posting records `posted_by` and `posted_at`, and the audit log keeps the event.
-- Counts, adjustments and purchase documents remain unbuilt until OD-06 is answered.
+- Draft creation and posting are restricted to the roles named in the SRS role table (`can_post_grn()`, `can_post_siv()`, `can_manage_purchasing()`).
+- Purchase request approval is restricted to `system_admin` and `general_manager` (`can_approve_purchasing()`), matching the General Manager's SRS approval authority.
+- Every posting records `posted_by`/`posted_at`; every PR decision records `decided_by_name`, `decided_at` and an optional comment; every PO approval records `approved_by`/`approved_at`. The audit log keeps each event.
+- **Self-approval is not blocked**: the same user who raised a request can approve it if they hold an approval role. This stays until the owner defines separation-of-duties rules or monetary thresholds.
+- No amount-based thresholds exist, so all values follow the same route.
+- Counts and adjustments remain unbuilt until OD-06 is answered.
 
 ### Open issue: stock location ↔ outlet mapping (2026-11-18)
 

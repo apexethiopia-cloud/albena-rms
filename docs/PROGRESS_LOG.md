@@ -331,4 +331,34 @@
 - OD-06 approval thresholds and the stock-location ↔ outlet mapping remain open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 14: 2026-11-18 — Phase 4 PR/PO Built; AC-04/AC-05 Verified Live
+
+- **Phase**: Phase 4 in progress | **Completion**: **35.0%** (unchanged; Phase 4 exit condition still open)
+- **Date**: 2026-11-18 19:10 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Live stock verification recorded** — owner ran AC-04/AC-05 in the deployed app: GRN 2,000 g → 2,000 g / ETB 240.00; SIV 500 g → 1,500 g / ETB 180.00 (FIFO value); over-issue rejected. Marked **Verified** in the traceability matrix.
+2. **Migration 0006 authored** — `20261118000600_purchase_requests_orders.sql`: PR/PO status enums, four tables, `current_user_name()`, `can_manage_purchasing()` / `can_approve_purchasing()`, seven workflow RPCs, audit triggers, RLS with SELECT-only grants, and comments.
+3. **Workflow rules** — PR: draft → submitted → approved/rejected, decision records approver name, time and comment. PO: draft → approved → ordered → closed; `pr_id` unique so one order per approved request; unit cost required on order lines.
+4. **Procurement feature** — `src/features/procurement/{api,validation,PurchaseLinesEditor,PurchaseRequestsPanel,PurchaseOrdersPanel}.tsx`: PR/PO lists, draft forms, decision panel, PR→PO seeding, status actions and role-aware read-only states.
+5. **Purchasing page** — mounts PR → PO → GRN → suppliers; the planned card is reduced to supplier performance reporting.
+6. **Tests** — `procurementValidation.test.ts` (13) and `Procurement.test.tsx` (11); procurement mocks added to the Receiving and Suppliers suites.
+7. **Docs** — PR/PO rows marked Implemented; AC-04/AC-05 marked Verified; OD-06 interim behaviour extended to PR/PO (self-approval not blocked, no thresholds); resolved open decisions mirrored into the traceability table.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 161/161 pass across 21 suites
+- `npm run build` — pass (606 kB JS / 153 kB gzip, 22 kB CSS; chunk-size warning only)
+- Commit `87d8379` (PR/PO slice) pushed to `main`.
+
+### Outstanding
+- **Owner applies** `20261118000600_purchase_requests_orders.sql`; AC-03 live run still required (create PR → submit → GM approve → Create PO → approve → ordered → close; confirm a purchasing officer cannot approve).
+- Phase 4 remainder: GRN ↔ PO linkage/shortages, counts, adjustments, waste, low-stock alerts.
+- OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 

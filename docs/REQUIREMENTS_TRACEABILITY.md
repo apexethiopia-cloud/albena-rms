@@ -103,10 +103,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| PR-01 | PR header fields | 4 | `purchase_requests` | `/procurement/pr` | AC-03 | Not Started |
-| PR-02 | PR statuses | 4 | `purchase_requests.status` | Status workflow | AC-03 | Not Started |
-| PR-03 | PR workflow: submit→approve→PO | 4 | `purchase_requests`, `purchase_orders` | Approval workflow | AC-03 | Not Started |
-| PR-04 | Record approver, time, comments | 4 | `purchase_requests.approved_by` | Approval UI | AC-03,13 | Not Started |
+| PR-01 | PR header fields | 4 | `purchase_requests` (migration 0006) | `src/features/procurement/PurchaseRequestsPanel.tsx`, `/purchasing` | `procurementValidation.test.ts`, `Procurement.test.tsx` | **Implemented** — live AC-03 check blocked until migration 0006 is applied |
+| PR-02 | PR statuses | 4 | `purchase_request_status` enum | `REQUEST_STATUS_LABELS`, status workflow | `Procurement.test.tsx` | **Implemented** — draft → submitted → approved/rejected enforced by RPC guards |
+| PR-03 | PR workflow: submit→approve→PO | 4 | `submit_purchase_request()`, `decide_purchase_request()`, `create_purchase_order()` | `PurchaseRequestsPanel.tsx`, `PurchaseOrdersPanel.tsx` | `Procurement.test.tsx` | **Implemented** — approved request seeds one PO; live AC-03 check pending |
+| PR-04 | Record approver, time, comments | 4 | `purchase_requests.decided_by`, `decided_by_name`, `decided_at`, `decision_comment` | Decision panel + list column | `Procurement.test.tsx` | **Implemented** — decision recorded by name, timestamp and optional comment |
 
 ---
 
@@ -114,10 +114,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| PO-01 | PO header and line fields | 4 | `purchase_orders`, `po_lines` | `/procurement/po` | — | Not Started |
-| PO-02 | PO statuses | 4 | `purchase_orders.status` | Status workflow | — | Not Started |
-| PO-03 | Link PO to PR | 4 | `purchase_orders.pr_id` | PO creation from PR | AC-03 | Not Started |
-| PO-04 | Prevent unauthorized PO modification | 4 | RLS + DB function | Approval guard | AC-02 | Not Started |
+| PO-01 | PO header and line fields | 4 | `purchase_orders`, `purchase_order_lines` (migration 0006) | `src/features/procurement/PurchaseOrdersPanel.tsx`, `/purchasing` | `procurementValidation.test.ts`, `Procurement.test.tsx` | **Implemented** — supplier, dates, lines with unit cost; `line_total` computed by the database |
+| PO-02 | PO statuses | 4 | `purchase_order_status` enum | `ORDER_STATUS_LABELS`, status workflow | `Procurement.test.tsx` | **Implemented** — draft → approved → ordered → closed, each transition guarded |
+| PO-03 | Link PO to PR | 4 | `purchase_orders.pr_id` (unique) | Source-request selector seeds lines | `Procurement.test.tsx` | **Implemented** — one order per approved request, enforced by unique constraint |
+| PO-04 | Prevent unauthorized PO modification | 4 | RLS + `can_manage_purchasing()` / `can_approve_purchasing()` | `PurchaseOrdersPanel.tsx` | `Procurement.test.tsx` | **Implemented** — SELECT-only grants; no direct writes; approval role-gated. OD-06 SoD still open |
 
 ---
 
@@ -397,9 +397,9 @@
 |:---|:---|:---:|:---:|
 | AC-01 | 3 users sign in concurrently from different locations | 2 | Not Started |
 | AC-02 | Role/outlet permissions enforced by DB; unauthorized fails | 2 | Not Started |
-| AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | Not Started |
-| AC-04 | GRN posted once; updates correct location and valuation | 4 | Not Started |
-| AC-05 | SIV/transfer atomic; traceable stock movements | 4 | Not Started |
+| AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | **In Progress** — PR/PO built and unit-tested; live check blocked until migration 0006 is applied |
+| AC-04 | GRN posted once; updates correct location and valuation | 4 | **Verified** 2026-11-18 (owner live run) — GRN 2,000 g posted once to the chosen location, balance 2,000 g / ETB 240.00 |
+| AC-05 | SIV/transfer atomic; traceable stock movements | 4 | **Verified** 2026-11-18 (owner live run) — SIV 500 g left 1,500 g / ETB 180.00 (FIFO), over-issue rejected, movements traceable |
 | AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | Not Started |
 | AC-07 | Waste and production update inventory correctly | 4,5 | Not Started |
 | AC-08 | Recipe costing and food-cost % verified | 5 | Not Started |
@@ -421,16 +421,16 @@
 
 | OD ID | Decision Required | Impact | Owner Response | Status |
 |:---|:---|:---|:---|:---:|
-| OD-01 | Business timezone | Daily totals, report dates | — | **Open** |
-| OD-02 | One entity + multiple outlets OR multi-tenant? | DB isolation model | — | **Open** |
-| OD-03 | Named test users → roles and outlet scopes | Auth and permission tests | — | **Open** |
-| OD-04 | Inventory costing method (weighted average?) | Valuation calculations | — | **Open** |
-| OD-05 | Unit conversion rules; purchase/storage/issue units | Stock and costing accuracy | — | **Open** |
-| OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | — | **Open** — approval workflows are required, but thresholds and separation of duties are undefined. Phase 4 postings are role-gated and record `posted_by`; no approval chain is implemented. |
+| OD-01 | Business timezone | Daily totals, report dates | Africa/Addis_Ababa (UTC+3) | **Resolved** |
+| OD-02 | One entity + multiple outlets OR multi-tenant? | DB isolation model | One business entity with multiple outlets | **Resolved** |
+| OD-03 | Named test users → roles and outlet scopes | Auth and permission tests | Three individual accounts, full access, all outlets | **Resolved** |
+| OD-04 | Inventory costing method (weighted average?) | Valuation calculations | FIFO (ADR-009) | **Resolved** |
+| OD-05 | Unit conversion rules; purchase/storage/issue units | Stock and costing accuracy | Base units + per-item factors (ADR-010) | **Resolved** |
+| OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | **Approval workflows required** — thresholds and SoD not yet defined | **Open** — Phase 4 postings are role-gated and record who acted. PR approval is restricted to System Administrator/General Manager with approver, time and comment recorded; self-approval is not blocked and no monetary thresholds exist. Counts/adjustments remain unbuilt pending this decision. |
 | OD-07 | Taxes, service charges, discounts in scope? | Receipt totals | — | **Open** |
-| OD-08 | Receipt numbering, business identity, language, currency | Receipt presentation | — | **Open** |
+| OD-08 | Receipt numbering, business identity, language, currency | Receipt presentation | Currency ETB; numbering/format TBC | **Partially resolved** |
 | OD-09 | Reservation capacity rules; table assignment mandatory? | Conflict validation logic | — | **Open** |
 | OD-10 | Guest profiles/history retention and privacy rules | Personal-data handling | — | **Open** |
-| OD-11 | Currency and decimal precision | Money calculations | — | **Open** |
+| OD-11 | Currency and decimal precision | Money calculations | ETB, 2 decimal places | **Resolved** |
 | OD-12 | Hotel features (room charges, room service) now or deferred? | Scope of Phase 6 | — | **Open** |
-| OD-13 | Free-tier eligibility and backup/restore expectations | DEPLOYMENT.md content | — | **Open** |
+| OD-13 | Free-tier eligibility and backup/restore expectations | DEPLOYMENT.md content | Supabase + Cloudflare Pages free tier, no card | **Resolved** |
