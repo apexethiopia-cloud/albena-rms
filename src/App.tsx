@@ -1,16 +1,19 @@
 import { Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { NetworkStatusBanner } from '@/components/NetworkStatusBanner'
+import { AuthProvider } from '@/features/auth/AuthProvider'
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
+import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
 
-export default function App() {
+export function AppRoutes() {
   return (
-    <>
-      <NetworkStatusBanner />
+    <Routes>
+      <Route path="/login" element={<Login />} />
 
-      <Routes>
+      <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route index element={<Dashboard />} />
 
@@ -25,7 +28,7 @@ export default function App() {
                   'Item master with category, unit of measure and reorder level',
                   'Stock balances by item and location, derived from the ledger',
                   'GRN, SIV, adjustments, waste and production postings',
-                  'Low-stock alerts and inventory valuation (OD-04 pending)',
+                  'FIFO valuation across receiving layers (OD-04 confirmed)',
                 ]}
               />
             }
@@ -75,7 +78,7 @@ export default function App() {
                 description="Operational, cost and management reporting."
                 planned={[
                   'Sales by day, outlet, category, item and waiter',
-                  'Stock on hand, movement and valuation',
+                  'Stock on hand, movement and FIFO valuation',
                   'Recipe cost, food cost % and profitability',
                   'Waste trends and theoretical vs actual consumption',
                   'Management dashboard: open tables, kitchen queue, low stock',
@@ -103,7 +106,18 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Route>
-      </Routes>
+      </Route>
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <>
+      <NetworkStatusBanner />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </>
   )
 }

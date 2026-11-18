@@ -1,8 +1,9 @@
-import { CheckCircle2, Circle, Database, Globe2, Wallet } from 'lucide-react'
+import { CheckCircle2, Circle, Database, Globe2, UserRound, Wallet } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { cn } from '@/lib/cn'
 import { CURRENCY, env, isSupabaseConfigured } from '@/lib/env'
 import { formatDateTime } from '@/lib/format'
+import { useAuth } from '@/features/auth/auth-context'
 
 const FOUNDATION_CHECKLIST = [
   { label: 'Vite + React + TypeScript shell', done: true },
@@ -11,15 +12,17 @@ const FOUNDATION_CHECKLIST = [
   { label: 'Offline / network-error banner (ARC-07)', done: true },
   { label: 'Vitest + Testing Library', done: true },
   { label: 'CI pipeline: typecheck, lint, test, build', done: true },
-  { label: 'Cloudflare Pages deployment', done: false },
-  { label: 'Supabase project, auth and RLS (Phase 2)', done: false },
+  { label: 'Cloudflare Pages deployment (live)', done: true },
+  { label: 'Supabase project provisioned', done: true },
+  { label: 'Phase 2 migrations and RLS applied', done: false },
+  { label: 'Three test users authenticated (AC-01)', done: false },
 ] as const
 
 const NEXT_UP = [
-  'Deploy to Cloudflare Pages and verify HTTPS',
-  'Create Supabase migrations: profiles, roles, outlets, scopes, audit',
-  'Enable RLS on every table before any data is written',
-  'Provision three test users and prove unauthorized access fails',
+  'Apply the Phase 2 migrations in Supabase',
+  'Create the three test users and assign roles',
+  'Prove unauthorized access fails (RLS tests)',
+  'Build master data: outlets, suppliers, items (Phase 3)',
 ] as const
 
 function StatCard({
@@ -46,14 +49,35 @@ function StatCard({
 }
 
 export function Dashboard() {
+  const { state } = useAuth()
+  const user = state.status === 'signed-in' ? state.user : null
   const doneCount = FOUNDATION_CHECKLIST.filter((item) => item.done).length
 
   return (
     <>
       <PageHeader
         title="Project dashboard"
-        description={`Phase 1 — Foundation. Server time: ${formatDateTime(new Date())}.`}
+        description={`Phase 2 — Backend & identity. Server time: ${formatDateTime(new Date())}.`}
       />
+
+      {user && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+          <UserRound className="h-4 w-4" aria-hidden="true" />
+          <span className="font-semibold">{user.fullName}</span>
+          <span className="text-brand-700">{user.email}</span>
+          {user.roles.slice(0, 3).map((role) => (
+            <span
+              key={role}
+              className="rounded-full bg-white px-2 py-0.5 text-xs font-medium capitalize text-brand-700"
+            >
+              {role.replace(/_/g, ' ')}
+            </span>
+          ))}
+          {user.roles.length > 3 && (
+            <span className="text-xs text-brand-700">+{user.roles.length - 3} more</span>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard

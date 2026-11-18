@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
   BarChart3,
   LayoutDashboard,
+  LogOut,
   Menu,
   Package,
   Settings,
@@ -14,6 +15,7 @@ import {
 import { cn } from '@/lib/cn'
 import { env } from '@/lib/env'
 import { formatDate } from '@/lib/format'
+import { useAuth } from '@/features/auth/auth-context'
 
 type NavItem = {
   to: string
@@ -67,7 +69,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="border-t border-slate-200 px-5 py-4">
-        <p className="text-xs font-medium text-slate-500">Phase 1 · Foundation</p>
+        <p className="text-xs font-medium text-slate-500">Phase 2 · Identity</p>
         <p className="mt-0.5 text-xs text-slate-400">v0.1.0</p>
       </div>
     </>
@@ -76,6 +78,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { state, signOut } = useAuth()
+  const user = state.status === 'signed-in' ? state.user : null
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -108,7 +112,7 @@ export function AppShell() {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          <p className="text-sm text-slate-600">
+          <p className="hidden text-sm text-slate-600 sm:block">
             <span className="font-medium text-slate-900">{env.appName}</span>
             <span className="mx-2 text-slate-300" aria-hidden="true">
               |
@@ -116,9 +120,30 @@ export function AppShell() {
             {formatDate(new Date())}
           </p>
 
-          <span className="ml-auto rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-            {env.appEnv}
-          </span>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 sm:inline">
+              {env.appEnv}
+            </span>
+
+            {user && (
+              <div className="text-right">
+                <p className="text-xs font-semibold text-slate-900">{user.fullName}</p>
+                <p className="text-[11px] capitalize text-slate-500">
+                  {(user.roles[0] ?? 'no role').replace(/_/g, ' ')}
+                </p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              aria-label="Sign out"
+              title="Sign out"
+              className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
