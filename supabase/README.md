@@ -50,7 +50,9 @@ TEST_USER_3_PASSWORD=...
 It creates the accounts (idempotently), assigns roles and grants all five outlets,
 matching OD-03 ("full/all-access for the initial three test users").
 
-## 3. Schema map (Phase 2)
+## 3. Schema map
+
+### Phase 2 — identity and outlets
 
 | Table | Purpose | RLS |
 | :--- | :--- | :--- |
@@ -60,6 +62,21 @@ matching OD-03 ("full/all-access for the initial three test users").
 | `outlets` | Single entity, multiple outlets (OD-02) | read: active users · write: admin |
 | `user_outlet_scopes` | Outlet access per user | read: self + admin · write: admin |
 | `audit_logs` | Append-only audit trail | read: admin/GM/auditor · no write policy |
+
+### Phase 3 — master data (migrations 0003/0004)
+
+| Table | Purpose | RLS |
+| :--- | :--- | :--- |
+| `stock_locations` | Stores that hold stock (INV-03) | read: active users · write: admin/GM |
+| `item_categories` | User-maintainable categories (INV-02) | read: active users · write: admin/GM |
+| `units` | Unit catalogue; `base_factor NULL` means the size is item-specific (ADR-010) | read: active users · write: admin/GM |
+| `item_unit_conversions` | Per-item factor from a purchase unit to the base unit | read: active users · write: admin/GM/purchasing/storekeeper/chef |
+| `suppliers` | Supplier master (SUP-01..03) | read: active users · write: admin/GM/purchasing |
+| `items` | Item master; balances never live here (ADR-007) | read: active users · write: admin/GM/purchasing/storekeeper/chef |
+
+Seed data: 4 stock locations, 9 item categories, and the unit catalogue. Only kg→g and L→ml
+carry a fixed factor. Box, carton and sack have `base_factor = NULL` and must be given an
+explicit factor per item — the system never invents one (CON-07).
 
 ## 4. Authorization rules worth remembering
 

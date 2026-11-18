@@ -14,15 +14,17 @@ const FOUNDATION_CHECKLIST = [
   { label: 'CI pipeline: typecheck, lint, test, build', done: true },
   { label: 'Cloudflare Pages deployment (live)', done: true },
   { label: 'Supabase project provisioned', done: true },
-  { label: 'Phase 2 migrations and RLS applied', done: false },
+  { label: 'Phase 2 migrations and RLS applied', done: true },
+  { label: 'Administrator login and role assignment', done: true },
+  { label: 'Outlet management screen', done: true },
   { label: 'Three test users authenticated (AC-01)', done: false },
 ] as const
 
 const NEXT_UP = [
-  'Apply the Phase 2 migrations in Supabase',
-  'Create the three test users and assign roles',
-  'Prove unauthorized access fails (RLS tests)',
-  'Build master data: outlets, suppliers, items (Phase 3)',
+  'Apply the master-data migrations (0003 and 0004)',
+  'Create the remaining test users and verify AC-01/AC-02',
+  'Build suppliers and item master screens',
+  'Add stock locations and item unit conversions',
 ] as const
 
 function StatCard({
@@ -57,7 +59,7 @@ export function Dashboard() {
     <>
       <PageHeader
         title="Project dashboard"
-        description={`Phase 2 — Backend & identity. Server time: ${formatDateTime(new Date())}.`}
+        description={`Phase 3 — Master data. Server time: ${formatDateTime(new Date())}.`}
       />
 
       {user && (

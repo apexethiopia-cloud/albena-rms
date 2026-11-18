@@ -7,6 +7,7 @@ import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
+import { Settings } from '@/pages/Settings'
 
 export function AppRoutes() {
   return (
@@ -87,22 +88,7 @@ export function AppRoutes() {
             }
           />
 
-          <Route
-            path="settings"
-            element={
-              <ComingSoon
-                title="Settings"
-                phase="Phase 2–3"
-                description="Users, roles, outlets and system configuration."
-                planned={[
-                  'User management: create, disable, reactivate',
-                  'Role and outlet scope assignment',
-                  'Outlet and stock location configuration',
-                  'Append-only audit trail access for authorized roles',
-                ]}
-              />
-            }
-          />
+          <Route path="settings" element={<Settings />} />
 
           <Route path="*" element={<NotFound />} />
         </Route>
