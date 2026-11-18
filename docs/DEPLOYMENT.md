@@ -11,17 +11,16 @@
 
 | Service | Purpose | Provider | Plan | Card Required? | Verified? |
 |:---|:---|:---|:---|:---:|:---:|
-| **Frontend hosting** | Serve React SPA globally | Cloudflare Pages | Free | ❓ To verify | ❌ |
-| **Database + Auth** | PostgreSQL + Auth + Realtime | Supabase | Free (500MB, 50k MAU) | ❓ To verify | ❌ |
+| **Frontend hosting** | Serve React SPA globally | Cloudflare Pages | Free | No | ✅ |
+| **Database + Auth** | PostgreSQL + Auth + Realtime | Supabase | Free (500MB, 50k MAU) | No | ✅ |
 | **Source control** | Git repository | GitHub | Free (public repo) | No | ✅ |
-| **CI/CD** | Automated builds on push | Cloudflare Pages (GitHub integration) | Free | ❓ To verify | ❌ |
+| **CI/CD** | Automated builds on push | Cloudflare Pages (GitHub integration) | Free | No | ✅ |
 
 > [!IMPORTANT]
-> **Action Required (OD-13)**: Before starting Phase 1, the owner must confirm:
-> 1. Cloudflare Pages free plan eligibility without entering a bank card.
-> 2. Supabase free plan eligibility without entering a bank card.
-> 3. Supabase free plan project pausing policy (projects pause after inactivity — verify current terms).
-> 4. Supabase free plan backup/restore capabilities (see Section 4 below).
+> **OD-13 status: confirmed 2026-11-17** — Supabase and Cloudflare Pages free tiers are usable without a bank card.
+> Two provider behaviours remain to be re-verified at launch (ARC-09, AC-18):
+> 1. Supabase free-plan project pausing after inactivity.
+> 2. Supabase free-plan backup/restore capabilities (see Section 4 below).
 
 ---
 
@@ -35,7 +34,7 @@ Variables prefixed with `VITE_` are exposed to the browser. Only use Supabase **
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
 VITE_APP_NAME=Albena RMS
-VITE_APP_TIMEZONE=Africa/Addis_Ababa   # TBC: OD-01
+VITE_APP_TIMEZONE=Africa/Addis_Ababa   # OD-01: confirmed UTC+3
 ```
 
 See `.env.example` for placeholder template.
@@ -49,11 +48,17 @@ The `service_role` key is used only in server-side Supabase Edge Functions and i
 
 ### Setup Steps (to be completed in Phase 1)
 1. Connect GitHub repository `apexethiopia-cloud/albena-rms` to Cloudflare Pages.
-2. Set build command: `pnpm run build`
+2. Set build command: `npm run build`
 3. Set output directory: `dist`
-4. Add environment variables from Section 2 in Cloudflare Pages dashboard.
-5. Verify HTTPS is enabled by default (Cloudflare provides TLS automatically).
-6. Confirm free plan limits: build minutes, bandwidth, concurrent builds.
+4. Set `NODE_VERSION` = `20` in the Pages environment variables (Vite 5 baseline).
+5. Add the Supabase environment variables from Section 2 in the Cloudflare Pages dashboard.
+6. Verify HTTPS is enabled by default (Cloudflare provides TLS automatically).
+7. Confirm free plan limits: build minutes, bandwidth, concurrent builds.
+
+### SPA routing and headers
+- `public/_redirects` contains `/*  /index.html  200` so deep links such as `/inventory` resolve to the SPA.
+- `public/_headers` sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and a long cache for hashed assets.
+- Both files are copied into `dist/` by Vite and read by Cloudflare Pages automatically.
 
 ### Deployment URL
 - **Production**: `https://albena-rms.pages.dev` (or custom domain — TBC)
@@ -87,11 +92,11 @@ The `service_role` key is used only in server-side Supabase Edge Functions and i
 ### Supabase Free Plan — Backup Capabilities (to verify)
 | Capability | Supabase Free Plan | Status |
 |:---|:---|:---:|
-| Automated daily backups | ❓ Verify current terms | ❌ Not verified |
+| Automated daily backups | Not included in free plan | ❌ |
 | Point-in-time recovery | Not included in free plan | ❌ |
 | Manual export via Dashboard | Available (pg_dump) | ✅ |
-| Project pausing after inactivity | Yes — after ~1 week inactivity (verify) | ⚠️ |
-| Restore from backup | ❓ Verify what free plan provides | ❌ Not verified |
+| Project pausing after inactivity | Yes — after ~1 week inactivity (verify at launch) | ⚠️ |
+| Restore from backup | Not guaranteed on free plan; verify at launch | ⚠️ |
 
 ### Manual Backup Procedure (DATA-04)
 Until automated backups are confirmed, perform manual exports before major changes:

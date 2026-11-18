@@ -16,7 +16,7 @@
 | CON-01 | Internet required; no offline/LAN mode | 0 | — | Architecture decision; no offline code | AC-15, NFR-04 | Not Started |
 | CON-02 | Three distinct cloud user accounts | 2 | `users`, `user_profiles` | Auth module | AC-01 | Not Started |
 | CON-03 | No paid services without owner approval | 0 | — | Policy; docs/QUOTA_LOG.md | — | Not Started |
-| CON-04 | Setup must not require bank card | 0 | — | docs/DEPLOYMENT.md provider check | AC-18 | Not Started |
+| CON-04 | Setup must not require bank card | 0 | - | docs/DEPLOYMENT.md provider check | AC-18 | **Implemented** |
 | CON-05 | Existing DigitalOcean/Odoo untouched | 0 | — | Policy — no connection to that infra | — | Not Started |
 | CON-06 | Public repo — no secrets committed | 0 | — | .gitignore, .env.example | AC-17 | **Implemented** |
 | CON-07 | Uncertainty recorded as open decision | 0 | — | docs/DECISIONS.md OD-01..13 | — | **In Progress** |
@@ -42,14 +42,14 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | ARC-01 | One shared cloud app and DB | 1–2 | Supabase project | All frontend/backend code | AC-01 | Not Started |
-| ARC-02 | Desktop + tablet responsive | 1 | — | Tailwind CSS responsive classes | Manual UI test | Not Started |
-| ARC-03 | No service-role key in frontend | 1 | — | .env.example; Vite env vars | AC-17 | Not Started |
+| ARC-02 | Desktop + tablet responsive | 1 | - | `src/components/layout/AppShell.tsx` (Tailwind responsive classes) | Manual UI test | **Implemented** |
+| ARC-03 | No service-role key in frontend | 1 | - | `.env.example`; `src/lib/env.ts` (only `VITE_*` values) | AC-17 | **Implemented** |
 | ARC-04 | Only anon/publishable keys in client | 1 | — | Supabase client init | AC-17 | Not Started |
 | ARC-05 | DB schema changes as migration files | 2+ | All migrations | `supabase/migrations/` | — | Not Started |
 | ARC-06 | Multi-step ops atomic in DB transactions | 4+ | DB functions | Supabase RPC functions | AC-05 | Not Started |
-| ARC-07 | Clear error state on connectivity loss | 1 | — | Network error handler component | AC-15 | Not Started |
+| ARC-07 | Clear error state on connectivity loss | 1 | - | `src/components/NetworkStatusBanner.tsx` | AC-15, `NetworkStatusBanner.test.tsx` | **Implemented** |
 | ARC-08 | No offline queue or background sync | 0 | — | Architecture decision; not implemented | — | Not Started |
-| ARC-09 | Re-verify provider free-tier before launch | 0,8 | — | docs/DEPLOYMENT.md | AC-18 | Not Started |
+| ARC-09 | Re-verify provider free-tier before launch | 0,8 | - | docs/DEPLOYMENT.md | AC-18 | **In Progress** — OD-13 confirmed, re-verify at Phase 8 |
 
 ---
 
@@ -337,8 +337,8 @@
 | NFR-07 | Least-privilege DB access + RLS + server-side validation | 2 | Security test AC-02 | Not Started |
 | NFR-08 | Input validation client + server; injection protection | 2+ | Security test | Not Started |
 | NFR-09 | Timezone-safe timestamps | 2 | Unit test | Not Started |
-| NFR-10 | Responsive desktop + tablet | 1 | Manual UI test | Not Started |
-| NFR-11 | TypeScript, modular, linting, tests for critical logic | 1+ | CI check | Not Started |
+| NFR-10 | Responsive desktop + tablet | 1 | Manual UI test | **In Progress** — responsive shell, device test pending |
+| NFR-11 | TypeScript, modular, linting, tests for critical logic | 1+ | CI check | **In Progress** — strict TS, ESLint, Vitest, CI workflow |
 | NFR-12 | No claimed uptime/backups beyond verified plan | 0,8 | docs/DEPLOYMENT.md | Not Started |
 | NFR-13 | Provider quotas and limits documented and monitored | 0,8 | docs/DEPLOYMENT.md | Not Started |
 | NFR-14 | Synthetic data only in prototype | 0 | Policy | **In Progress** |
@@ -409,7 +409,7 @@
 | AC-12 | Reports/dashboard reconcile to test data; respect access scope | 7 | Not Started |
 | AC-13 | Critical actions produce audit events | 2+ | Not Started |
 | AC-14 | Concurrent edits don't overwrite; conflicts visible | 6 | Not Started |
-| AC-15 | App shows clear error on network failure | 1 | Not Started |
+| AC-15 | App shows clear error on network failure | 1 | **In Progress** — offline banner tested; save-failure UX pending data layer |
 | AC-16 | Backup/export procedure documented and tested | 8 | Not Started |
 | AC-17 | No secrets in repo or browser-delivered code | 0 | **In Progress** |
 | AC-18 | Free-tier/no-card eligibility checked and recorded | 0 | Not Started |

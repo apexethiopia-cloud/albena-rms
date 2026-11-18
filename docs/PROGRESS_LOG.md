@@ -54,3 +54,38 @@
 - Owner answers to OD-01..13 (at minimum OD-01, OD-02, OD-11, OD-13 to unblock Phase 1).
 - Commit and push to GitHub `origin/main` (requires owner terminal or token).
 - Phase 1 implementation start pending OD resolution.
+
+---
+
+## Session 4: 2026-11-18 — Phase 1 Foundation Implemented Locally
+
+- **Phase**: Phase 1 (in progress) | **Completion**: 5.0% (unchanged — Phase 1 exit condition requires a live deployment)
+- **Date**: 2026-11-18 10:35 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+- **Starting state**: Documentation complete, but no `src/` directory; `npm run build` failed on a missing entry point.
+
+### Actions Completed
+1. **Environment repaired**: first `npm install` had been killed mid-write, leaving a corrupted `esbuild.exe` (`EFTYPE`). Removed `node_modules`, reinstalled cleanly (413 packages), verified esbuild 0.21.5 and Vite 5.4.21.
+2. **Toolchain corrected**: `vite.config.ts` now imports `defineConfig` from `vitest/config`, uses an ESM-safe `@` alias and a port setting; added `@types/node`; typecheck now covers both the app (`tsconfig.json`) and the Vite config (`tsconfig.node.json`) without project-reference errors.
+3. **Application created**: `src/main.tsx`, `src/App.tsx`, `src/index.css`, `src/vite-env.d.ts`; strict TypeScript, Tailwind directives and base focus styles.
+4. **App shell and routing**: responsive sidebar with mobile drawer, header with business date, five module placeholders (Inventory, Purchasing, Operations, Reports, Settings) and a 404 route. Single `h1` per page for accessibility.
+5. **Foundation utilities**: `src/lib/env.ts` (VITE-only values, placeholder detection), `src/lib/format.ts` (ETB 2dp, `Africa/Addis_Ababa`, ISO report dates), `src/lib/cn.ts`.
+6. **Network handling (ARC-07)**: global offline banner stating changes cannot be saved, with retry, plus tests.
+7. **Testing**: Vitest + Testing Library + jsdom; 8 tests across 3 suites covering the shell, deep-link routing, 404, offline banner and money/timezone formatting.
+8. **CI and deployment assets**: `.github/workflows/ci.yml` (Node 20), `public/_redirects`, `public/_headers`, `public/favicon.svg`; `docs/DEPLOYMENT.md` corrected to `npm run build`.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 8/8 pass
+- `npm run build` — pass (186 kB JS / 60 kB gzip)
+- Preview smoke test — `/` 200, deep link `/inventory` 200 with SPA fallback, `/favicon.svg` 200
+
+### Files Created / Modified
+- Created: `src/**`, `public/*`, `.github/workflows/ci.yml`, `package-lock.json`, `docs/FAST_TRACK_PLAN.md`
+- Modified: `package.json`, `vite.config.ts`, `tsconfig.json`, `tsconfig.node.json`, `.eslintrc.cjs`, `index.html`, `.gitignore`, `.env.example`, `docs/DEPLOYMENT.md`, `docs/REQUIREMENTS_TRACEABILITY.md`, `PROJECT_STATUS.md`
+
+### Outstanding
+- Cloudflare Pages project + first deployment (Phase 1 exit condition).
+- Commit and push to `origin/main` (owner credentials required).
+- OD-04 (costing) and OD-05 (units) before Phase 4.
