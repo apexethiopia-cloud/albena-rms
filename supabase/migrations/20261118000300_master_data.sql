@@ -283,3 +283,7 @@ comment on table public.units is 'Unit catalogue (ADR-010). base_factor NULL = i
 comment on table public.item_unit_conversions is 'Per-item factor from a purchase unit to the base unit (boxes, cartons, sacks).';
 comment on table public.suppliers is 'Supplier master (SUP-01..03).';
 comment on table public.items is 'Inventory item master (INV-01..06). Balances live in the stock ledger, not here.';
+comment on column public.items.base_unit_id is 'Must reference a base unit: g (mass), ml (volume) or piece (count). Stock is stored in this unit.';
+comment on column public.items.reorder_level is 'Expressed in the item base unit. Compared against ledger-derived balances in Phase 4.';
+comment on column public.items.purchase_unit_id is 'Default buying unit. A factor to the base unit is required in item_unit_conversions unless it is the base unit or a fixed-factor unit.';
+comment on column public.item_unit_conversions.base_factor is 'How many base units one of this unit contains for this item. Example: 1 carton = 24 bottles = 24 pieces.';

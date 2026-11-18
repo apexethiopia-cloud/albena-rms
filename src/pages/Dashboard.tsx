@@ -17,14 +17,16 @@ const FOUNDATION_CHECKLIST = [
   { label: 'Phase 2 migrations and RLS applied', done: true },
   { label: 'Administrator login and role assignment', done: true },
   { label: 'Outlet management screen', done: true },
+  { label: 'Supplier management screen', done: true },
+  { label: 'Master-data migrations applied (0003/0004)', done: false },
   { label: 'Three test users authenticated (AC-01)', done: false },
 ] as const
 
 const NEXT_UP = [
   'Apply the master-data migrations (0003 and 0004)',
-  'Create the remaining test users and verify AC-01/AC-02',
-  'Build suppliers and item master screens',
-  'Add stock locations and item unit conversions',
+  'Create the remaining test accounts (AC-01)',
+  'Prove unauthorized access fails (AC-02)',
+  'Build the item master and stock locations',
 ] as const
 
 function StatCard({

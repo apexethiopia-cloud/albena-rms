@@ -69,7 +69,7 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| OUT-01 | Multiple outlets supported | 3 | `outlets` | `src/features/outlets/**`, `/settings` | — | **Implemented** — 5 outlets seeded; CRUD verified by unit tests |
+| OUT-01 | Multiple outlets supported | 3 | `outlets` | `src/features/outlets/**`, `/settings` | `Settings.test.tsx` | **Implemented** — 5 outlets seeded; CRUD covered by tests |
 | OUT-02 | Outlet-specific orders/reports | 3,7 | `orders.outlet_id` | Report filters | RPT-01,02 | Not Started |
 | OUT-03 | Users scoped to one or more outlets | 3 | `user_outlet_scopes` | RLS outlet filter | AC-02 | **Implemented** — scopes granted; UI pending |
 | OUT-04 | Prevent cross-outlet access by default | 2 | RLS policies | RLS row filter | AC-02 | **Implemented** — anon reads filtered; AC-02 negative test pending |
@@ -80,8 +80,8 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| SUP-01 | Supplier master data fields | 3 | `suppliers` | `supabase/migrations/20261118000300_master_data.sql` | — | **In Progress** — schema written, not applied |
-| SUP-02 | CRUD and deactivate suppliers | 3 | `suppliers` | Supplier management UI (not built) | — | **In Progress** — RLS policy written, UI pending |
+| SUP-01 | Supplier master data fields | 3 | `suppliers` | `20261118000300_master_data.sql`, `src/features/suppliers/**` | — | **In Progress** — UI written; migration not applied |
+| SUP-02 | CRUD and deactivate suppliers | 3 | `suppliers` | `SuppliersPanel.tsx` (create, edit, deactivate) | `Suppliers.test.tsx` | **In Progress** — UI written; migration not applied |
 | SUP-03 | Supplier history and performance reports | 7 | — | Report queries | RPT-03 | Not Started |
 
 ---

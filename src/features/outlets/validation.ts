@@ -1,3 +1,5 @@
+import { mapDbError, type DbErrorLike } from '@/lib/errors'
+
 export type OutletInput = {
   code: string
   name: string
@@ -35,19 +37,8 @@ export function validateOutlet(input: OutletInput): ValidationResult {
   }
 }
 
-type DbErrorLike = { code?: string; message: string }
-
 export function describeDbError(error: DbErrorLike): string {
-  switch (error.code) {
-    case '23505':
-      return 'That code is already in use. Choose a different one.'
-    case '42501':
-      return 'You do not have permission to change outlets.'
-    case '23514':
-      return 'The value violates a database rule.'
-    default:
-      return error.message
-  }
+  return mapDbError(error, 'outlets')
 }
 
 export function toMessage(error: unknown): string {

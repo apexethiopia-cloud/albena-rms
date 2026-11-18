@@ -82,12 +82,12 @@ flowchart LR
 
 ## Phase 3 — Master Data (10%)
 **SRS Reference**: Section 11, Phase 3
-**Status**: 🟡 **IN PROGRESS** — outlet management delivered; suppliers, items, stock locations and user administration pending.
+**Status**: 🟡 **IN PROGRESS** — outlets and suppliers delivered; items, stock locations and user administration pending.
 
 **Scope**:
 - ✅ Outlet management UI: list, create, edit, deactivate/reactivate (no deletes)
+- ✅ Supplier management UI: list, create, edit, deactivate/reactivate (no deletes)
 - Business workspace, outlets and location management UI
-- Supplier management (create, edit, deactivate)
 - Inventory item master (create, edit, categories, deactivate)
 - Stock location management
 - User management UI (assign roles, outlet scopes, disable/reactivate)
@@ -97,7 +97,9 @@ flowchart LR
 **Delivered so far**:
 - Migrations `20261118000300_master_data.sql` and `20261118000400_master_data_seed.sql` authored: `stock_locations`, `item_categories`, `units`, `item_unit_conversions`, `suppliers`, `items`, RLS, audit triggers, reference seeds. **Not yet applied.**
 - Settings page at `/settings` with the outlet panel: RLS-gated write controls, client validation, duplicate-code and permission error mapping, deactivate instead of delete.
-- FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles.
+- Purchasing page at `/purchasing` with the supplier panel: contact, phone, email, address, tax number and payment terms; active/inactive toggling.
+- Shared Postgres error mapping (`src/lib/errors.ts`), including a clear message when a table is missing because a migration has not been applied.
+- FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles for both panels.
 
 **Requirements addressed**: OUT-01..03, SUP-01..02, INV-01..05, USR-01..05, SEC-ROLE-05
 

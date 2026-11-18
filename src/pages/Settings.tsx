@@ -1,4 +1,4 @@
-import { Boxes, ClipboardList, MapPin, Package, ShoppingBasket, Users } from 'lucide-react'
+import { Boxes, ClipboardList, MapPin, Package, Users } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { OutletsPanel } from '@/features/outlets/OutletsPanel'
 
@@ -14,12 +14,6 @@ const PLANNED = [
     title: 'Stock locations',
     detail:
       'Main store, kitchen store, bar store and coffee store. These become the locations in the stock ledger.',
-  },
-  {
-    icon: ShoppingBasket,
-    title: 'Suppliers',
-    detail:
-      'Supplier master with contact details, payment terms and an active flag. Required before purchase orders can be raised.',
   },
   {
     icon: Package,

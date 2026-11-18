@@ -208,6 +208,7 @@ export function OutletsPanel() {
       {mode && (
         <form
           onSubmit={handleSubmit}
+          noValidate
           aria-labelledby="outlet-form-heading"
           className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm"
         >

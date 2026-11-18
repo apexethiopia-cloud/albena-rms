@@ -150,3 +150,32 @@
 - Owner creates the two remaining test accounts; AC-01 and AC-02 remain unrecorded.
 - Suppliers, item master, stock locations and user administration UI.
 - RLS negative-test SQL script for repeatable authorization proof.
+
+---
+
+## Session 7: 2026-11-18 — Supplier Master and Missing-Table Guidance
+
+- **Phase**: Phase 3 in progress | **Completion**: **25.0%** unchanged (Phase 3 exit condition not met)
+- **Date**: 2026-11-18 13:30 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+
+### Actions Completed
+1. **Deployment verified after the outlet fix**: live bundle contains the outlet panel, the admin-only write copy, and the Supabase project ref. An anonymous `POST /rest/v1/outlets` returns `42501` ("new row violates row-level security policy"), proving the live write boundary.
+2. **Shared error mapping**: `src/lib/errors.ts` centralizes `23505`, `42501`, `23514`, `23503`, `P0002` and the missing-table codes `42P01`/`PGRST205`. The missing-table message tells the owner to apply the pending migration instead of exposing a raw PostgREST error.
+3. **Supplier feature**: validation (code, required name, optional validated email/phone, length limits, normalization), API via the RLS client, and a full panel with list/create/edit/deactivate.
+4. **Purchasing page**: `/purchasing` now hosts the supplier panel plus an explicit list of what is not built (PR, PO, GRN, supplier performance).
+5. **Settings page cleaned up**: suppliers removed from the "not implemented" list because they now exist under Purchasing.
+6. **Accessibility/UX fix found by a test**: forms use `noValidate`, so the app's own validation messages appear instead of the browser blocking submit on an invalid email field.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 51/51 pass across 8 suites
+- `npm run build` — pass (461 kB JS / 129 kB gzip, 18 kB CSS)
+- Live bundle — outlet panel, admin-only copy and project ref all present
+- Live RLS probe — anon `GET outlets` 200 `[]`; anon `POST outlets` 401 `42501`
+
+### Outstanding
+- Suppliers cannot be integration-tested until migrations 0003/0004 are applied. The UI reports this explicitly.
+- Item master, stock locations and user administration UI.
+- AC-01/AC-02 evidence still needs the two remaining test accounts.

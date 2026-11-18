@@ -7,6 +7,7 @@ import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
+import { Purchasing } from '@/pages/Purchasing'
 import { Settings } from '@/pages/Settings'
 
 export function AppRoutes() {
@@ -35,22 +36,7 @@ export function AppRoutes() {
             }
           />
 
-          <Route
-            path="purchasing"
-            element={
-              <ComingSoon
-                title="Purchasing"
-                phase="Phase 4"
-                description="Purchase requests, purchase orders and goods receiving."
-                planned={[
-                  'Purchase request workflow: draft, submitted, approved, rejected',
-                  'Purchase orders linked to approved requests',
-                  'Goods receiving notes with atomic stock increase',
-                  'Duplicate-posting protection and shortage review',
-                ]}
-              />
-            }
-          />
+          <Route path="purchasing" element={<Purchasing />} />
 
           <Route
             path="operations"
