@@ -128,7 +128,7 @@
 | GRN-01 | GRN header fields | 4 | `grns` | `src/features/stock/GrnPanel.tsx` | AC-04 | Implemented |
 | GRN-02 | GRN line fields | 4 | `grn_lines` | GRN line entry | AC-04 | Implemented |
 | GRN-03 | Posting increases stock and updates valuation atomically | 4 | `post_grn()` | GRN post RPC | AC-04 | Implemented |
-| GRN-04 | Link GRN to PO; record shortages/over-receipts | 4 | — (no PO table yet) | GRN-PO linkage | — | Not Started |
+| GRN-04 | Link GRN to PO; record shortages/over-receipts | 4 | `grns.po_id`, `grn_lines.po_line_id`, `purchase_order_receipts` (migration 0007) | PO selector + seeded lines in `GrnPanel.tsx`, receipt status table | `Receiving.test.tsx` | **Implemented** — live check pending migration 0007; over-receipts recorded as `over`, drafts excluded |
 | GRN-05 | Prevent duplicate GRN posting | 4 | `grns.posted_at`, unique source-line index | Idempotency guard | — | Implemented |
 
 ---

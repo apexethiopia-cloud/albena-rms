@@ -7,8 +7,8 @@
 | **Project Name** | Albena Restaurant Management System (RMS) |
 | **Current Phase** | Phase 4 — Inventory & Purchasing (in progress); Phases 0–3 complete |
 | **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 exit condition not yet met) |
-| **Last Updated** | 2026-11-18 19:10 UTC+3 |
-| **Latest Git Commit** | `87d8379` (Phase 4 PR/PO slice) |
+| **Last Updated** | 2026-11-18 20:15 UTC+3 |
+| **Latest Git Commit** | `32ef218` (Phase 4 GRN ↔ PO linkage) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -28,7 +28,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | **Phase 1** | Foundation (React/Vite, Cloudflare, CI/CD) | 10% | ✅ **Complete** | Yes — app live at `albena-rms.pages.dev` |
 | **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 confirmed by owner** (all three accounts created) |
 | **Phase 3** | Master Data (outlets, suppliers, inventory, users) | 10% | ✅ **Complete** | Master-data CRUD, unit conversions, categories and user/role/outlet administration pass tests |
-| **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock) | 20% | 🚧 **In Progress** | No — PR/PO, GRN/SIV postings and ledger-derived balances are built; AC-03 live run, GRN↔PO linkage, counts, adjustments, waste and reorder alerts remain |
+| **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock) | 20% | 🚧 **In Progress** | No — PR/PO, GRN/SIV postings, ledger-derived balances and GRN↔PO receipts are built; live AC-03/GRN-04 runs, counts, adjustments, waste and reorder alerts remain |
 | **Phase 5** | Recipes & Production | 10% | ⏳ Planned | No |
 | **Phase 6** | Restaurant Operations (menu, tables, KDS, POS) | 15% | ⏳ Planned | No |
 | **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
@@ -110,14 +110,21 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] PO panel on `/purchasing`: list with supplier/source request/status, draft creation with costs, optional seed from an approved request, approve → mark ordered → close.
 - [x] Tests: `procurementValidation.test.ts` (13), `Procurement.test.tsx` (11), plus procurement mocks in the Receiving and Suppliers suites.
 
+### Completed (Phase 4 — GRN ↔ PO linkage)
+- [x] Migration `20261118000700_grn_po_linkage.sql` authored: optional `grns.po_id` and `grn_lines.po_line_id`, indexes, and the 8-argument `create_grn` that rejects a mismatched supplier or PO line item.
+- [x] `purchase_order_receipts` view derives ordered/received/outstanding base quantities and `pending`/`partial`/`complete`/`over` status from posted GRNs only; drafts do not count and over-receipts are not blocked (no tolerance invented, CON-07).
+- [x] GRN panel: purchase-order selector (approved/ordered orders), supplier locked to the order, outstanding lines seeded at the ordered unit and cost, over-receipt warning per line, PO number on documents, and a receipts table for review.
+- [x] Tests: 5 new GRN↔PO cases in `Receiving.test.tsx` plus PO-link normalization in `stockValidation.test.ts`; total 166/166 across 21 suites.
+
 ### Outstanding
-- [ ] **Owner**: apply `supabase/migrations/20261118000600_purchase_requests_orders.sql` in Supabase before the PR/PO panels can load or post.
+- [ ] **Owner**: apply `supabase/migrations/20261118000600_purchase_requests_orders.sql`, then `supabase/migrations/20261118000700_grn_po_linkage.sql`, in that order.
 - [ ] **Owner/agent**: after 0006 is applied, run the live AC-03 workflow and confirm a purchasing officer cannot approve.
+- [ ] **Owner/agent**: after 0007 is applied, post a GRN against an ordered PO and confirm the receipt status moves to `partial`/`complete` and an over-receipt shows as `over`.
 - [x] **Owner**: migration `20261118000500_stock_ledger.sql` applied and the GRN/SIV flow verified live (AC-04, AC-05).
 - [x] **Owner**: the two additional test accounts were created and the GM / Restaurant Manager roles were assigned.
 - [x] AC-01 / AC-02 authenticated end-to-end sign-off confirmed by the owner.
 - [x] Authenticated check of outlets, suppliers, items, categories, stock locations and user administration (owner-confirmed).
-- [ ] Phase 4 remainder: GRN ↔ PO linkage/shortages, counts, adjustments, waste and low-stock alerts.
+- [ ] Phase 4 remainder: counts, adjustments, waste and low-stock alerts.
 - [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock cannot be enforced (open issue).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 
@@ -127,7 +134,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
-| 🔴 HIGH | **Blocker** | Migration 0006 is not applied yet; the PR/PO panels cannot read or post until it is | AC-03 demonstration | Owner applies `20261118000600_purchase_requests_orders.sql`; pages show a clear "apply the pending migration" message meanwhile |
+| 🔴 HIGH | **Blocker** | Migrations 0006 and 0007 are not applied yet; the PR/PO panels and GRN↔PO linkage cannot read or post until they are | AC-03 and GRN-04 demonstration | Owner applies `20261118000600_purchase_requests_orders.sql` then `20261118000700_grn_po_linkage.sql` |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
@@ -172,6 +179,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `supabase/migrations/20261118000600_purchase_requests_orders.sql` | **Created** — PR/PO schema, RPCs, RLS, audit — pending owner apply | 2026-11-18 |
 | `src/features/procurement/**` | **Created** — PR/PO API, validation, line editor and panels | 2026-11-18 |
 | `src/test/Procurement.test.tsx`, `src/test/procurementValidation.test.ts` | **Created** — PR/PO panel and validation tests | 2026-11-18 |
+| `supabase/migrations/20261118000700_grn_po_linkage.sql` | **Created** — GRN↔PO columns, `create_grn` update, receipts view — pending owner apply | 2026-11-18 |
 | `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
 | `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
 | `.github/workflows/ci.yml` | Created | 2026-11-18 |
@@ -193,8 +201,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 21 suites, 161 tests (routing, auth, offline banner, formatting, roles, master-data, stock/GRN/SIV and PR/PO validation and panels) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 606 kB JS (153 kB gzip), 22 kB CSS (chunk-size warning only) |
+| `npm run test` | 21 suites, 166 tests (routing, auth, offline banner, formatting, roles, master-data, stock/GRN/SIV, PR/PO and GRN↔PO validation and panels) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 613 kB JS (155 kB gzip), 23 kB CSS (chunk-size warning only) |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
@@ -207,10 +215,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Apply migration 0006 first**, then finish Phase 4: live AC-03 run, GRN ↔ PO linkage, counts, adjustments, waste and low-stock alerts. Phases 0–3 are complete and AC-04/AC-05 are verified.
+> **Apply migrations 0006 then 0007**, then finish Phase 4: live AC-03 and GRN↔PO runs, counts, adjustments, waste and low-stock alerts. Phases 0–3 are complete and AC-04/AC-05 are verified.
 
 Then:
 1. Owner applies `20261118000600_purchase_requests_orders.sql`; run PR → submit → approve → Create PO → approve → ordered → close, and confirm a purchasing officer cannot approve (AC-03).
-2. Link GRNs to POs with shortage/over-receipt flags (GRN-04).
+2. Owner applies `20261118000700_grn_po_linkage.sql`; receive against an ordered PO, confirm outstanding quantities and `partial`/`complete` status, and confirm an over-receipt appears as `over` (GRN-04).
 3. Build counts, adjustments and waste on top of the same ledger (STK-04, ADJ-01..03, WST-01..04).
 4. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).

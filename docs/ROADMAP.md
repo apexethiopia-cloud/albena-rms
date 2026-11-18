@@ -122,11 +122,11 @@ flowchart LR
 - Purchase Requests: header/lines, Draft → Submitted → Approved/Rejected, approver + time + comment recorded
 - Purchase Orders: header/lines with unit costs, Draft → Approved → Ordered → Closed, one order per approved request
 - PROCUREMENT role gates: `system_admin`/`general_manager`/`purchasing_officer` manage; `system_admin`/`general_manager` approve
+- GRN ↔ PO linkage: optional `po_id`/`po_line_id`, outstanding-line seeding, supplier lock, and a derived `purchase_order_receipts` view with `pending`/`partial`/`complete`/`over` status from posted GRNs only
 - AC-04 and AC-05 verified against the live database by the owner (GRN 2,000 g / ETB 240.00 → SIV 500 g / ETB 180.00, over-issue rejected)
 
 **Remaining**:
-- Apply migration `20261118000600_purchase_requests_orders.sql`, then run the live AC-03 workflow check
-- GRN ↔ PO linkage with shortage/over-receipt flags
+- Apply migration `20261118000600_purchase_requests_orders.sql`, then `20261118000700_grn_po_linkage.sql`, then run the live AC-03 and GRN↔PO checks
 - Inventory counting module with variance calculation and approval
 - Inventory adjustments (approved reasons, audit-trailed)
 - Waste recording and posting
@@ -143,7 +143,7 @@ flowchart LR
 - Waste recording and posting
 - Low-stock/reorder alert system
 
-**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-04 and AC-05 are verified live; AC-03 is built and awaits migration 0006 plus a live workflow run.
+**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-04 and AC-05 are verified live; AC-03 and GRN-04 are built and await migrations 0006/0007 plus live workflow runs.
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 

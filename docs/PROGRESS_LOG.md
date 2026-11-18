@@ -362,4 +362,34 @@
 - OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 15: 2026-11-18 — Phase 4 GRN ↔ PO Linkage Built
+
+- **Phase**: Phase 4 in progress | **Completion**: **35.0%** (unchanged; Phase 4 exit condition still open)
+- **Date**: 2026-11-18 20:15 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Migration 0007 authored** — `20261118000700_grn_po_linkage.sql`: optional `grns.po_id` and `grn_lines.po_line_id` with indexes, and the 8-argument `create_grn` replacing the 7-argument version. The function rejects a PO from another supplier, a line from another order, and a PO line whose item differs from the GRN line.
+2. **Receipt variance view** — `purchase_order_receipts` derives ordered, received and outstanding base quantities per PO line plus `pending`/`partial`/`complete`/`over` status. Only posted GRNs count; over-receipts are recorded, not blocked, because the owner has not defined a tolerance (CON-07).
+3. **GRN panel** — purchase-order selector limited to approved/ordered orders; selecting one fixes the supplier, seeds outstanding lines in the ordered unit and cost, and explains the seeding. Each seeded line shows ordered/received/outstanding and warns when the entered quantity exceeds the outstanding amount.
+4. **Receipts review** — a "Purchase order receipts" table lists every PO line with ordered/received/outstanding amounts and a status chip; posted documents show their PO number.
+5. **Resilient loading** — GRN listing, creation and posting still work when migrations 0006/0007 are not applied; the purchase-order lookups degrade to empty instead of failing the panel.
+6. **Tests** — 5 new GRN↔PO cases in `Receiving.test.tsx` (seeding and supplier lock, over-receipt warning, receipts table, PO number on a document) and PO-link normalization in `stockValidation.test.ts`; procurement/receiving/supplier suites gained the new receipt mock.
+7. **Docs** — GRN-04 marked Implemented; Phase 4 delivered/remaining lists, blockers and next steps updated.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 166/166 pass across 21 suites
+- `npm run build` — pass (613 kB JS / 155 kB gzip, 23 kB CSS; chunk-size warning only)
+- Commit `32ef218` (GRN ↔ PO slice) created; push and deployment recorded below.
+
+### Outstanding
+- **Owner applies** `20261118000600_purchase_requests_orders.sql` then `20261118000700_grn_po_linkage.sql` (in that order); AC-03 and GRN-04 live runs still required.
+- Phase 4 remainder: counts, adjustments, waste, low-stock alerts.
+- OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 
