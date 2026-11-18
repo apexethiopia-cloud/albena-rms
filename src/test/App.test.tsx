@@ -51,9 +51,9 @@ describe('App shell', () => {
   })
 
   it('renders a placeholder page for a planned module', () => {
-    renderApp(signedIn, '/inventory')
+    renderApp(signedIn, '/reports')
 
-    expect(screen.getByRole('heading', { name: 'Inventory' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Reports' })).toBeInTheDocument()
     expect(screen.getByText(/scheduled for phase/i)).toBeInTheDocument()
   })
 

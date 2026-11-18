@@ -5,6 +5,7 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
+import { Inventory } from '@/pages/Inventory'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
 import { Purchasing } from '@/pages/Purchasing'
@@ -19,22 +20,7 @@ export function AppRoutes() {
         <Route element={<AppShell />}>
           <Route index element={<Dashboard />} />
 
-          <Route
-            path="inventory"
-            element={
-              <ComingSoon
-                title="Inventory"
-                phase="Phase 3–4"
-                description="Items, locations, stock ledger, counts and adjustments."
-                planned={[
-                  'Item master with category, unit of measure and reorder level',
-                  'Stock balances by item and location, derived from the ledger',
-                  'GRN, SIV, adjustments, waste and production postings',
-                  'FIFO valuation across receiving layers (OD-04 confirmed)',
-                ]}
-              />
-            }
-          />
+          <Route path="inventory" element={<Inventory />} />
 
           <Route path="purchasing" element={<Purchasing />} />
 

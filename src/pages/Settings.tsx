@@ -17,9 +17,9 @@ const PLANNED = [
   },
   {
     icon: Package,
-    title: 'Items and unit conversions',
+    title: 'Item unit conversions',
     detail:
-      'Item master with category, base unit, reorder level and per-item purchase-unit factors (box, carton, sack) required by ADR-010.',
+      'Per-item factors for box, carton and sack, which have no universal size (ADR-010). Items can be created now; these factors must be entered before such a purchase unit can be received.',
   },
   {
     icon: ClipboardList,

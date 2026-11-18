@@ -77,12 +77,17 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Supplier validation: code pattern, required name, optional-but-validated email and phone, field length limits, normalization (uppercase code, lowercase email, trimmed text).
 - [x] Supplier write gate matches the `suppliers_write` policy: System Administrator, General Manager, Purchasing Officer.
 - [x] Missing-table errors (`PGRST205`/`42P01`) explain that a pending migration must be applied, instead of showing a raw PostgREST message.
+- [x] `/inventory` route now renders a real page (no longer a placeholder).
+- [x] Item master panel: list, create, edit, deactivate/reactivate with category, base unit, optional purchase unit and reorder level.
+- [x] Item write gate matches the `items_write` policy: System Administrator, General Manager, Purchasing Officer, Storekeeper, Executive Chef.
+- [x] Base units limited to the seeded gram / millilitre / piece; reorder level validated as a non-negative decimal in the base unit.
+- [x] Box/carton/sack purchase units are selectable but flagged in the form as needing a per-item factor (editor not built yet).
 
 ### Outstanding
-- [ ] **Owner**: apply `20261118000300_master_data.sql`, then `20261118000400_master_data_seed.sql`.
 - [ ] **Owner**: create the two remaining test accounts and verify AC-01 / AC-02.
-- [ ] Integration-test suppliers against the applied table (UI is written and unit-tested, but the table does not exist yet).
-- [ ] Build the item master and stock-location screens.
+- [ ] Integration-test outlets, suppliers and items with an authenticated account (migrations are applied; all three UIs are written and unit-tested).
+- [ ] Item unit-conversion editor for box / carton / sack factors.
+- [ ] Stock-location screen.
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 - [ ] User administration UI (roles, outlet scopes, disable/reactivate).
 
@@ -92,13 +97,13 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
-| 🟡 MEDIUM | **Blocker** | Master-data migration 0003/0004 not applied; suppliers, items and locations cannot be used yet | Phase 3 items/suppliers | Owner runs the two SQL files in order; agent has no database credentials |
 | 🟡 MEDIUM | **Risk** | AC-01 cannot be demonstrated with one account | Phase 2 acceptance | Owner creates two more accounts (dashboard or `scripts/seed-test-users.mjs`) |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
 | 🟢 LOW | **Risk** | **Service-role key** needed only for the seeding script | Test users | Key lives in `.env.local` only; never in the repo or browser bundle |
 | 🟢 LOW | **Resolved** | OD-04 and OD-05 answered 2026-11-18 (FIFO, base units) | — | Recorded in ADR-009 and ADR-010 |
+| 🟢 LOW | **Resolved** | Master-data migrations 0003/0004 applied 2026-11-18; all six tables respond to REST | — | Anon reads return `200 []`; anon writes return `42501` |
 
 ---
 
@@ -114,15 +119,19 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `src/features/suppliers/validation.ts` | **Created** — supplier validation + DB error mapping | 2026-11-18 |
 | `src/features/suppliers/api.ts` | **Created** — supplier data access via RLS client | 2026-11-18 |
 | `src/features/suppliers/SuppliersPanel.tsx` | **Created** — supplier CRUD UI | 2026-11-18 |
+| `src/features/items/validation.ts` | **Created** — item validation | 2026-11-18 |
+| `src/features/items/api.ts` | **Created** — items, units and categories data access | 2026-11-18 |
+| `src/features/items/ItemsPanel.tsx` | **Created** — item master CRUD UI | 2026-11-18 |
 | `src/lib/errors.ts` | **Created** — shared Postgres error mapping | 2026-11-18 |
 | `src/pages/Settings.tsx` | **Created** — settings page with outlet panel | 2026-11-18 |
 | `src/pages/Purchasing.tsx` | **Created** — purchasing page with supplier panel | 2026-11-18 |
+| `src/pages/Inventory.tsx` | **Created** — inventory page with item panel | 2026-11-18 |
 | `src/pages/Login.tsx` | Created | 2026-11-18 |
 | `src/lib/supabase.ts` | Created | 2026-11-18 |
 | `supabase/migrations/20261118000100_foundation.sql` | Created — applied by owner | 2026-11-18 |
 | `supabase/migrations/20261118000200_reference_data.sql` | Created — applied by owner | 2026-11-18 |
-| `supabase/migrations/20261118000300_master_data.sql` | **Created — pending apply** | 2026-11-18 |
-| `supabase/migrations/20261118000400_master_data_seed.sql` | **Created — pending apply** | 2026-11-18 |
+| `supabase/migrations/20261118000300_master_data.sql` | Created — **applied by owner** | 2026-11-18 |
+| `supabase/migrations/20261118000400_master_data_seed.sql` | Created — **applied by owner** | 2026-11-18 |
 | `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
 | `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
 | `.github/workflows/ci.yml` | Created | 2026-11-18 |
@@ -144,8 +153,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 8 suites, 51 tests (routing, auth, offline banner, formatting, roles, outlet + supplier validation, outlet + supplier panels) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 461 kB JS (129 kB gzip), 18 kB CSS |
+| `npm run test` | 10 suites, 69 tests (routing, auth, offline banner, formatting, roles, outlet/supplier/item validation, and all three panels) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 480 kB JS (132 kB gzip), 19 kB CSS |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
@@ -158,11 +167,9 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Owner action (2 steps)**:
-> 1. Apply `supabase/migrations/20261118000300_master_data.sql`, then `20261118000400_master_data_seed.sql`.
-> 2. Create the two remaining test accounts so AC-01 can be recorded.
+> **Owner action (1 step)**: create the two remaining test accounts (Authentication → Users → Add user, auto-confirm, or `scripts/seed-test-users.mjs`), then sign in and confirm AC-01.
 
 Then:
-1. Open `/settings` and `/purchasing` at the deployed URL; exercise outlet and supplier create, edit and deactivate with the administrator account. Before step 1, `/purchasing` shows a message telling you the table needs the migration.
+1. Open `/settings`, `/purchasing` and `/inventory` and create one outlet, one supplier and one item with the administrator account. This is the first end-to-end check of RLS with a real session.
 2. Run the RLS negative tests: signed-out and role-less requests must be rejected (AC-02).
-3. Build the item master and stock-location screens on the now-applied schema.
+3. Build the item unit-conversion editor (box / carton / sack factors) and the stock-location screen.

@@ -179,3 +179,31 @@
 - Suppliers cannot be integration-tested until migrations 0003/0004 are applied. The UI reports this explicitly.
 - Item master, stock locations and user administration UI.
 - AC-01/AC-02 evidence still needs the two remaining test accounts.
+
+---
+
+## Session 8: 2026-11-18 — Master-Data Tables Applied, Item Master Built
+
+- **Phase**: Phase 3 in progress | **Completion**: **25.0%** (exit condition still open)
+- **Date**: 2026-11-18 13:45 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+- **Starting state**: Owner reported migrations 0003/0004 applied.
+
+### Actions Completed
+1. **Migration verification**: `suppliers`, `items`, `units`, `stock_locations`, `item_categories` and `item_unit_conversions` all respond to REST (`200 []` for anon, which is RLS filtering). Anonymous `POST` to `suppliers`, `items` and `units` returns `42501` ("new row violates row-level security policy"), so the new tables are write-protected.
+2. **Seed data not verifiable as anon**: the select policies are `to authenticated` with `is_active_user()`, so seed counts and unit factors can only be confirmed with a real session or SQL. This remains an owner check.
+3. **Item master**: validation (code, name, required base unit, non-negative decimal reorder level), data access for items/units/categories, and a full panel with list/create/edit/deactivate.
+4. **Inventory page**: `/inventory` now hosts the item panel and states plainly that no stock balances or movements exist yet.
+5. **Unit handling in the UI**: base-unit select offers only gram, millilitre and piece; purchase-unit select flags box/carton/sack as needing a per-item factor, with a note that the conversion editor is not built.
+6. **Tests**: 9 item-validation and 9 item-panel tests added. App-shell placeholder test moved from `/inventory` to `/reports` since inventory is now a real page.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 69/69 pass across 10 suites
+- `npm run build` — pass (480 kB JS / 132 kB gzip, 19 kB CSS)
+
+### Outstanding
+- Authenticated end-to-end check of outlets, suppliers and items.
+- Item unit-conversion editor, stock-location screen, category CRUD, user administration.
+- AC-01/AC-02 evidence needs the two remaining test accounts.

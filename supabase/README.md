@@ -63,7 +63,7 @@ matching OD-03 ("full/all-access for the initial three test users").
 | `user_outlet_scopes` | Outlet access per user | read: self + admin · write: admin |
 | `audit_logs` | Append-only audit trail | read: admin/GM/auditor · no write policy |
 
-### Phase 3 — master data (migrations 0003/0004)
+### Phase 3 — master data (migrations 0003/0004, applied 2026-11-18)
 
 | Table | Purpose | RLS |
 | :--- | :--- | :--- |

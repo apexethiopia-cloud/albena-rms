@@ -4,7 +4,7 @@
 **Baseline**: `docs/SRS_v3.0.md` (approved 2026-11-17) + `docs/ROADMAP.md` (Phases 0–8)
 **Purpose**: Turn the current 5%-complete documentation baseline into a working cloud prototype in the shortest credible path, without violating SRS constraints.
 
-> **Status 2026-11-18 (updated 13:15 UTC+3)**: Phases 1 and 2 are complete and the app is live at `https://albena-rms.pages.dev`. Supabase migrations 0001/0002 are applied and the administrator account is verified. Phase 3 is in progress: outlet management ships at `/settings`, and master-data migrations 0003/0004 await the owner's apply. Typecheck, lint, 32 tests and the production build pass.
+> **Status 2026-11-18 (updated 13:45 UTC+3)**: Phases 1 and 2 are complete and the app is live at `https://albena-rms.pages.dev`. Supabase migrations 0001–0004 are applied and the administrator account is verified. Phase 3 is in progress: outlets (`/settings`), suppliers (`/purchasing`) and items (`/inventory`) ship; item conversions, stock locations and user administration remain. Typecheck, lint, 69 tests and the production build pass.
 
 ---
 
