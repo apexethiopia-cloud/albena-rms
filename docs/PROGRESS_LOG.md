@@ -384,7 +384,8 @@
 - `npm run lint` — pass (zero warnings)
 - `npm run test` — 166/166 pass across 21 suites
 - `npm run build` — pass (613 kB JS / 155 kB gzip, 23 kB CSS; chunk-size warning only)
-- Commit `32ef218` (GRN ↔ PO slice) created; push and deployment recorded below.
+- Commit `32ef218` (GRN ↔ PO slice) pushed to `main`; docs commit `5e03b86` followed.
+- Cloudflare deployed the slice (`index-DNG685JJ.js`, 613,133 bytes); the served bundle contains the receipts view and GRN↔PO panel markers.
 
 ### Outstanding
 - **Owner applies** `20261118000600_purchase_requests_orders.sql` then `20261118000700_grn_po_linkage.sql` (in that order); AC-03 and GRN-04 live runs still required.
