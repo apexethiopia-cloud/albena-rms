@@ -217,7 +217,7 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| TBL-01 | Display table layout and status | 6 | `restaurant_tables` (migration 0010) | `src/features/tables/TablesPanel.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — outlet, code, name, seats, zone and live status |
+| TBL-01 | Display table layout and status | 6 | `restaurant_tables` (migration 0010) | `src/features/tables/TablesPanel.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** - outlet, code, name, capacity and live status |
 | TBL-02 | Table statuses | 6 | `restaurant_tables.status` | `TablesPanel.tsx`; order/reservation RPCs | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — available/occupied/reserved/cleaning/closed; orders and reservations drive the state automatically |
 | TBL-03 | Merge, split, transfer per permissions | 6 | `transfer_order`, `split_order`, `merge_orders` (migration 0010) | `src/features/orders/OrdersPanel.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — transfer and split by order takers; merge is manager-only and same-outlet |
 | TBL-04 | Prevent conflicting simultaneous assignments (server-side) | 6 | `orders_one_open_per_table`, `reservations_table_slot_unique`, `FOR UPDATE` locks | Order/reservation RPCs | `ordersValidation.test.ts`; AC-14 at final UAT | **Implemented** — one open order per table, one reservation per table/slot, rows locked in the transaction |
@@ -427,10 +427,10 @@
 | OD-04 | Inventory costing method (weighted average?) | Valuation calculations | FIFO (ADR-009) | **Resolved** |
 | OD-05 | Unit conversion rules; purchase/storage/issue units | Stock and costing accuracy | Base units + per-item factors (ADR-010) | **Resolved** |
 | OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | **Approval workflows required** — thresholds and SoD not yet defined | **Open** — Phase 4 postings are role-gated and record who acted. PR approval is restricted to System Administrator/General Manager with approver, time and comment recorded; self-approval is not blocked and no monetary thresholds exist. Counts, adjustments and waste are now built with manage/post restricted to admin/GM/storekeeper and approval to admin/GM; self-approval is still not blocked and no thresholds exist. |
-| OD-07 | Taxes, service charges, discounts in scope? | Receipt totals | — | **Open** |
-| OD-08 | Receipt numbering, business identity, language, currency | Receipt presentation | Currency ETB; numbering/format TBC | **Partially resolved** |
-| OD-09 | Reservation capacity rules; table assignment mandatory? | Conflict validation logic | — | **Open** |
-| OD-10 | Guest profiles/history retention and privacy rules | Personal-data handling | — | **Open** |
+| OD-07 | Taxes, service charges, discounts in scope? | Receipt totals | VAT 15% only; menu prices are VAT-inclusive; no service charge or discounts (ADR-013) | **Resolved** |
+| OD-08 | Receipt numbering, business identity, language, currency | Receipt presentation | ETB; receipt numbers `<OUTLET>-YYYYMMDD-####` per outlet per business day; identity editable in Settings (ADR-013) | **Resolved** |
+| OD-09 | Reservation capacity rules; table assignment mandatory? | Conflict validation logic | Optional table assignment; exact-slot double-booking blocked; overbooking warning (ADR-013) | **Resolved** |
+| OD-10 | Guest profiles/history retention and privacy rules | Personal-data handling | Guest name and phone only; no profile or history (RES-03 dropped) (ADR-013) | **Resolved** |
 | OD-11 | Currency and decimal precision | Money calculations | ETB, 2 decimal places | **Resolved** |
-| OD-12 | Hotel features (room charges, room service) now or deferred? | Scope of Phase 6 | — | **Open** |
+| OD-12 | Hotel features (room charges, room service) now or deferred? | Scope of Phase 6 | All hotel features deferred (ADR-013) | **Resolved** |
 | OD-13 | Free-tier eligibility and backup/restore expectations | DEPLOYMENT.md content | Supabase + Cloudflare Pages free tier, no card | **Resolved** |

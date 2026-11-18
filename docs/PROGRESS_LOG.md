@@ -547,7 +547,7 @@
 6. **Receipts** - closing requires `served`, extracts VAT as `total x rate / (100 + rate)` from inclusive prices, snapshots the business identity and footer, issues an immutable numbered receipt and frees the table when no open order remains.
 7. **KDS** - three Sent/Preparing/Ready columns with timestamps, line instructions, role-gated transitions and a Realtime subscription that refetches on any order or line change; online only.
 8. **Business settings** - `/settings` panel for business name, TIN, address, phone, VAT rate and receipt footer; admin/GM write access, read-only summary for everyone else.
-9. **Receipt footer gap** - the footer was editable but not stored on receipts; `receipt_footer` was added to the receipts table and `close_order()` snapshot, and the receipt view now prints it. Migration 0010 had not been applied, so no follow-up migration is needed.
+9. **Receipt footer gap** - the footer was editable but not stored on receipts; `receipt_footer` was added to the receipts table and `close_order()` snapshot, and the receipt view now prints it. Migration 0010 had not been applied, so no follow-up migration was expected at the time. **Correction (Session 22): the applied 0010 was the earlier copy, so hotfix 0011 is required.**
 10. **UI and navigation** - the `/operations` placeholder was replaced with `MenuPanel`, `TablesPanel`, `ReservationsPanel`, `OrdersPanel` and `KitchenDisplayPanel`; `BusinessSettingsPanel` was added to `/settings`.
 11. **Tests** - `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12) cover payloads, role gates, order/KDS flow, receipt rendering and business settings.
 12. **Commits** - slice 1 `ac31955`; slice 2 `3ed1273` (13 files, 3,112 insertions); docs and receipt-footer fix `a80f90f`; all pushed to `main`.
@@ -566,6 +566,33 @@
 - KDS-01 shows sent/opened timestamps but no elapsed-minutes counter; KDS-04 prep-time reporting and the reservation/guest-history reports are Phase 7 (RES-03 dropped per OD-10).
 - OD-06 thresholds and separation of duties remain open; the stock-location to outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
+
+
+
+## Session 22: 2026-11-18 - Phase 5/6 Migrations Applied and Verified; Receipt Footer Hotfix
+
+- **Phase**: Phase 6 build complete; migrations 0009/0010 applied, 0011 pending | **Completion**: **35.0%** credited (Phases 4-6 release at final UAT)
+- **Date**: 2026-11-19 00:30 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner applied migrations** - 0009 `recipes_production` and then 0010 `restaurant_operations` were applied on the live project on 2026-11-18.
+2. **PostgREST verification** - 49 probes with the anonymous key (16 table/view GETs and 33 RPC calls with named arguments). Every Phase 5 object (`recipes`, `recipe_versions`, `recipe_version_lines`, `production_orders`, `production_inputs`, `recipe_version_costs`) and Phase 6 object (`business_settings`, `menu_categories`, `menu_items`, `restaurant_tables`, `reservations`, `orders`, `order_lines`, `receipts`, `reservation_slot_load`, `document_sequences`) resolves. Anon reads return `42501 permission denied`, not `404`/`PGRST202`.
+3. **RPC verification** - all nine Phase 5 and all 24 Phase 6 RPCs resolve. Workflow RPCs return their role-gate `42501` message, the eight Phase 6 role helpers return `false`, `business_today()` returns `2026-11-18`, `next_document_number()` rejects an unknown outlet with `409` (foreign key) rather than a missing function, and the not-found paths return their own SQLSTATEs.
+4. **Gap found** - the applied 0010 predates the receipt-footer snapshot: `receipts?select=receipt_footer` returns `42703 column receipts.receipt_footer does not exist`, so the live `close_order()` is the earlier copy. The migration file in git is correct; re-running it would not add the column because the table already exists.
+5. **Hotfix 0011** - `20261118001100_receipt_footer_and_function_privileges.sql` adds `receipt_footer` with `add column if not exists`, recreates `close_order()` with the footer snapshot, and revokes anonymous EXECUTE on helpers and RPCs. It also closes a privilege hole found during the probe: `occupy_table()`, `free_table_if_idle()`, `next_document_number()`, `insert_recipe_version_lines()`, `post_stock_in()` and `post_stock_out()` are `SECURITY DEFINER`, have no internal role gate, and were executable by `anon` because the earlier migrations revoked only from `PUBLIC`.
+6. **Docs corrected** - table columns are `capacity` (no `seats`/`zone`); OD-07/08/09/10/12 marked resolved in the traceability decision table; migration statuses and next-task guidance refreshed in `PROJECT_STATUS.md`, `ROADMAP.md` and `REQUIREMENTS_TRACEABILITY.md`.
+
+### Verification
+- Anon probes - 49 calls, no missing table, view or function; all denials are `42501`
+- Defect confirmation - `receipts.receipt_footer` absent (`42703`) on the live schema
+- Hotfix 0011 - authored, **not yet applied** (no local Postgres to syntax-check)
+- Application tests - unchanged since the last green run (252/252 across 28 suites)
+
+### Outstanding
+- Owner applies `20261118001100_receipt_footer_and_function_privileges.sql`; agent re-probes the footer column and anonymous function denials.
+- Final UAT: AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
+- OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open.
 
 
 

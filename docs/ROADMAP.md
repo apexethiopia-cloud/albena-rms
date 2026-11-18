@@ -155,7 +155,7 @@ flowchart LR
 
 ## Phase 5 — Recipes & Production (10%)
 **SRS Reference**: Section 11, Phase 5
-**Status**: 🚧 **Build complete** — awaiting owner application of migration 0009 and final UAT
+**Status**: ✅ **Build complete** — migration 0009 applied and verified; final UAT deferred
 
 **Scope**:
 - Recipe management (ingredients, quantities, yield, version history)
@@ -172,10 +172,9 @@ flowchart LR
 - `post_production_order()` consumes every input through FIFO and creates the output layer at the consumed cost in one transaction (PROD-03, PROD-04, STK-02/03)
 - `/kitchen` page with the Recipes and Production panels, plus validation, role gates, read-only states and refresh/confirm flows
 - Tests: `recipesValidation.test.ts` (16) and `Kitchen.test.tsx` (8)
-- Migration `20261118000900_recipes_production.sql` written; **not yet applied**
+- Migration `20261118000900_recipes_production.sql` applied by the owner; all six objects and nine RPCs verified through PostgREST (anon denied with `42501`)
 
 **Remaining**:
-- Owner applies migration 0009; agent verifies objects and RPC gates through PostgREST
 - Final UAT: AC-07 production posting and AC-08 costing (deferred by the owner with the rest of UAT)
 - REC-05 and REC-07 theoretical consumption need Phase 6 sales (COST-01..03 in Phase 7)
 
@@ -189,7 +188,7 @@ flowchart LR
 
 ## Phase 6 — Restaurant Operations (15%)
 **SRS Reference**: Section 11, Phase 6
-**Status**: ✅ **Build complete** — awaiting owner application of migrations 0009 and 0010, then final UAT
+**Status**: ✅ **Build complete** — migrations 0009/0010 applied and verified; hotfix 0011 pending, then final UAT
 
 **Scope**:
 - Menu management (items, categories, pricing, deactivation)
@@ -203,7 +202,7 @@ flowchart LR
 **Delivered (2026-11-18)**:
 - `business_settings`, `menu_categories`, `menu_items`, `restaurant_tables`, `reservations`, `document_sequences`, `orders`, `order_lines`, `receipts`, the `reservation_slot_load` view, eight role helpers and fifteen SECURITY DEFINER RPCs (migration 0010)
 - Menu: categories with sort order and items with code, name, category, VAT-inclusive selling price, optional recipe link and active flag; deactivation preserves order history (MENU-01..03)
-- Tables: outlet, code, name, seats, zone, active flag and status, with state advancing automatically from orders and reservations (TBL-01, TBL-02)
+- Tables: outlet, code, name, capacity, active flag and status, with state advancing automatically from orders and reservations (TBL-01, TBL-02)
 - Reservations: guest name/phone, party size, date/time and optional table; `booked → confirmed → arrived → cancelled/completed`; exact-slot double-booking blocked and overbooking warned from `reservation_slot_load` (RES-01, RES-02, RES-04; RES-03 dropped per OD-10)
 - Orders: lifecycle `pending → sent_to_kitchen → preparing → ready → served → closed` plus `cancelled`; create, edit, send, serve, cancel, transfer, split, manager merge and close all run atomically in SQL (ORD-01..04, ORD-06)
 - Line price snapshots: code, name and unit price are copied at line creation, so later menu edits cannot rewrite history (ORD-03, RCT-05)
@@ -216,9 +215,11 @@ flowchart LR
 - Role gates mirror the SRS table: menu/layout = admin/GM/RM; table status = +waiter/cashier; reservations/orders = +waiter; kitchen status = +executive chef/kitchen staff; close = admin/GM/RM/cashier; business settings = admin/GM
 - Tests: `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12); full suite 252/252 across 28 suites
 - Commits `ac31955` (slice 1) and `3ed1273` (slice 2) pushed to `main`; Cloudflare serves `assets/index-fqmOEPuP.js` (811,382 bytes)
+- Migrations 0009 and 0010 applied by the owner and verified through PostgREST: all 16 objects and 33 RPCs resolve; anon is denied with `42501`, not `404`
+- Verification gap: the applied 0010 predates the receipt-footer snapshot, so `receipts.receipt_footer` is missing. Hotfix `20261118001100_receipt_footer_and_function_privileges.sql` adds it, recreates `close_order()`, and revokes anonymous EXECUTE on ungated helpers
 
 **Remaining**:
-- Owner applies migration 0009, then 0010; agent verifies the tables, views and RPC gates through PostgREST
+- Owner applies hotfix 0011; agent confirms the footer column and that anon can no longer execute the helpers
 - Final UAT: AC-10 (KDS flow), AC-11 (order/table workflow), AC-14 (concurrent table/order handling) and AC-15 (reservations), deferred by the owner with the rest of UAT
 - KDS-04 prep-time reporting and the Phase 7 reservation/guest-history reports remain in Phase 7
 - Outlet scoping of stock/recipes still needs the `stock_locations` ↔ outlet decision; Phase 6 reads are role-based
