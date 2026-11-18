@@ -125,12 +125,14 @@ flowchart LR
 - GRN ↔ PO linkage: optional `po_id`/`po_line_id`, outstanding-line seeding, supplier lock, and a derived `purchase_order_receipts` view with `pending`/`partial`/`complete`/`over` status from posted GRNs only
 - AC-03 verified live: PR approval recorded, PO created and closed, purchasing officer blocked from approving
 - AC-04, AC-05 and GRN-04 verified against the live database by the owner (GRN 2,000 g / ETB 240.00 → SIV 500 g / ETB 180.00; over-receipt recorded as `over`)
+- Inventory counts: base-unit count sheets with a ledger snapshot, generated variance, submit/review/approve then posting that reconciles the ledger to the physical quantity through `adjustment` transactions (CNT-01..05, STK-04)
+- Adjustments: increase/decrease documents with SRS reasons, one-shot approval and FIFO posting (ADJ-01..03)
+- Waste: item, quantity, location, date, user and reason, approved and posted as a FIFO decrease (WST-01..03)
+- Reorder alerts: total on-hand across locations compared with the item-level reorder level (INV-06)
+- Migration `20261118000800_counts_adjustments_waste.sql` written; **not yet applied** — AC-06/AC-07 live runs pending
 
 **Remaining**:
-- Inventory counting module with variance calculation and approval
-- Inventory adjustments (approved reasons, audit-trailed)
-- Waste recording and posting
-- Low-stock/reorder alert system
+- Owner applies migration 0008 and live-verifies AC-06 (count variance → approved adjustment reconciles the ledger) and AC-07 (waste decreases inventory at FIFO cost)
 
 **Scope**:
 - Purchase Request workflow (Draft → Submitted → Approved/Rejected → PO)
@@ -143,11 +145,11 @@ flowchart LR
 - Waste recording and posting
 - Low-stock/reorder alert system
 
-**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-03, AC-04, AC-05 and GRN-04 are verified live; counts, adjustments and waste remain before AC-06/AC-07 can be checked.
+**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-03, AC-04, AC-05 and GRN-04 are verified live; counts, adjustments and waste are built and unit-tested, with AC-06/AC-07 awaiting migration 0008 and an owner live run.
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 
-**Decisions**: OD-04 FIFO (ADR-009) and OD-05 unit model (ADR-010) both confirmed 2026-11-18. OD-06 approval thresholds remain undefined: postings are role-gated and record who acted; PR/PO approval is limited to System Administrator/General Manager, self-approval is not blocked, and no monetary thresholds exist.
+**Decisions**: OD-04 FIFO (ADR-009), OD-05 unit model (ADR-010) and inventory control (ADR-011) confirmed 2026-11-18. OD-06 approval thresholds remain undefined: postings are role-gated and record who acted; PR/PO and inventory-document approval is limited to System Administrator/General Manager, self-approval is not blocked, and no monetary thresholds exist.
 
 ---
 

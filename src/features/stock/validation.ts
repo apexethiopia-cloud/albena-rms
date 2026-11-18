@@ -74,6 +74,98 @@ export type NormalizedSiv = {
   lines: NormalizedSivLine[]
 }
 
+export type AdjustmentKind = 'adjustment' | 'waste'
+export type AdjustmentDirection = 'in' | 'out'
+
+export type AdjustmentReason = {
+  value: string
+  label: string
+}
+
+/** ADJ-01 reasons. Count variances are posted by the count itself, not here. */
+export const ADJUSTMENT_REASONS: readonly AdjustmentReason[] = [
+  { value: 'damage', label: 'Damage' },
+  { value: 'spoilage', label: 'Spoilage' },
+  { value: 'theft', label: 'Theft' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'operational_loss', label: 'Operational loss' },
+]
+
+/** WST-02 reasons. */
+export const WASTE_REASONS: readonly AdjustmentReason[] = [
+  { value: 'kitchen_waste', label: 'Kitchen waste' },
+  { value: 'burnt_food', label: 'Burnt food' },
+  { value: 'returned_food', label: 'Returned food' },
+  { value: 'expired', label: 'Expired products' },
+  { value: 'spoilage', label: 'Spoilage' },
+]
+
+export type AdjustmentLineDraft = {
+  key: string
+  itemId: string
+  direction: AdjustmentDirection
+  quantity: string
+  unitId: string
+  unitCost: string
+}
+
+export type AdjustmentDraft = {
+  kind: AdjustmentKind
+  adjustmentNumber: string
+  adjustmentDate: string
+  locationId: string
+  reason: string
+  notes: string
+  lines: AdjustmentLineDraft[]
+}
+
+export type NormalizedAdjustmentLine = {
+  itemId: string
+  unitId: string
+  direction: AdjustmentDirection
+  quantity: number
+  unitCost: number | null
+}
+
+export type NormalizedAdjustment = {
+  kind: AdjustmentKind
+  adjustmentNumber: string
+  adjustmentDate: string
+  locationId: string
+  reason: string
+  notes: string | null
+  lines: NormalizedAdjustmentLine[]
+}
+
+export type CountLineDraft = {
+  key: string
+  itemId: string
+  physicalQuantity: string
+}
+
+export type CountDraft = {
+  countNumber: string
+  countDate: string
+  locationId: string
+  counterName: string
+  notes: string
+  lines: CountLineDraft[]
+}
+
+export type NormalizedCountLine = {
+  itemId: string
+  physicalQuantity: number
+}
+
+export type NormalizedCount = {
+  countNumber: string
+  countDate: string
+  locationId: string
+  counterName: string
+  notes: string | null
+  lines: NormalizedCountLine[]
+}
+
 export type Validation<T> =
   | { valid: true; value: T; errors: Record<string, string> }
   | { valid: false; value: null; errors: Record<string, string> }
@@ -105,6 +197,13 @@ export function parseMoney(value: string): number | null {
   if (!value.trim()) return null
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+/** Physical counts may legitimately be zero (the item is absent). */
+export function parseNonNegativeNumber(value: string): number | null {
+  if (!value.trim()) return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
 }
 
 /**
@@ -322,6 +421,169 @@ export function validateSiv(input: SivDraft, context: StockContext): Validation<
   }
 }
 
+export function validateInventoryAdjustment(
+  input: AdjustmentDraft,
+  context: StockContext,
+): Validation<NormalizedAdjustment> {
+  const errors: Record<string, string> = {}
+  const reasons = input.kind === 'waste' ? WASTE_REASONS : ADJUSTMENT_REASONS
+
+  if (!input.adjustmentNumber.trim()) {
+    errors.adjustmentNumber = 'Enter a document number.'
+  } else if (input.adjustmentNumber.trim().length > 40) {
+    errors.adjustmentNumber = 'Use 40 characters or fewer.'
+  }
+
+  if (!input.adjustmentDate) errors.adjustmentDate = 'Choose the document date.'
+  else if (!isIsoDate(input.adjustmentDate)) errors.adjustmentDate = 'Use a valid date.'
+
+  if (!input.locationId) errors.locationId = 'Choose the stock location.'
+  if (!reasons.some((reason) => reason.value === input.reason)) {
+    errors.reason = input.kind === 'waste' ? 'Choose a waste reason.' : 'Choose an adjustment reason.'
+  }
+  if (input.notes.trim().length > 500) errors.notes = 'Use 500 characters or fewer.'
+
+  const normalized: NormalizedAdjustmentLine[] = []
+
+  if (input.lines.length === 0) {
+    errors.lines = 'Add at least one line.'
+  }
+
+  input.lines.forEach((line, index) => {
+    const prefix = `line-${index}`
+    if (!line.itemId) errors[`${prefix}-item`] = 'Choose an item.'
+    if (!line.unitId) errors[`${prefix}-unit`] = 'Choose a unit.'
+    if (input.kind === 'waste' && line.direction !== 'out') {
+      errors[`${prefix}-direction`] = 'Waste can only decrease stock.'
+    }
+
+    const quantity = parsePositiveNumber(line.quantity)
+    if (quantity === null) {
+      errors[`${prefix}-quantity`] = 'Enter a quantity greater than zero.'
+    }
+
+    let unitCost: number | null = null
+    if (line.direction === 'in') {
+      unitCost = parseMoney(line.unitCost)
+      if (unitCost === null) {
+        errors[`${prefix}-cost`] = 'Enter a unit cost greater than zero.'
+      }
+    }
+
+    if (line.itemId && line.unitId) {
+      const resolved = resolveUnitFactor(line.itemId, line.unitId, context)
+      if (resolved.error) errors[`${prefix}-unit`] = resolved.error
+    }
+
+    if (
+      line.itemId &&
+      line.unitId &&
+      quantity !== null &&
+      (line.direction === 'out' || unitCost !== null)
+    ) {
+      normalized.push({
+        itemId: line.itemId,
+        unitId: line.unitId,
+        direction: line.direction,
+        quantity,
+        unitCost: line.direction === 'in' ? unitCost : null,
+      })
+    }
+  })
+
+  if (Object.keys(errors).length > 0) {
+    return { valid: false, value: null, errors }
+  }
+
+  return {
+    valid: true,
+    errors,
+    value: {
+      kind: input.kind,
+      adjustmentNumber: input.adjustmentNumber.trim().toUpperCase(),
+      adjustmentDate: input.adjustmentDate,
+      locationId: input.locationId,
+      reason: input.reason,
+      notes: input.notes.trim() || null,
+      lines: normalized,
+    },
+  }
+}
+
+export function validateInventoryCount(
+  input: CountDraft,
+  context: Pick<StockContext, 'items'>,
+): Validation<NormalizedCount> {
+  const errors: Record<string, string> = {}
+
+  if (!input.countNumber.trim()) errors.countNumber = 'Enter a count number.'
+  else if (input.countNumber.trim().length > 40) {
+    errors.countNumber = 'Use 40 characters or fewer.'
+  }
+
+  if (!input.countDate) errors.countDate = 'Choose the count date.'
+  else if (!isIsoDate(input.countDate)) errors.countDate = 'Use a valid date.'
+
+  if (!input.locationId) errors.locationId = 'Choose the stock location.'
+  if (!input.counterName.trim()) errors.counterName = 'Enter the counter name.'
+  else if (input.counterName.trim().length > 120) {
+    errors.counterName = 'Use 120 characters or fewer.'
+  }
+  if (input.notes.trim().length > 500) errors.notes = 'Use 500 characters or fewer.'
+
+  const normalized: NormalizedCountLine[] = []
+  const seen = new Set<string>()
+
+  if (input.lines.length === 0) {
+    errors.lines = 'Add at least one line.'
+  }
+
+  input.lines.forEach((line, index) => {
+    const prefix = `line-${index}`
+    let lineValid = true
+
+    if (!line.itemId) {
+      errors[`${prefix}-item`] = 'Choose an item.'
+      lineValid = false
+    } else if (seen.has(line.itemId)) {
+      errors[`${prefix}-item`] = 'Each item can appear only once.'
+      lineValid = false
+    } else if (!context.items.some((item) => item.id === line.itemId && item.is_active)) {
+      errors[`${prefix}-item`] = 'Choose an active item.'
+      lineValid = false
+    } else {
+      seen.add(line.itemId)
+    }
+
+    const physical = parseNonNegativeNumber(line.physicalQuantity)
+    if (physical === null) {
+      errors[`${prefix}-physical`] = 'Enter a quantity of zero or more.'
+      lineValid = false
+    }
+
+    if (lineValid && line.itemId && physical !== null) {
+      normalized.push({ itemId: line.itemId, physicalQuantity: physical })
+    }
+  })
+
+  if (Object.keys(errors).length > 0) {
+    return { valid: false, value: null, errors }
+  }
+
+  return {
+    valid: true,
+    errors,
+    value: {
+      countNumber: input.countNumber.trim().toUpperCase(),
+      countDate: input.countDate,
+      locationId: input.locationId,
+      counterName: input.counterName.trim(),
+      notes: input.notes.trim() || null,
+      lines: normalized,
+    },
+  }
+}
+
 export function describeStockDbError(error: DbErrorLike): string {
   if (error.code === '23505') {
     if (/already posted/i.test(error.message)) {
@@ -334,6 +596,13 @@ export function describeStockDbError(error: DbErrorLike): string {
     if (/insufficient stock/i.test(error.message)) return error.message
     if (/conversion/i.test(error.message)) return error.message
     if (/dimension/i.test(error.message)) return error.message
+    if (
+      /only an approved|only a draft|only a submitted|each item can appear|choose an adjustment reason|choose a waste reason|waste can only decrease|needs a quantity greater than zero|needs a unit cost|needs at least one line|needs a physical quantity|choose an active|already posted/i.test(
+        error.message,
+      )
+    ) {
+      return error.message
+    }
   }
 
   return mapDbError(error, 'stock postings')

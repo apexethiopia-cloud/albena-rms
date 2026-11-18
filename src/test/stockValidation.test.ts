@@ -5,7 +5,11 @@ import {
   previewLine,
   resolveUnitFactor,
   validateGrn,
+  validateInventoryAdjustment,
+  validateInventoryCount,
   validateSiv,
+  type AdjustmentDraft,
+  type CountDraft,
   type GrnDraft,
   type SivDraft,
   type StockContext,
@@ -218,6 +222,195 @@ describe('SIV validation', () => {
   it('does not require a unit cost on an issue', () => {
     const result = validateSiv(siv(), CONTEXT)
     expect(result.valid).toBe(true)
+  })
+})
+
+function adjustment(overrides: Partial<AdjustmentDraft> = {}): AdjustmentDraft {
+  return {
+    kind: 'adjustment',
+    adjustmentNumber: ' adj-0001 ',
+    adjustmentDate: '2026-11-18',
+    locationId: 'location-1',
+    reason: 'damage',
+    notes: 'Dropped crate',
+    lines: [
+      { key: 'a', itemId: 'tomato', direction: 'out', quantity: '1.5', unitId: 'kg', unitCost: '' },
+    ],
+    ...overrides,
+  }
+}
+
+function count(overrides: Partial<CountDraft> = {}): CountDraft {
+  return {
+    countNumber: ' cnt-0001 ',
+    countDate: '2026-11-18',
+    locationId: 'location-1',
+    counterName: '  Selam ',
+    notes: '',
+    lines: [{ key: 'a', itemId: 'tomato', physicalQuantity: '0' }],
+    ...overrides,
+  }
+}
+
+describe('Adjustment and waste validation', () => {
+  it('normalizes a valid decrease and ignores the cost', () => {
+    const result = validateInventoryAdjustment(adjustment(), CONTEXT)
+
+    expect(result.valid).toBe(true)
+    if (!result.valid) return
+    expect(result.value.kind).toBe('adjustment')
+    expect(result.value.adjustmentNumber).toBe('ADJ-0001')
+    expect(result.value.notes).toBe('Dropped crate')
+    expect(result.value.lines).toEqual([
+      { itemId: 'tomato', unitId: 'kg', direction: 'out', quantity: 1.5, unitCost: null },
+    ])
+  })
+
+  it('requires a unit cost on an increase and keeps it after normalization', () => {
+    const missing = validateInventoryAdjustment(
+      adjustment({
+        lines: [
+          { key: 'a', itemId: 'tomato', direction: 'in', quantity: '1', unitId: 'kg', unitCost: '' },
+        ],
+      }),
+      CONTEXT,
+    )
+    expect(missing.valid).toBe(false)
+    expect(missing.errors['line-0-cost']).toMatch(/unit cost/i)
+
+    const priced = validateInventoryAdjustment(
+      adjustment({
+        lines: [
+          {
+            key: 'a',
+            itemId: 'tomato',
+            direction: 'in',
+            quantity: '1',
+            unitId: 'kg',
+            unitCost: '80',
+          },
+        ],
+      }),
+      CONTEXT,
+    )
+    expect(priced.valid).toBe(true)
+    if (!priced.valid) return
+    expect(priced.value.lines[0]).toEqual({
+      itemId: 'tomato',
+      unitId: 'kg',
+      direction: 'in',
+      quantity: 1,
+      unitCost: 80,
+    })
+  })
+
+  it('only allows waste to decrease stock and only accepts waste reasons', () => {
+    const direction = validateInventoryAdjustment(
+      adjustment({
+        kind: 'waste',
+        reason: 'kitchen_waste',
+        lines: [
+          { key: 'a', itemId: 'tomato', direction: 'in', quantity: '1', unitId: 'kg', unitCost: '5' },
+        ],
+      }),
+      CONTEXT,
+    )
+    expect(direction.valid).toBe(false)
+    expect(direction.errors['line-0-direction']).toMatch(/decrease/i)
+
+    const reason = validateInventoryAdjustment(
+      adjustment({ kind: 'waste', reason: 'operational_loss' }),
+      CONTEXT,
+    )
+    expect(reason.valid).toBe(false)
+    expect(reason.errors.reason).toMatch(/waste reason/i)
+  })
+
+  it('rejects a unit with no conversion and the missing header fields', () => {
+    const result = validateInventoryAdjustment(
+      adjustment({
+        adjustmentNumber: '',
+        adjustmentDate: '',
+        locationId: '',
+        reason: 'not-a-reason',
+        lines: [
+          { key: 'a', itemId: 'egg', direction: 'out', quantity: '', unitId: 'carton', unitCost: '' },
+        ],
+      }),
+      CONTEXT,
+    )
+
+    expect(result.valid).toBe(false)
+    expect(result.errors.adjustmentNumber).toBeTruthy()
+    expect(result.errors.adjustmentDate).toBeTruthy()
+    expect(result.errors.locationId).toBeTruthy()
+    expect(result.errors.reason).toBeTruthy()
+    expect(result.errors['line-0-quantity']).toBeTruthy()
+    expect(result.errors['line-0-unit']).toMatch(/No conversion/i)
+  })
+})
+
+describe('Count validation', () => {
+  it('accepts a zero physical quantity and trims the counter', () => {
+    const result = validateInventoryCount(count(), { items: ITEMS })
+
+    expect(result.valid).toBe(true)
+    if (!result.valid) return
+    expect(result.value.countNumber).toBe('CNT-0001')
+    expect(result.value.counterName).toBe('Selam')
+    expect(result.value.notes).toBeNull()
+    expect(result.value.lines).toEqual([{ itemId: 'tomato', physicalQuantity: 0 }])
+  })
+
+  it('rejects a negative or missing physical quantity', () => {
+    const negative = validateInventoryCount(
+      count({ lines: [{ key: 'a', itemId: 'tomato', physicalQuantity: '-1' }] }),
+      { items: ITEMS },
+    )
+    expect(negative.valid).toBe(false)
+    expect(negative.errors['line-0-physical']).toMatch(/zero or more/i)
+
+    const missing = validateInventoryCount(
+      count({ lines: [{ key: 'a', itemId: 'tomato', physicalQuantity: '' }] }),
+      { items: ITEMS },
+    )
+    expect(missing.valid).toBe(false)
+    expect(missing.errors['line-0-physical']).toBeTruthy()
+  })
+
+  it('rejects the same item twice', () => {
+    const result = validateInventoryCount(
+      count({
+        lines: [
+          { key: 'a', itemId: 'tomato', physicalQuantity: '1' },
+          { key: 'b', itemId: 'tomato', physicalQuantity: '2' },
+        ],
+      }),
+      { items: ITEMS },
+    )
+
+    expect(result.valid).toBe(false)
+    expect(result.errors['line-1-item']).toMatch(/only once/i)
+  })
+
+  it('requires a count number, date, location, counter and a line', () => {
+    const result = validateInventoryCount(
+      count({
+        countNumber: '',
+        countDate: '',
+        locationId: '',
+        counterName: '   ',
+        lines: [],
+      }),
+      { items: ITEMS },
+    )
+
+    expect(result.valid).toBe(false)
+    expect(result.errors.countNumber).toBeTruthy()
+    expect(result.errors.countDate).toBeTruthy()
+    expect(result.errors.locationId).toBeTruthy()
+    expect(result.errors.counterName).toBeTruthy()
+    expect(result.errors.lines).toMatch(/at least one line/i)
   })
 })
 

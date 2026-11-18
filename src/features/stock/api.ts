@@ -1,6 +1,9 @@
 import { requireSupabase } from '@/lib/supabase'
 import {
   describeStockDbError,
+  type AdjustmentKind,
+  type NormalizedAdjustment,
+  type NormalizedCount,
   type NormalizedGrn,
   type NormalizedSiv,
 } from './validation'
@@ -113,6 +116,90 @@ export type PurchaseOrderReceipt = {
   received_base_quantity: Numberish
   outstanding_base_quantity: Numberish
   receipt_status: ReceiptStatus
+}
+
+export type InventoryDocumentStatus =
+  | 'draft'
+  | 'submitted'
+  | 'approved'
+  | 'rejected'
+  | 'posted'
+
+export type AdjustmentLine = {
+  id: string
+  adjustment_id: string
+  item_id: string
+  unit_id: string
+  direction: 'in' | 'out'
+  quantity: Numberish
+  unit_cost: Numberish | null
+  base_quantity: Numberish | null
+  posted_cost: Numberish | null
+  created_at: string
+}
+
+export type InventoryAdjustment = {
+  id: string
+  adjustment_number: string
+  kind: AdjustmentKind
+  adjustment_date: string
+  location_id: string
+  reason: string
+  notes: string | null
+  status: InventoryDocumentStatus
+  created_by: string | null
+  created_at: string
+  submitted_at: string | null
+  decided_by: string | null
+  decided_by_name: string | null
+  decided_at: string | null
+  decision_comment: string | null
+  posted_by: string | null
+  posted_at: string | null
+  inventory_adjustment_lines: AdjustmentLine[]
+}
+
+export type InventoryCountLine = {
+  id: string
+  count_id: string
+  item_id: string
+  system_quantity: Numberish
+  physical_quantity: Numberish
+  variance_quantity: Numberish
+  posted_quantity: Numberish | null
+  posted_cost: Numberish | null
+  created_at: string
+}
+
+export type InventoryCount = {
+  id: string
+  count_number: string
+  count_date: string
+  location_id: string
+  counter_name: string
+  notes: string | null
+  status: InventoryDocumentStatus
+  created_by: string | null
+  created_at: string
+  submitted_at: string | null
+  decided_by: string | null
+  decided_by_name: string | null
+  decided_at: string | null
+  decision_comment: string | null
+  posted_by: string | null
+  posted_at: string | null
+  inventory_count_lines: InventoryCountLine[]
+}
+
+export type ReorderStatus = {
+  item_id: string
+  item_code: string
+  item_name: string
+  base_unit_code: string
+  reorder_level: Numberish
+  on_hand: Numberish
+  shortage: Numberish
+  is_low: boolean
 }
 
 const GRN_COLUMNS = `
@@ -241,4 +328,156 @@ export async function listStockMovements(limit = 20): Promise<StockMovement[]> {
 
   if (error) throw new Error(describeStockDbError(error))
   return (data ?? []) as unknown as StockMovement[]
+}
+
+const ADJUSTMENT_COLUMNS = `
+  id, adjustment_number, kind, adjustment_date, location_id, reason, notes, status,
+  created_by, created_at, submitted_at, decided_by, decided_by_name, decided_at,
+  decision_comment, posted_by, posted_at,
+  inventory_adjustment_lines (
+    id, adjustment_id, item_id, unit_id, direction, quantity, unit_cost,
+    base_quantity, posted_cost, created_at
+  )
+`
+
+const COUNT_COLUMNS = `
+  id, count_number, count_date, location_id, counter_name, notes, status,
+  created_by, created_at, submitted_at, decided_by, decided_by_name, decided_at,
+  decision_comment, posted_by, posted_at,
+  inventory_count_lines (
+    id, count_id, item_id, system_quantity, physical_quantity, variance_quantity,
+    posted_quantity, posted_cost, created_at
+  )
+`
+
+export async function listInventoryAdjustments(
+  kind: AdjustmentKind,
+): Promise<InventoryAdjustment[]> {
+  const { data, error } = await requireSupabase()
+    .from('inventory_adjustments')
+    .select(ADJUSTMENT_COLUMNS)
+    .eq('kind', kind)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(describeStockDbError(error))
+  return (data ?? []) as unknown as InventoryAdjustment[]
+}
+
+export async function createInventoryAdjustment(
+  input: NormalizedAdjustment,
+): Promise<string> {
+  const { data, error } = await requireSupabase().rpc('create_inventory_adjustment', {
+    p_kind: input.kind,
+    p_adjustment_number: input.adjustmentNumber,
+    p_adjustment_date: input.adjustmentDate,
+    p_location_id: input.locationId,
+    p_reason: input.reason,
+    p_notes: input.notes,
+    p_lines: input.lines.map((line) => ({
+      item_id: line.itemId,
+      unit_id: line.unitId,
+      direction: line.direction,
+      quantity: line.quantity,
+      unit_cost: line.unitCost,
+    })),
+  })
+
+  if (error) throw new Error(describeStockDbError(error))
+  if (!data) {
+    throw new Error('The document was saved but no reference was returned. Refresh the list.')
+  }
+  return data as string
+}
+
+export async function submitInventoryAdjustment(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('submit_inventory_adjustment', {
+    p_adjustment_id: id,
+  })
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function decideInventoryAdjustment(
+  id: string,
+  decision: 'approved' | 'rejected',
+  comment: string,
+): Promise<void> {
+  const { error } = await requireSupabase().rpc('decide_inventory_adjustment', {
+    p_adjustment_id: id,
+    p_decision: decision,
+    p_comment: comment,
+  })
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function postInventoryAdjustment(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('post_inventory_adjustment', {
+    p_adjustment_id: id,
+  })
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function listInventoryCounts(): Promise<InventoryCount[]> {
+  const { data, error } = await requireSupabase()
+    .from('inventory_counts')
+    .select(COUNT_COLUMNS)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(describeStockDbError(error))
+  return (data ?? []) as unknown as InventoryCount[]
+}
+
+export async function createInventoryCount(input: NormalizedCount): Promise<string> {
+  const { data, error } = await requireSupabase().rpc('create_inventory_count', {
+    p_count_number: input.countNumber,
+    p_count_date: input.countDate,
+    p_location_id: input.locationId,
+    p_counter_name: input.counterName,
+    p_notes: input.notes,
+    p_lines: input.lines.map((line) => ({
+      item_id: line.itemId,
+      physical_quantity: line.physicalQuantity,
+    })),
+  })
+
+  if (error) throw new Error(describeStockDbError(error))
+  if (!data) {
+    throw new Error('The count was saved but no reference was returned. Refresh the list.')
+  }
+  return data as string
+}
+
+export async function submitInventoryCount(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('submit_inventory_count', { p_count_id: id })
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function decideInventoryCount(
+  id: string,
+  decision: 'approved' | 'rejected',
+  comment: string,
+): Promise<void> {
+  const { error } = await requireSupabase().rpc('decide_inventory_count', {
+    p_count_id: id,
+    p_decision: decision,
+    p_comment: comment,
+  })
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function postInventoryCount(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('post_inventory_count', { p_count_id: id })
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function listReorderStatus(): Promise<ReorderStatus[]> {
+  const { data, error } = await requireSupabase()
+    .from('stock_reorder_status')
+    .select(
+      'item_id, item_code, item_name, base_unit_code, reorder_level, on_hand, shortage, is_low',
+    )
+    .order('is_low', { ascending: false })
+    .order('item_name', { ascending: true })
+
+  if (error) throw new Error(describeStockDbError(error))
+  return (data ?? []) as unknown as ReorderStatus[]
 }

@@ -95,7 +95,7 @@
 | INV-03 | Multiple stock locations | 3 | `stock_locations` | `src/features/locations/**`, `/inventory` | `Locations.test.tsx` | **Implemented** - needs authenticated integration check |
 | INV-04 | Stock balances by item + location | 4 | `stock_balances` view | `src/features/stock/StockPanel.tsx` | AC-04,05 | Implemented |
 | INV-05 | Deactivate items; preserve history | 3 | `items.is_active` | `ItemsPanel.tsx` toggle | `Items.test.tsx` | **Implemented** |
-| INV-06 | Low-stock/reorder alerts | 4 | `inventory_items.reorder_level` | Alert component | RPT-08 | Not Started |
+| INV-06 | Low-stock/reorder alerts | 4 | `stock_reorder_status` view over `items.reorder_level` + `stock_transactions` (migration 0008) | `src/features/stock/LowStockPanel.tsx`, `/inventory` | `InventoryControl.test.tsx` | **Implemented** — total on-hand across locations compared with the item-level level; live check pending migration 0008 |
 
 ---
 
@@ -149,11 +149,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| CNT-01 | Count sheet header | 4 | `inventory_counts` | `/inventory/counts` | AC-06 | Not Started |
-| CNT-02 | Variance per line | 4 | `count_lines` | Count entry UI | AC-06 | Not Started |
-| CNT-03 | Review and approval before adjustment posting | 4 | `inventory_counts.status` | Approval workflow | AC-06 | Not Started |
-| CNT-04 | Variance and accuracy reports | 7 | — | Report queries | RPT-02 | Not Started |
-| CNT-05 | Preserve original count and approval history | 4 | `audit_logs` | Append-only audit | AC-13 | Not Started |
+| CNT-01 | Count sheet header | 4 | `inventory_counts` (migration 0008) | `src/features/stock/CountPanel.tsx`, `/inventory` | `InventoryControl.test.tsx` | **Implemented** — number, date, location, counter and notes; live check pending migration 0008 |
+| CNT-02 | Variance per line | 4 | `inventory_count_lines.system_quantity`, `variance_quantity` (generated) | Count entry UI + `inventory_count_variances` view | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — snapshot taken at sheet creation; variance calculated by the database |
+| CNT-03 | Review and approval before adjustment posting | 4 | `inventory_counts.status` + `submit_/decide_/post_inventory_count()` | Count panel approval and posting gates | `InventoryControl.test.tsx` | **Implemented** — draft → submitted → approved/rejected → posted; posting requires approval and reconciles the ledger to the physical count (STK-04) |
+| CNT-04 | Variance and accuracy reports | 7 | `inventory_count_variances` view (migration 0008) | Report queries | RPT-02 | Not Started — variance view is ready for the Phase 7 report |
+| CNT-05 | Preserve original count and approval history | 4 | `inventory_counts` decision columns + `audit_logs` | Append-only audit triggers | AC-13 | **Implemented** — original count, system snapshot, approver, time and comment are kept; no update path for posted documents |
 
 ---
 
@@ -161,9 +161,9 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| ADJ-01 | +/- adjustments for approved reasons | 4 | `inventory_adjustments` | `/inventory/adjustments` | AC-06 | Not Started |
-| ADJ-02 | Require approval per role config | 4 | RLS + workflow | Approval gate | AC-02 | Not Started |
-| ADJ-03 | Post to stock ledger; never overwrite balances | 4 | `stock_transactions` | Adjustment post RPC | AC-06 | Not Started |
+| ADJ-01 | +/- adjustments for approved reasons | 4 | `inventory_adjustments`, `inventory_adjustment_lines` (migration 0008) | `src/features/stock/AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — increase/decrease lines with damage, spoilage, theft, expired, operational loss; live check pending migration 0008 |
+| ADJ-02 | Require approval per role config | 4 | `can_manage_inventory()`, `can_approve_inventory()`, `can_post_inventory()` | Approval gate in the panel + RPC | `InventoryControl.test.tsx`, `Stock.test.tsx` | **Implemented** — manage/post for admin/GM/storekeeper, approve for admin/GM; OD-06 thresholds still open |
+| ADJ-03 | Post to stock ledger; never overwrite balances | 4 | `post_inventory_adjustment()`, `stock_transactions`, `stock_layers` | Adjustment post RPC | `InventoryControl.test.tsx` | **Implemented** — approved document posts once; increases create a FIFO layer, decreases consume oldest layers; no balance column is written |
 
 ---
 
@@ -171,10 +171,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| WST-01 | Waste record fields | 4 | `waste_records` | `/inventory/waste` | AC-07 | Not Started |
-| WST-02 | Waste types supported | 4 | `waste_records.reason` | Waste type enum | AC-07 | Not Started |
-| WST-03 | Post approved waste as inventory decrease | 4 | DB function | Waste post RPC | AC-07 | Not Started |
-| WST-04 | Waste cost and trend reports | 7 | — | Report queries | RPT-05 | Not Started |
+| WST-01 | Waste record fields | 4 | `inventory_adjustments` with `kind = 'waste'` + lines (migration 0008) | `WastePanel` in `AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — item, quantity, location, date, user and reason recorded; FIFO cost written on posting; live check pending migration 0008 |
+| WST-02 | Waste types supported | 4 | `inventory_adjustments` reason check | Waste reason selector | `stockValidation.test.ts` | **Implemented** — kitchen waste, burnt food, returned food, expired, spoilage; waste lines can only decrease stock |
+| WST-03 | Post approved waste as inventory decrease | 4 | `post_inventory_adjustment()` | Waste post action | `InventoryControl.test.tsx` | **Implemented** — posts `waste` transactions after approval, consuming FIFO layers |
+| WST-04 | Waste cost and trend reports | 7 | Posted cost on `inventory_adjustment_lines` | Report queries | RPT-05 | Not Started — posted cost is recorded for the Phase 7 report |
 
 ---
 
@@ -277,9 +277,9 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | STK-01 | Balances from transactions only | 4 | `stock_transactions`, `stock_balances` | `src/features/stock/StockPanel.tsx` | — | Implemented |
-| STK-02 | Stock increases defined | 4 | `stock_transactions.transaction_type` | GRN posting implemented; opening/adjustment/production not built | AC-04 | In Progress |
-| STK-03 | Stock decreases defined | 4 | `stock_transactions.transaction_type` | SIV posting implemented; adjustment/waste not built | AC-05 | In Progress |
-| STK-04 | Counts verify; variances via adjustments | 4 | `inventory_adjustments` | Count reconciliation | AC-06 | Not Started |
+| STK-02 | Stock increases defined | 4 | `stock_transactions.transaction_type` | GRN and adjustment increases implemented; opening/production not built | AC-04,06 | In Progress |
+| STK-03 | Stock decreases defined | 4 | `stock_transactions.transaction_type` | SIV, adjustment and waste decreases implemented; production not built | AC-05,07 | In Progress |
+| STK-04 | Counts verify; variances via adjustments | 4 | `post_inventory_count()` → `adjustment` transactions (migration 0008) | Count reconciliation | `InventoryControl.test.tsx` | **Implemented** — approved count reconciles the ledger to the physical quantity; the posted variance is traceable to the count line |
 | STK-05 | Menu sales do NOT deduct stock | 6 | — | No auto-deduction | AC-09 | Not Started |
 | STK-06 | Stock ledger record fields | 4 | `stock_transactions`, `stock_ledger_entries` | Ledger schema + history view | — | Implemented |
 | STK-07 | Prevent duplicate posting; preserve reversals | 4 | `posted_at` + unique index | Post guard; reversal flow not built | — | In Progress |
@@ -400,8 +400,8 @@
 | AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | **Verified** 2026-11-18 (owner live run) — PR submitted and approved with approver/time/comment, PO created from it and moved draft → approved → ordered → closed; purchasing officer could not approve a PO |
 | AC-04 | GRN posted once; updates correct location and valuation | 4 | **Verified** 2026-11-18 (owner live run) — GRN 2,000 g posted once to the chosen location, balance 2,000 g / ETB 240.00 |
 | AC-05 | SIV/transfer atomic; traceable stock movements | 4 | **Verified** 2026-11-18 (owner live run) — SIV 500 g left 1,500 g / ETB 180.00 (FIFO), over-issue rejected, movements traceable |
-| AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | Not Started |
-| AC-07 | Waste and production update inventory correctly | 4,5 | Not Started |
+| AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | **In Progress** — count variance, approval and posting built and unit-tested; owner live run pending migration 0008 |
+| AC-07 | Waste and production update inventory correctly | 4,5 | **In Progress** — approved waste posts as a FIFO decrease and is unit-tested; production is Phase 5; owner live run pending migration 0008 |
 | AC-08 | Recipe costing and food-cost % verified | 5 | Not Started |
 | AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6 | Not Started |
 | AC-10 | Orders appear on KDS; status visible to other users over internet | 6 | Not Started |
@@ -426,7 +426,7 @@
 | OD-03 | Named test users → roles and outlet scopes | Auth and permission tests | Three individual accounts, full access, all outlets | **Resolved** |
 | OD-04 | Inventory costing method (weighted average?) | Valuation calculations | FIFO (ADR-009) | **Resolved** |
 | OD-05 | Unit conversion rules; purchase/storage/issue units | Stock and costing accuracy | Base units + per-item factors (ADR-010) | **Resolved** |
-| OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | **Approval workflows required** — thresholds and SoD not yet defined | **Open** — Phase 4 postings are role-gated and record who acted. PR approval is restricted to System Administrator/General Manager with approver, time and comment recorded; self-approval is not blocked and no monetary thresholds exist. Counts/adjustments remain unbuilt pending this decision. |
+| OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | **Approval workflows required** — thresholds and SoD not yet defined | **Open** — Phase 4 postings are role-gated and record who acted. PR approval is restricted to System Administrator/General Manager with approver, time and comment recorded; self-approval is not blocked and no monetary thresholds exist. Counts, adjustments and waste are now built with manage/post restricted to admin/GM/storekeeper and approval to admin/GM; self-approval is still not blocked and no thresholds exist. |
 | OD-07 | Taxes, service charges, discounts in scope? | Receipt totals | — | **Open** |
 | OD-08 | Receipt numbering, business identity, language, currency | Receipt presentation | Currency ETB; numbering/format TBC | **Partially resolved** |
 | OD-09 | Reservation capacity rules; table assignment mandatory? | Conflict validation logic | — | **Open** |

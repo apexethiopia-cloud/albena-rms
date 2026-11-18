@@ -35,6 +35,17 @@ vi.mock('@/features/stock/api', () => ({
   listSivs: vi.fn().mockResolvedValue([]),
   createSiv: vi.fn(),
   postSiv: vi.fn(),
+  listInventoryAdjustments: vi.fn().mockResolvedValue([]),
+  createInventoryAdjustment: vi.fn(),
+  submitInventoryAdjustment: vi.fn(),
+  decideInventoryAdjustment: vi.fn(),
+  postInventoryAdjustment: vi.fn(),
+  listInventoryCounts: vi.fn().mockResolvedValue([]),
+  createInventoryCount: vi.fn(),
+  submitInventoryCount: vi.fn(),
+  decideInventoryCount: vi.fn(),
+  postInventoryCount: vi.fn(),
+  listReorderStatus: vi.fn().mockResolvedValue([]),
 }))
 
 const CATEGORY = {

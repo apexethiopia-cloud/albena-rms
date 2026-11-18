@@ -97,6 +97,22 @@
 
 ---
 
+## ADR-011: Inventory Control Documents, Count Reconciliation and Reorder Aggregation
+- **Date**: 2026-11-18 | **Status**: Accepted
+- **SRS Reference**: CNT-01..05, ADJ-01..03, WST-01..04, STK-04, INV-06, SEC-ROLE-01, ADR-007..010
+- **Context**: Counts, adjustments and waste all change stock after a review step. The owner has not defined OD-06 thresholds or separation of duties, and stock locations are not yet mapped to outlets.
+- **Decision**:
+  - One `inventory_adjustments` table holds both adjustment and waste documents, distinguished by `kind` and by the ledger transaction type. Waste can only contain decrease lines.
+  - All three document types share the status path `draft → submitted → approved/rejected → posted`. Submission, decisions and posting are separate RPCs; a document can only post once.
+  - **Counts count in the item base unit.** The sheet stores `system_quantity` (ledger snapshot at sheet creation) and `physical_quantity`; `variance_quantity` is a generated column. This snapshot/variance stays on the record for reporting even if stock moves before approval.
+  - **Posting a count reconciles the ledger to the physical quantity at posting time**, not to the snapshot variance. It writes `adjustment` transactions with `reference_type = 'inventory_count'` linked to the count line, so no balance column is ever overwritten (ADR-007).
+  - A count gain is valued at the weighted average of the location's remaining FIFO layers; when the location has no layers it is posted at zero cost and can be corrected later with a priced adjustment. A count loss consumes FIFO layers exactly like an issue.
+  - **Roles**: manage/submit/post inventory documents = `system_admin`, `general_manager`, `storekeeper`; approve/reject = `system_admin`, `general_manager`. Self-approval is not blocked and no monetary thresholds exist, consistent with the OD-06 interim position.
+  - **INV-06 reorder alerts** compare an item's `reorder_level` (in base units) with total on-hand across all locations, because stock is not yet outlet-scoped.
+- **Consequences**: Migration `20261118000800_counts_adjustments_waste.sql` adds the documents, the count reconciliation, two reporting views and role helpers. OD-06 and the stock-location ↔ outlet mapping remain open; neither is invented here.
+
+---
+
 ## Open Decisions Log (OD-01 to OD-13)
 
 > These require owner confirmation before the relevant phase begins. Developers must NOT invent business policy.
@@ -127,7 +143,7 @@ Approval workflows are required, but the owner has not defined thresholds, appro
 - Every posting records `posted_by`/`posted_at`; every PR decision records `decided_by_name`, `decided_at` and an optional comment; every PO approval records `approved_by`/`approved_at`. The audit log keeps each event.
 - **Self-approval is not blocked**: the same user who raised a request can approve it if they hold an approval role. This stays until the owner defines separation-of-duties rules or monetary thresholds.
 - No amount-based thresholds exist, so all values follow the same route.
-- Counts and adjustments remain unbuilt until OD-06 is answered.
+- Counts, adjustments and waste follow the same role-only approach: manage/post = admin/GM/storekeeper, approve = admin/GM. They are built but remain subject to the OD-06 decision.
 
 ### Open issue: stock location ↔ outlet mapping (2026-11-18)
 

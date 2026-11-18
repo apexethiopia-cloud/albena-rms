@@ -442,4 +442,35 @@
 - OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 18: 2026-11-18 — Counts, Adjustments, Waste and Reorder Alerts Built
+
+- **Phase**: Phase 4 in progress | **Completion**: **35.0%** (unchanged; AC-06/AC-07 live runs pending migration 0008)
+- **Date**: 2026-11-18 23:40 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Migration 0008 authored** — `20261118000800_counts_adjustments_waste.sql` adds `inventory_adjustments` / `inventory_adjustment_lines` (shared by adjustments and waste through `kind`), `inventory_counts` / `inventory_count_lines`, the `stock_reorder_status` and `inventory_count_variances` views, the role helpers `can_manage_inventory()`, `can_approve_inventory()` and `can_post_inventory()`, the FIFO helpers `post_stock_in()` / `post_stock_out()`, eight workflow RPCs, audit triggers, RLS and grants. **Not applied yet.**
+2. **Counts** — sheets record the item base unit, a `system_quantity` ledger snapshot taken at creation, the physical quantity and a generated variance. Posting after approval reconciles the ledger to the physical quantity at posting time through `adjustment` transactions linked to the count line (`reference_type = 'inventory_count'`); gains are valued at the weighted average of remaining FIFO layers, or zero when the location has no layers.
+3. **Adjustments and waste** — increase/decrease lines with SRS reasons; waste allows decrease lines only and offers the five waste reasons. Posting creates a FIFO layer for increases and consumes the oldest layers for decreases, recording the posted cost.
+4. **Workflow and roles** — `draft → submitted → approved/rejected → posted`; one-shot posting, read-only posted documents. Manage/submit/post = admin/GM/storekeeper; approve/reject = admin/GM. Self-approval is not blocked and no thresholds exist (OD-06 interim).
+5. **Reorder alerts** — total on-hand across locations compared with the item-level reorder level; shows the shortage and can reveal tracked items that are not low.
+6. **UI** — `AdjustmentPanel` / `WastePanel`, `CountPanel` and `LowStockPanel` mounted on `/inventory`; `api.ts` gained the new types and RPC wrappers; `validation.ts` gained adjustment/count validation and broader database error messages.
+7. **Tests** — `stockValidation.test.ts` grew to 26; new `InventoryControl.test.tsx` has 8 cases covering reorder rows, adjustment/waste payloads, the storekeeper-vs-manager approval gate, confirmed posting, read-only roles and count creation; stock/lookup mocks updated in the existing suites.
+8. **Docs** — ADR-011 recorded; CNT/ADJ/WST/STK/INV-06 and AC-06/AC-07 rows updated; Phase 4 delivered/remaining, exit condition and OD-06 notes refreshed.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 182/182 pass across 22 suites
+- `npm run build` — pass (670.43 kB JS / 162.87 kB gzip, 23.27 kB CSS; chunk-size warning only)
+
+### Outstanding
+- **Owner applies** `20261118000800_counts_adjustments_waste.sql`, then runs AC-06 (count variance → approval → posting reconciles the ledger) and AC-07 (waste decreases stock and FIFO value).
+- Agent verifies the migration objects and RPC gates through PostgREST once applied.
+- OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
+
 

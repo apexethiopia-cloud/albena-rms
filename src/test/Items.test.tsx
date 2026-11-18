@@ -21,6 +21,17 @@ const stockApi = vi.hoisted(() => ({
   listSivs: vi.fn(),
   createSiv: vi.fn(),
   postSiv: vi.fn(),
+  listInventoryAdjustments: vi.fn(),
+  createInventoryAdjustment: vi.fn(),
+  submitInventoryAdjustment: vi.fn(),
+  decideInventoryAdjustment: vi.fn(),
+  postInventoryAdjustment: vi.fn(),
+  listInventoryCounts: vi.fn(),
+  createInventoryCount: vi.fn(),
+  submitInventoryCount: vi.fn(),
+  decideInventoryCount: vi.fn(),
+  postInventoryCount: vi.fn(),
+  listReorderStatus: vi.fn(),
 }))
 
 vi.mock('@/features/items/api', () => api)
@@ -121,6 +132,9 @@ beforeEach(() => {
   stockApi.listSivs.mockResolvedValue([])
   stockApi.createSiv.mockResolvedValue('siv-1')
   stockApi.postSiv.mockResolvedValue(undefined)
+  stockApi.listInventoryAdjustments.mockResolvedValue([])
+  stockApi.listInventoryCounts.mockResolvedValue([])
+  stockApi.listReorderStatus.mockResolvedValue([])
 })
 
 describe('Inventory — items', () => {

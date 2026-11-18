@@ -10,6 +10,17 @@ const stockApi = vi.hoisted(() => ({
   listSivs: vi.fn(),
   createSiv: vi.fn(),
   postSiv: vi.fn(),
+  listInventoryAdjustments: vi.fn(),
+  createInventoryAdjustment: vi.fn(),
+  submitInventoryAdjustment: vi.fn(),
+  decideInventoryAdjustment: vi.fn(),
+  postInventoryAdjustment: vi.fn(),
+  listInventoryCounts: vi.fn(),
+  createInventoryCount: vi.fn(),
+  submitInventoryCount: vi.fn(),
+  decideInventoryCount: vi.fn(),
+  postInventoryCount: vi.fn(),
+  listReorderStatus: vi.fn(),
 }))
 
 const itemsApi = vi.hoisted(() => ({
@@ -161,6 +172,17 @@ beforeEach(() => {
   stockApi.listSivs.mockResolvedValue([])
   stockApi.createSiv.mockResolvedValue('siv-1')
   stockApi.postSiv.mockResolvedValue(undefined)
+  stockApi.listInventoryAdjustments.mockResolvedValue([])
+  stockApi.listInventoryCounts.mockResolvedValue([])
+  stockApi.listReorderStatus.mockResolvedValue([])
+  stockApi.createInventoryAdjustment.mockResolvedValue('adj-1')
+  stockApi.submitInventoryAdjustment.mockResolvedValue(undefined)
+  stockApi.decideInventoryAdjustment.mockResolvedValue(undefined)
+  stockApi.postInventoryAdjustment.mockResolvedValue(undefined)
+  stockApi.createInventoryCount.mockResolvedValue('count-1')
+  stockApi.submitInventoryCount.mockResolvedValue(undefined)
+  stockApi.decideInventoryCount.mockResolvedValue(undefined)
+  stockApi.postInventoryCount.mockResolvedValue(undefined)
 
   itemsApi.listItems.mockResolvedValue(ITEMS)
   itemsApi.listUnits.mockResolvedValue(UNITS)

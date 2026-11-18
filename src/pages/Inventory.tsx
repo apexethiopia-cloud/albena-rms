@@ -1,30 +1,15 @@
-import { ClipboardCheck, Factory, Scale, Trash2 } from 'lucide-react'
+import { Factory } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { ItemsPanel } from '@/features/items/ItemsPanel'
 import { CategoriesPanel } from '@/features/categories/CategoriesPanel'
 import { LocationsPanel } from '@/features/locations/LocationsPanel'
 import { StockPanel } from '@/features/stock/StockPanel'
+import { LowStockPanel } from '@/features/stock/LowStockPanel'
 import { SivPanel } from '@/features/stock/SivPanel'
+import { CountPanel } from '@/features/stock/CountPanel'
+import { AdjustmentPanel, WastePanel } from '@/features/stock/AdjustmentPanel'
 
 const PLANNED = [
-  {
-    icon: ClipboardCheck,
-    title: 'Inventory counts',
-    detail:
-      'Count sheets, variance calculation and approval. Variances post as traceable adjustments, never as overwritten balances.',
-  },
-  {
-    icon: Scale,
-    title: 'Adjustments',
-    detail:
-      'Positive and negative adjustments with a reason, atomic posting and FIFO cost-layer impact (ADR-009).',
-  },
-  {
-    icon: Trash2,
-    title: 'Waste',
-    detail:
-      'Approved waste postings that decrease stock and record the FIFO cost. Reports arrive in Phase 7.',
-  },
   {
     icon: Factory,
     title: 'Production',
@@ -38,13 +23,21 @@ export function Inventory() {
     <>
       <PageHeader
         title="Inventory"
-        description="Ledger-derived balances, goods issues, item master data and stock locations. Quantities are never edited directly."
+        description="Ledger-derived balances, issues, counts, adjustments, waste, reorder alerts, item master data and stock locations. Quantities are never edited directly."
       />
 
       <div className="space-y-6">
         <StockPanel />
 
+        <LowStockPanel />
+
         <SivPanel />
+
+        <CountPanel />
+
+        <AdjustmentPanel />
+
+        <WastePanel />
 
         <ItemsPanel />
 
@@ -60,8 +53,8 @@ export function Inventory() {
             Not implemented yet
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Stock balances and transfers are live. Counts, adjustments, waste and production are
-            still to be built.
+            Stock balances, transfers, counts, adjustments, waste and reorder alerts are live.
+            Production is still to be built.
           </p>
 
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
