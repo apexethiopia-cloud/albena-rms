@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 2 — Backend & Identity (in progress) |
 | **Overall Completion** | **15.0%** (Phase 0 and Phase 1 complete; Phase 2 code written, migrations pending apply) |
 | **Last Updated** | 2026-11-18 12:30 UTC+3 |
-| **Latest Git Commit** | *(to be updated after commit)* |
+| **Latest Git Commit** | `aa826b9` (Phase 2 auth + schema) + `be1f548` (decisions and status docs) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
