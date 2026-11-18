@@ -420,4 +420,26 @@
 - OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 17: 2026-11-18 — AC-03 and GRN-04 Verified Live
+
+- **Phase**: Phase 4 in progress | **Completion**: **35.0%** (unchanged; counts, adjustments, waste and alerts remain)
+- **Date**: 2026-11-18 21:05 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **AC-03 verified live by the owner** — PR submitted, approved with approver name/time/comment, converted to one PO, then advanced draft → approved → ordered → closed. A purchasing officer could not approve the PO.
+2. **GRN-04 verified live by the owner** — selecting an ordered PO locked the supplier and seeded the outstanding lines; a draft receipt stayed `pending`; posting it moved the status to `partial`/`complete`; a receipt above the outstanding quantity was recorded as `over`.
+3. **Docs** — AC-03 and GRN-04 marked Verified; PR/PO rows annotated with live evidence; blocker/risk table and next task updated for the remaining Phase 4 scope.
+
+### Verification
+- Live AC-03 and GRN-04: **pass** (owner-run in the deployed app)
+- Unit gates unchanged from Session 16: typecheck, lint, 166/166 tests, build all pass
+
+### Outstanding
+- Phase 4 remainder: inventory counts, adjustments, waste, low-stock alerts.
+- OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 
