@@ -20,7 +20,7 @@
 | CON-05 | Existing DigitalOcean/Odoo untouched | 0 | — | Policy — no connection to that infra | — | Not Started |
 | CON-06 | Public repo — no secrets committed | 0 | — | .gitignore, .env.example | AC-17 | **Implemented** |
 | CON-07 | Uncertainty recorded as open decision | 0 | — | docs/DECISIONS.md OD-01..13 | — | **In Progress** |
-| CON-08 | Sales recorded; no payment processing | 6 | orders, receipts | POS module; no payment gateway | AC-11, RCT-04 | Not Started |
+| CON-08 | Sales recorded; no payment processing | 6 | `orders`, `receipts` (migration 0010) | `src/features/orders/**`; no payment gateway | `Operations.test.tsx`, RCT-04 | **Implemented** — orders and receipts record sales only; no payment credentials exist |
 
 ---
 
@@ -46,7 +46,7 @@
 | ARC-03 | No service-role key in frontend | 1 | - | `.env.example`; `src/lib/env.ts` (only `VITE_*` values) | AC-17 | **Implemented** |
 | ARC-04 | Only anon/publishable keys in client | 1 | — | `src/lib/supabase.ts` (publishable key only, verified in bundle) | AC-17 | **Implemented** |
 | ARC-05 | DB schema changes as migration files | 2+ | All migrations | `supabase/migrations/` (0001–0004) | - | **Implemented** |
-| ARC-06 | Multi-step ops atomic in DB transactions | 4+ | DB functions | Supabase RPC functions | AC-05 | Not Started |
+| ARC-06 | Multi-step ops atomic in DB transactions | 4+ | DB functions | SECURITY DEFINER RPCs for postings, procurement, production and orders | AC-05 | **Implemented** — each workflow step runs inside one database transaction |
 | ARC-07 | Clear error state on connectivity loss | 1 | - | `src/components/NetworkStatusBanner.tsx` | AC-15, `NetworkStatusBanner.test.tsx` | **Implemented** |
 | ARC-08 | No offline queue or background sync | 0 | — | Architecture decision; not implemented | — | Not Started |
 | ARC-09 | Re-verify provider free-tier before launch | 0,8 | - | docs/DEPLOYMENT.md | AC-18 | **In Progress** — OD-13 confirmed, re-verify at Phase 8 |
@@ -207,9 +207,9 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| MENU-01 | Menu item fields | 6 | `menu_items` | `/menu/items` | — | Not Started |
-| MENU-02 | Menu categories | 6 | `menu_categories` | Category management | — | Not Started |
-| MENU-03 | Deactivate items; preserve historical descriptions/prices | 6 | `menu_items.status` | Menu management | RCT-05 | Not Started |
+| MENU-01 | Menu item fields | 6 | `menu_items` (migration 0010) | `src/features/menu/MenuPanel.tsx` | `menuValidation.test.ts` | **Implemented** — code, name, category, VAT-inclusive selling price, optional recipe link and active flag |
+| MENU-02 | Menu categories | 6 | `menu_categories` (migration 0010) | `src/features/menu/MenuPanel.tsx` | `menuValidation.test.ts` | **Implemented** — categories with sort order, create/edit and deactivate |
+| MENU-03 | Deactivate items; preserve historical descriptions/prices | 6 | `menu_items.is_active`; `order_lines` snapshot | `MenuPanel.tsx`; `OrdersPanel.tsx` | `ordersValidation.test.ts`, `Operations.test.tsx` | **Implemented** — items are never deleted; order lines keep their own code, name and price |
 
 ---
 
@@ -217,10 +217,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| TBL-01 | Display table layout and status | 6 | `tables` | Floor plan view | AC-11 | Not Started |
-| TBL-02 | Table statuses | 6 | `tables.status` | Status management | AC-11 | Not Started |
-| TBL-03 | Merge, split, transfer per permissions | 6 | DB function | Table ops RPC | AC-11 | Not Started |
-| TBL-04 | Prevent conflicting simultaneous assignments (server-side) | 6 | DB function + lock | Concurrency guard | AC-14 | Not Started |
+| TBL-01 | Display table layout and status | 6 | `restaurant_tables` (migration 0010) | `src/features/tables/TablesPanel.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — outlet, code, name, seats, zone and live status |
+| TBL-02 | Table statuses | 6 | `restaurant_tables.status` | `TablesPanel.tsx`; order/reservation RPCs | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — available/occupied/reserved/cleaning/closed; orders and reservations drive the state automatically |
+| TBL-03 | Merge, split, transfer per permissions | 6 | `transfer_order`, `split_order`, `merge_orders` (migration 0010) | `src/features/orders/OrdersPanel.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — transfer and split by order takers; merge is manager-only and same-outlet |
+| TBL-04 | Prevent conflicting simultaneous assignments (server-side) | 6 | `orders_one_open_per_table`, `reservations_table_slot_unique`, `FOR UPDATE` locks | Order/reservation RPCs | `ordersValidation.test.ts`; AC-14 at final UAT | **Implemented** — one open order per table, one reservation per table/slot, rows locked in the transaction |
 
 ---
 
@@ -228,10 +228,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| RES-01 | Reservation record fields | 6 | `reservations` | `/reservations` | AC-11 | Not Started |
-| RES-02 | Reservation statuses | 6 | `reservations.status` | Status workflow | AC-11 | Not Started |
-| RES-03 | Reservation summary and guest history | 7 | — | Report queries | RPT-07 | Not Started |
-| RES-04 | Detect/flag overlapping reservations | 6 | DB constraint | Overlap check | OD-09 | Not Started |
+| RES-01 | Reservation record fields | 6 | `reservations` (migration 0010) | `src/features/reservations/ReservationsPanel.tsx` | `tablesReservationsValidation.test.ts`; AC-11 at final UAT | **Implemented** — guest name, phone, party size, date/time and optional table; no guest profile (OD-10) |
+| RES-02 | Reservation statuses | 6 | `reservations.status` | `ReservationsPanel.tsx`; `set_reservation_status()` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — booked → confirmed → arrived → cancelled/completed, with table state updates |
+| RES-03 | Reservation summary and guest history | 7 | — | Report queries | RPT-07 | **Dropped** — OD-10 removed guest profiles and history |
+| RES-04 | Detect/flag overlapping reservations | 6 | `reservations_table_slot_unique`; `reservation_slot_load` view | `ReservationsPanel.tsx` | `tablesReservationsValidation.test.ts` | **Implemented** — the exact table/slot pair is blocked by a unique index; overbooking raises a visible warning from active load vs tables |
 
 ---
 
@@ -239,12 +239,12 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| ORD-01 | Open/modify/cancel/transfer/split/close orders | 6 | `orders` | POS order module | AC-11 | Not Started |
-| ORD-02 | Order header fields | 6 | `orders` | Order form | AC-11 | Not Started |
-| ORD-03 | Order line fields (price snapshot) | 6 | `order_lines` | Order line entry | RCT-05 | Not Started |
-| ORD-04 | Order statuses | 6 | `orders.status` | Status workflow | AC-10 | Not Started |
-| ORD-05 | Concurrent edits handled visibly | 6 | Optimistic locking / realtime | Conflict handler | AC-14 | Not Started |
-| ORD-06 | Cancellation/modifications audited | 6 | `audit_logs` | Audit trigger | AC-13 | Not Started |
+| ORD-01 | Open/modify/cancel/transfer/split/close orders | 6 | `create_order`, `update_order`, `cancel_order`, `transfer_order`, `split_order`, `close_order` (migration 0010) | `src/features/orders/OrdersPanel.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — every action is an atomic SECURITY DEFINER RPC |
+| ORD-02 | Order header fields | 6 | `orders` | `OrdersPanel.tsx` | `ordersValidation.test.ts` | **Implemented** — order number, outlet, optional table, waiter, notes, timestamps and lifecycle status |
+| ORD-03 | Order line fields (price snapshot) | 6 | `order_lines` | `OrdersPanel.tsx` | `ordersValidation.test.ts`; RCT-05 | **Implemented** — item code, name and unit price are copied at line creation |
+| ORD-04 | Order statuses | 6 | `orders.status`; `set_order_status()` | `OrdersPanel.tsx`; `KitchenDisplayPanel.tsx` | `Operations.test.tsx`; AC-10 at final UAT | **Implemented** — pending → sent → preparing → ready → served → closed, plus cancelled; illegal transitions rejected in SQL |
+| ORD-05 | Concurrent edits handled visibly | 6 | `orders.revision`; SQLSTATE `40001` | `OrdersPanel.tsx`; `validation.ts` | `ordersValidation.test.ts`; AC-14 at final UAT | **Implemented** — stale revisions are rejected and the UI explains that the order changed |
+| ORD-06 | Cancellation/modifications audited | 6 | `audit_logs`; `orders_audit`, `order_lines_audit` | Audit triggers | `ordersValidation.test.ts`; AC-13 at final UAT | **Implemented** — inserts, updates and cancellations are appended to the audit log |
 
 ---
 
@@ -252,11 +252,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| KDS-01 | Display order info + elapsed time | 6 | — | `/kds` view | AC-10 | Not Started |
-| KDS-02 | Kitchen staff update Preparing/Ready | 6 | `orders.status` | KDS action buttons | AC-10 | Not Started |
-| KDS-03 | Sync status changes via Supabase Realtime | 6 | — | Realtime subscription | AC-10 | Not Started |
+| KDS-01 | Display order info + elapsed time | 6 | — | `src/features/orders/KitchenDisplayPanel.tsx` | `Operations.test.tsx`; AC-10 at final UAT | **Partial** — ticket shows order number, table, waiter, lines, instructions and sent/opened timestamps; no elapsed-minutes counter |
+| KDS-02 | Kitchen staff update Preparing/Ready | 6 | `set_order_status()`; `can_update_kitchen_status()` | `KitchenDisplayPanel.tsx` | `Operations.test.tsx`; AC-10 at final UAT | **Implemented** — Sent/Preparing/Ready columns with role-gated transitions |
+| KDS-03 | Sync status changes via Supabase Realtime | 6 | Realtime publication on `orders`/`order_lines` | `subscribeToOrderChanges()` in `src/features/orders/api.ts` | `Operations.test.tsx`; AC-10 at final UAT | **Implemented** — any change triggers a refetch; the database stays authoritative |
 | KDS-04 | Prep-time and delayed-order reporting | 7 | — | Report queries | RPT-06 | Not Started |
-| KDS-05 | KDS requires internet; no offline KDS | 0 | — | Architecture decision | CON-01 | Not Started |
+| KDS-05 | KDS requires internet; no offline KDS | 0 | — | Architecture decision; no offline queue | CON-01 | **Implemented** — online-only display with no local persistence |
 
 ---
 
@@ -264,11 +264,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| RCT-01 | Receipt fields and format | 6 | `receipts` | Receipt generator | AC-11 | Not Started |
-| RCT-02 | Browser print + PDF output | 6 | — | Print/PDF component | AC-11 | Not Started |
-| RCT-03 | Record sales/closure/receipt reference | 6 | `receipts` | Order close workflow | — | Not Started |
-| RCT-04 | No payment credentials collected/stored | 6 | — | No payment gateway code | — | Not Started |
-| RCT-05 | Preserve item descriptions/prices at time of sale | 6 | `order_lines.price_snapshot` | Order line snapshot | — | Not Started |
+| RCT-01 | Receipt fields and format | 6 | `receipts` (migration 0010) | `src/features/orders/ReceiptView.tsx` | `Operations.test.tsx`; AC-11 at final UAT | **Implemented** — number, date, business identity, TIN, table, waiter, lines, VAT breakdown, total and footer |
+| RCT-02 | Browser print + PDF output | 6 | — | `ReceiptView.tsx` (`window.print()`) | Manual print at final UAT | **Implemented** — browser print and print-to-PDF, no client-side PDF dependency |
+| RCT-03 | Record sales/closure/receipt reference | 6 | `close_order()`; `receipts.order_id` unique | `OrdersPanel.tsx` | `Operations.test.tsx`; RCT-05 | **Implemented** — closing stores the totals on the order and links one immutable receipt |
+| RCT-04 | No payment credentials collected/stored | 6 | — | No payment fields or gateway anywhere | `ordersValidation.test.ts` | **Implemented** — orders record no payment data |
+| RCT-05 | Preserve item descriptions/prices at time of sale | 6 | `order_lines.item_code`, `item_name`, `unit_price` | Order line creation | `ordersValidation.test.ts` | **Implemented** — snapshots survive later menu edits; receipts repeat the snapshot |
 
 ---
 
@@ -280,7 +280,7 @@
 | STK-02 | Stock increases defined | 4 | `stock_transactions.transaction_type` | GRN and adjustment increases implemented; opening/production not built | AC-04,06 | In Progress |
 | STK-03 | Stock decreases defined | 4 | `stock_transactions.transaction_type` | SIV, adjustment and waste decreases implemented; production not built | AC-05,07 | In Progress |
 | STK-04 | Counts verify; variances via adjustments | 4 | `post_inventory_count()` → `adjustment` transactions (migration 0008) | Count reconciliation | `InventoryControl.test.tsx` | **Implemented** — approved count reconciles the ledger to the physical quantity; the posted variance is traceable to the count line |
-| STK-05 | Menu sales do NOT deduct stock | 6 | — | No auto-deduction | AC-09 | Not Started |
+| STK-05 | Menu sales do NOT deduct stock | 6 | — | `close_order()` never writes `stock_transactions` | `Operations.test.tsx`; AC-09 | **Implemented** — menu sales and stock stay separate (ADR-008) |
 | STK-06 | Stock ledger record fields | 4 | `stock_transactions`, `stock_ledger_entries` | Ledger schema + history view | — | Implemented |
 | STK-07 | Prevent duplicate posting; preserve reversals | 4 | `posted_at` + unique index | Post guard; reversal flow not built | — | In Progress |
 
@@ -403,12 +403,12 @@
 | AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | **Implemented** — count variance, approval and posting built and unit-tested; migration 0008 applied and structure-verified; live UAT deferred by the owner |
 | AC-07 | Waste and production update inventory correctly | 4,5 | **Implemented** — approved waste and posted production both move stock through the FIFO ledger and are unit-tested; live UAT deferred by the owner |
 | AC-08 | Recipe costing and food-cost % verified | 5 | **Implemented** — `recipe_version_costs` computes cost per portion, gross profit and food cost %; panel tested; live UAT deferred |
-| AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6 | **Partial** — recipe definitions never deduct stock (REC-06); menu sales and theoretical consumption arrive with Phase 6 |
-| AC-10 | Orders appear on KDS; status visible to other users over internet | 6 | Not Started |
-| AC-11 | Table/reservation/order/receipt workflows per permissions | 6 | Not Started |
+| AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6 | **Implemented** — recipe definitions and order close never write stock (REC-06, STK-05, ADR-008); the theoretical-consumption report remains Phase 7 |
+| AC-10 | Orders appear on KDS; status visible to other users over internet | 6 | **Implemented** — KDS columns, role-gated transitions and Realtime refetch built and unit-tested; the multi-user live run is deferred to final UAT |
+| AC-11 | Table/reservation/order/receipt workflows per permissions | 6 | **Implemented** — menus, tables, reservations, order lifecycle, closing and receipts built and unit-tested; live three-user run deferred to final UAT |
 | AC-12 | Reports/dashboard reconcile to test data; respect access scope | 7 | Not Started |
-| AC-13 | Critical actions produce audit events | 2+ | Not Started |
-| AC-14 | Concurrent edits don't overwrite; conflicts visible | 6 | Not Started |
+| AC-13 | Critical actions produce audit events | 2+ | **In Progress** — business, procurement, inventory, recipe and order changes are audited; login/logout events are not logged |
+| AC-14 | Concurrent edits don't overwrite; conflicts visible | 6 | **Implemented** — revision checks with SQLSTATE `40001`, row locks and one-open-order-per-table; the concurrent live run is deferred to final UAT |
 | AC-15 | App shows clear error on network failure | 1 | **In Progress** — offline banner tested; save-failure UX pending data layer |
 | AC-16 | Backup/export procedure documented and tested | 8 | Not Started |
 | AC-17 | No secrets in repo or browser-delivered code | 0 | **In Progress** |

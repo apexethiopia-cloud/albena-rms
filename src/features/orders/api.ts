@@ -66,6 +66,7 @@ export type Receipt = {
   total: Numberish
   table_code: string | null
   waiter_name: string
+  receipt_footer: string | null
   line_count: number
 }
 
@@ -229,7 +230,7 @@ export async function closeOrder(id: string, expectedRevision: number): Promise<
 const RECEIPT_COLUMNS = `
   id, receipt_number, order_id, outlet_id, issued_at, business_name, business_tin,
   business_address, business_phone, vat_rate, subtotal, vat_amount, total,
-  table_code, waiter_name, line_count
+  table_code, waiter_name, receipt_footer, line_count
 `
 
 export async function getReceipt(id: string): Promise<Receipt> {

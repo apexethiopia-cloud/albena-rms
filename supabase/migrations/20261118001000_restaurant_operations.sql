@@ -349,6 +349,7 @@ create table if not exists public.receipts (
   total            numeric(14, 2) not null,
   table_code       text,
   waiter_name      text not null default '',
+  receipt_footer   text,
   line_count       integer not null default 0,
   constraint receipts_totals_non_negative check (subtotal >= 0 and vat_amount >= 0 and total >= 0),
   constraint receipts_vat_range check (vat_rate >= 0 and vat_rate <= 100)
@@ -1435,7 +1436,7 @@ begin
   insert into public.receipts (
     receipt_number, order_id, outlet_id, issued_by, business_name, business_tin,
     business_address, business_phone, vat_rate, subtotal, vat_amount, total,
-    table_code, waiter_name, line_count
+    table_code, waiter_name, receipt_footer, line_count
   )
   values (
     v_receipt_number,
@@ -1452,6 +1453,7 @@ begin
     v_total,
     v_table_code,
     v_order.waiter_name,
+    v_settings.receipt_footer,
     v_line_count
   )
   returning id into v_receipt_id;

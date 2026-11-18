@@ -530,6 +530,43 @@
 - OD-06 thresholds and separation of duties remain open; the stock-location to outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 21: 2026-11-18 - Phase 6 Restaurant Operations Build
+
+- **Phase**: Phase 6 build complete; migrations 0009 and 0010 awaiting the owner | **Completion**: **35.0%** credited (Phases 4-6 release at final UAT)
+- **Date**: 2026-11-18 23:30 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner decisions** - OD-07 (VAT 15%, VAT-inclusive menu prices, no service charge or discounts), OD-08 (receipt numbers `<outlet>-YYYYMMDD-####` per outlet per business day with editable business identity), OD-09 (optional table, exact-slot double-booking blocked, overbooking warning), OD-10 (guest name and phone only, no profile/history) and OD-12 (all hotel features deferred) were recorded in ADR-013.
+2. **Migration 0010** - `20261118001000_restaurant_operations.sql` adds `business_settings`, `menu_categories`, `menu_items`, `restaurant_tables`, `reservations`, `document_sequences`, `orders`, `order_lines` and `receipts`, the `reservation_slot_load` view, eight role helpers, fifteen SECURITY DEFINER RPCs, audit/`updated_at` triggers, RLS, grants and a Realtime publication for `orders`/`order_lines`.
+3. **Menu, tables and reservations** - category and item management with VAT-inclusive prices and optional recipe links; table layout with statuses driven by open orders and reservations; reservation lifecycle `booked -> confirmed -> arrived -> cancelled/completed` with a unique table/slot index and an active-load overbooking warning.
+4. **Orders** - create, edit, send, serve, cancel, transfer, split, manager merge and close; lifecycle `pending -> sent_to_kitchen -> preparing -> ready -> served -> closed` plus `cancelled`, enforced in SQL; line code, name and price snapshotted at creation.
+5. **Concurrency** - `orders.revision` is checked on every mutation and a stale value raises SQLSTATE `40001`; `FOR UPDATE` locks plus `orders_one_open_per_table` prevent conflicting table use.
+6. **Receipts** - closing requires `served`, extracts VAT as `total x rate / (100 + rate)` from inclusive prices, snapshots the business identity and footer, issues an immutable numbered receipt and frees the table when no open order remains.
+7. **KDS** - three Sent/Preparing/Ready columns with timestamps, line instructions, role-gated transitions and a Realtime subscription that refetches on any order or line change; online only.
+8. **Business settings** - `/settings` panel for business name, TIN, address, phone, VAT rate and receipt footer; admin/GM write access, read-only summary for everyone else.
+9. **Receipt footer gap** - the footer was editable but not stored on receipts; `receipt_footer` was added to the receipts table and `close_order()` snapshot, and the receipt view now prints it. Migration 0010 had not been applied, so no follow-up migration is needed.
+10. **UI and navigation** - the `/operations` placeholder was replaced with `MenuPanel`, `TablesPanel`, `ReservationsPanel`, `OrdersPanel` and `KitchenDisplayPanel`; `BusinessSettingsPanel` was added to `/settings`.
+11. **Tests** - `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12) cover payloads, role gates, order/KDS flow, receipt rendering and business settings.
+12. **Commits** - slice 1 `ac31955`; slice 2 `3ed1273` (13 files, 3,112 insertions); both pushed to `main`.
+
+### Verification
+- `npm run typecheck` - pass
+- `npm run lint` - pass (zero warnings)
+- `npm run test` - 252/252 pass across 28 suites
+- `npm run build` - pass (811.08 kB JS / 186.65 kB gzip, 24.76 kB CSS; chunk-size warning only)
+- Live deployment - `https://albena-rms.pages.dev` serves `assets/index-C14jpLIO.js` (811,383 bytes) containing New order, Kitchen display, Close & print receipt, Business & receipts, `receipt_number`, `split_order` and `merge_orders`
+- Migrations 0009 and 0010 - authored, **not yet applied**
+
+### Outstanding
+- Owner applies migration 0009, then 0010 (0010 references `recipes`); agent verifies the Phase 5/6 objects and RPC gates through PostgREST.
+- Final UAT: AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
+- KDS-01 shows sent/opened timestamps but no elapsed-minutes counter; KDS-04 prep-time reporting and the reservation/guest-history reports are Phase 7 (RES-03 dropped per OD-10).
+- OD-06 thresholds and separation of duties remain open; the stock-location to outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 
 
 

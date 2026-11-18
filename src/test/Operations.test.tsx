@@ -275,6 +275,7 @@ const RECEIPT = {
   total: 180.5,
   table_code: null,
   waiter_name: 'Test Waiter',
+  receipt_footer: 'Thank you for dining with us.',
   line_count: 1,
 }
 
@@ -555,6 +556,9 @@ describe('Operations - menus, tables, reservations, orders and kitchen', () => {
     expect(within(receipt).getByText('Albena Restaurant')).toBeInTheDocument()
     expect(within(receipt).getByText('MAIN-20261118-0001')).toBeInTheDocument()
     expect(within(receipt).getByText('Total (VAT inclusive)')).toBeInTheDocument()
+    expect(
+      within(receipt).getByText('Thank you for dining with us.'),
+    ).toBeInTheDocument()
     expect(within(receipt).getAllByText(/180\.50/).length).toBeGreaterThanOrEqual(3)
   })
 

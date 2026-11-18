@@ -189,7 +189,7 @@ flowchart LR
 
 ## Phase 6 — Restaurant Operations (15%)
 **SRS Reference**: Section 11, Phase 6
-**Status**: ⏳ Planned
+**Status**: ✅ **Build complete** — awaiting owner application of migrations 0009 and 0010, then final UAT
 
 **Scope**:
 - Menu management (items, categories, pricing, deactivation)
@@ -200,11 +200,34 @@ flowchart LR
 - Receipt generation (browser print + PDF)
 - Price snapshot preservation at order close
 
-**Exit Condition**: Three-user live workflows pass (AC-10, AC-11, AC-14, AC-15).
+**Delivered (2026-11-18)**:
+- `business_settings`, `menu_categories`, `menu_items`, `restaurant_tables`, `reservations`, `document_sequences`, `orders`, `order_lines`, `receipts`, the `reservation_slot_load` view, eight role helpers and fifteen SECURITY DEFINER RPCs (migration 0010)
+- Menu: categories with sort order and items with code, name, category, VAT-inclusive selling price, optional recipe link and active flag; deactivation preserves order history (MENU-01..03)
+- Tables: outlet, code, name, seats, zone, active flag and status, with state advancing automatically from orders and reservations (TBL-01, TBL-02)
+- Reservations: guest name/phone, party size, date/time and optional table; `booked → confirmed → arrived → cancelled/completed`; exact-slot double-booking blocked and overbooking warned from `reservation_slot_load` (RES-01, RES-02, RES-04; RES-03 dropped per OD-10)
+- Orders: lifecycle `pending → sent_to_kitchen → preparing → ready → served → closed` plus `cancelled`; create, edit, send, serve, cancel, transfer, split, manager merge and close all run atomically in SQL (ORD-01..04, ORD-06)
+- Line price snapshots: code, name and unit price are copied at line creation, so later menu edits cannot rewrite history (ORD-03, RCT-05)
+- Revision-based optimistic concurrency with SQLSTATE `40001` and a visible conflict message (ORD-05)
+- Closing requires `served`, extracts VAT from VAT-inclusive totals as `total × rate ÷ (100 + rate)`, issues an immutable receipt and frees the table (RCT-01, RCT-03, OD-07)
+- Receipt numbering `<OUTLET>-YYYYMMDD-####` per outlet per business day via `document_sequences`; identity, VAT rate and footer are snapshotted onto the receipt (OD-08)
+- Kitchen display: Sent/Preparing/Ready columns, sent/opened timestamps, line instructions, role-gated transitions and Realtime refetch on `orders`/`order_lines` changes (KDS-01..03); online only (KDS-05). KDS-01 is partial: timestamps are shown, but there is no elapsed-minutes counter
+- Receipt view supports browser print, giving the print/PDF output path without a client-side PDF library (RCT-02)
+- `/operations` page with `MenuPanel`, `TablesPanel`, `ReservationsPanel`, `OrdersPanel` and `KitchenDisplayPanel`; `BusinessSettingsPanel` mounted on `/settings`
+- Role gates mirror the SRS table: menu/layout = admin/GM/RM; table status = +waiter/cashier; reservations/orders = +waiter; kitchen status = +executive chef/kitchen staff; close = admin/GM/RM/cashier; business settings = admin/GM
+- Tests: `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12); full suite 252/252 across 28 suites
+- Commits `ac31955` (slice 1) and `3ed1273` (slice 2) pushed to `main`; Cloudflare serves `assets/index-bR3rdj_e.js` (811,264 bytes)
 
-**Requirements addressed**: MENU-01..03, TBL-01..04, RES-01..04, ORD-01..06, KDS-01..05, RCT-01..05, NFR-03
+**Remaining**:
+- Owner applies migration 0009, then 0010; agent verifies the tables, views and RPC gates through PostgREST
+- Final UAT: AC-10 (KDS flow), AC-11 (order/table workflow), AC-14 (concurrent table/order handling) and AC-15 (reservations), deferred by the owner with the rest of UAT
+- KDS-04 prep-time reporting and the Phase 7 reservation/guest-history reports remain in Phase 7
+- Outlet scoping of stock/recipes still needs the `stock_locations` ↔ outlet decision; Phase 6 reads are role-based
 
-**Blocked by**: OD-07 (taxes/discounts), OD-08 (receipt format), OD-09 (reservation rules), OD-10 (guest profiles), OD-12 (hotel features scope)
+**Exit Condition**: Three-user live workflows pass (AC-10, AC-11, AC-14, AC-15). Build and unit tests are complete; live runs are deferred to final UAT.
+
+**Requirements addressed**: MENU-01..03, TBL-01..04, RES-01, RES-02, RES-04, ORD-01..06, KDS-01..03, KDS-05, RCT-01..05, NFR-03
+
+**Decisions**: OD-07 (VAT 15%, inclusive prices, no service charge/discounts), OD-08 (receipt numbering and editable identity), OD-09 (optional table, exact-slot block, overbooking warning), OD-10 (no guest profiles) and OD-12 (hotel features deferred) resolved 2026-11-18; recorded with the full operational model in ADR-013. OD-06 thresholds and separation of duties remain open.
 
 ---
 
@@ -258,7 +281,7 @@ flowchart LR
 | Phase 3 | 10% | ✅ Complete | 10.0% |
 | Phase 4 | 20% | ✅ Build complete — final UAT deferred | 0% (releases at final UAT) |
 | Phase 5 | 10% | 🚧 Build complete — final UAT deferred | 0% (releases at final UAT) |
-| Phase 6 | 15% | ⏳ Planned | 0% |
+| Phase 6 | 15% | ✅ Build complete — final UAT deferred | 0% (releases at final UAT) |
 | Phase 7 | 10% | ⏳ Planned | 0% |
 | Phase 8 | 10% | ⏳ Planned | 0% |
 | **Total** | **100%** | | **35.0%** |

@@ -123,8 +123,12 @@ export function ReceiptView({ receipt, order, onClose }: ReceiptViewProps) {
 
         <p className="mt-4 text-center text-[11px] text-slate-500">
           {receipt.line_count} line{receipt.line_count === 1 ? '' : 's'} · prices include VAT.
-          Thank you.
         </p>
+        {receipt.receipt_footer && (
+          <p className="mt-1 text-center text-[11px] text-slate-500">
+            {receipt.receipt_footer}
+          </p>
+        )}
       </div>
     </section>
   )
