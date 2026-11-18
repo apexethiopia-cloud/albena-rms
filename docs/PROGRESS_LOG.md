@@ -353,7 +353,8 @@
 - `npm run lint` — pass (zero warnings)
 - `npm run test` — 161/161 pass across 21 suites
 - `npm run build` — pass (606 kB JS / 153 kB gzip, 22 kB CSS; chunk-size warning only)
-- Commit `87d8379` (PR/PO slice) pushed to `main`.
+- Commit `87d8379` (PR/PO slice) pushed to `main`; docs commit `ceaf3d9` followed.
+- Cloudflare deployed the slice (`index-DTCkkht6.js`, 605,898 bytes); the served bundle contains the PR/PO panels.
 
 ### Outstanding
 - **Owner applies** `20261118000600_purchase_requests_orders.sql`; AC-03 live run still required (create PR → submit → GM approve → Create PO → approve → ordered → close; confirm a purchasing officer cannot approve).
