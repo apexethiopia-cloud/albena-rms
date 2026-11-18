@@ -393,4 +393,31 @@
 - OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 16: 2026-11-18 — Migrations 0006/0007 Applied and Verified
+
+- **Phase**: Phase 4 in progress | **Completion**: **35.0%** (unchanged; live runs still pending)
+- **Date**: 2026-11-18 20:45 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner applied both migrations** — `20261118000600_purchase_requests_orders.sql` then `20261118000700_grn_po_linkage.sql`.
+2. **Migration verification through PostgREST** with the publishable key:
+   - `purchase_requests`, `purchase_orders`, `purchase_order_receipts`, `grns.po_id` and `grn_lines.po_line_id` all resolve; the anon role is denied with `42501`, which proves the objects exist and RLS/grants are in force.
+   - The 8-argument `create_grn` exists and returns its role-gate message; the old 7-argument signature returns `PGRST202` and the hint shows the new signature, confirming the drop.
+   - All seven PR/PO RPCs (`submit`, `decide`, `create`, `approve`, `mark ordered`, `close`) return their domain permission messages rather than 404.
+3. **Docs** — blocker cleared; verification evidence added to `PROJECT_STATUS.md`; AC-03 and GRN-04 rows updated to "awaiting live run".
+
+### Verification
+- Migration objects and RPC gates: **pass** (see evidence above)
+- Unit gates unchanged from Session 15: typecheck, lint, 166/166 tests, build all pass
+
+### Outstanding
+- Live **AC-03**: PR → submit → GM approve → Create PO → approve → ordered → close; purchasing officer must not be able to approve.
+- Live **GRN-04**: receive against an ordered PO; confirm outstanding quantities and `partial`/`complete`, and that an over-receipt shows as `over`.
+- Phase 4 remainder: counts, adjustments, waste, low-stock alerts.
+- OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 

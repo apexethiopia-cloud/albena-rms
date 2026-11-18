@@ -128,7 +128,7 @@
 | GRN-01 | GRN header fields | 4 | `grns` | `src/features/stock/GrnPanel.tsx` | AC-04 | Implemented |
 | GRN-02 | GRN line fields | 4 | `grn_lines` | GRN line entry | AC-04 | Implemented |
 | GRN-03 | Posting increases stock and updates valuation atomically | 4 | `post_grn()` | GRN post RPC | AC-04 | Implemented |
-| GRN-04 | Link GRN to PO; record shortages/over-receipts | 4 | `grns.po_id`, `grn_lines.po_line_id`, `purchase_order_receipts` (migration 0007) | PO selector + seeded lines in `GrnPanel.tsx`, receipt status table | `Receiving.test.tsx` | **Implemented** — live check pending migration 0007; over-receipts recorded as `over`, drafts excluded |
+| GRN-04 | Link GRN to PO; record shortages/over-receipts | 4 | `grns.po_id`, `grn_lines.po_line_id`, `purchase_order_receipts` (migration 0007, applied) | PO selector + seeded lines in `GrnPanel.tsx`, receipt status table | `Receiving.test.tsx` | **Implemented** — live GRN↔PO check pending; over-receipts recorded as `over`, drafts excluded |
 | GRN-05 | Prevent duplicate GRN posting | 4 | `grns.posted_at`, unique source-line index | Idempotency guard | — | Implemented |
 
 ---
@@ -397,7 +397,7 @@
 |:---|:---|:---:|:---:|
 | AC-01 | 3 users sign in concurrently from different locations | 2 | Not Started |
 | AC-02 | Role/outlet permissions enforced by DB; unauthorized fails | 2 | Not Started |
-| AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | **In Progress** — PR/PO built and unit-tested; live check blocked until migration 0006 is applied |
+| AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | **In Progress** — migrations 0006/0007 applied and verified; awaiting the live signed-in workflow run |
 | AC-04 | GRN posted once; updates correct location and valuation | 4 | **Verified** 2026-11-18 (owner live run) — GRN 2,000 g posted once to the chosen location, balance 2,000 g / ETB 240.00 |
 | AC-05 | SIV/transfer atomic; traceable stock movements | 4 | **Verified** 2026-11-18 (owner live run) — SIV 500 g left 1,500 g / ETB 180.00 (FIFO), over-issue rejected, movements traceable |
 | AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | Not Started |

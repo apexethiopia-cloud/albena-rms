@@ -117,9 +117,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Tests: 5 new GRN↔PO cases in `Receiving.test.tsx` plus PO-link normalization in `stockValidation.test.ts`; total 166/166 across 21 suites.
 
 ### Outstanding
-- [ ] **Owner**: apply `supabase/migrations/20261118000600_purchase_requests_orders.sql`, then `supabase/migrations/20261118000700_grn_po_linkage.sql`, in that order.
-- [ ] **Owner/agent**: after 0006 is applied, run the live AC-03 workflow and confirm a purchasing officer cannot approve.
-- [ ] **Owner/agent**: after 0007 is applied, post a GRN against an ordered PO and confirm the receipt status moves to `partial`/`complete` and an over-receipt shows as `over`.
+- [x] **Owner**: migrations `20261118000600_purchase_requests_orders.sql` and `20261118000700_grn_po_linkage.sql` applied (2026-11-18).
+- [x] **Agent**: migration application verified through PostgREST — all five objects exist, the anon role is denied by RLS/grants, the 8-argument `create_grn` is live, the old 7-argument signature is gone, and all seven PR/PO RPCs return their role-gate messages instead of 404.
+- [ ] **Owner/agent**: run the live AC-03 workflow and confirm a purchasing officer cannot approve.
+- [ ] **Owner/agent**: post a GRN against an ordered PO and confirm the receipt status moves to `partial`/`complete` and an over-receipt shows as `over` (GRN-04).
 - [x] **Owner**: migration `20261118000500_stock_ledger.sql` applied and the GRN/SIV flow verified live (AC-04, AC-05).
 - [x] **Owner**: the two additional test accounts were created and the GM / Restaurant Manager roles were assigned.
 - [x] AC-01 / AC-02 authenticated end-to-end sign-off confirmed by the owner.
@@ -134,7 +135,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
-| 🔴 HIGH | **Blocker** | Migrations 0006 and 0007 are not applied yet; the PR/PO panels and GRN↔PO linkage cannot read or post until they are | AC-03 and GRN-04 demonstration | Owner applies `20261118000600_purchase_requests_orders.sql` then `20261118000700_grn_po_linkage.sql` |
+| 🔴 HIGH | **Resolved** | Migrations 0006 and 0007 applied 2026-11-18 and checked through PostgREST | AC-03 and GRN-04 demonstration | Objects and RPCs confirmed; anon denied. Only the live signed-in workflow runs remain |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
@@ -176,10 +177,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `supabase/migrations/20261118000500_stock_ledger.sql` | Created — **applied by owner** | 2026-11-18 |
 | `src/features/stock/**` | **Created** — ledger API, unit/GRN/SIV validation, stock/GRN/SIV panels | 2026-11-18 |
 | `src/test/Stock.test.tsx`, `src/test/Receiving.test.tsx`, `src/test/stockValidation.test.ts` | **Created** — Phase 4 panel and validation tests | 2026-11-18 |
-| `supabase/migrations/20261118000600_purchase_requests_orders.sql` | **Created** — PR/PO schema, RPCs, RLS, audit — pending owner apply | 2026-11-18 |
+| `supabase/migrations/20261118000600_purchase_requests_orders.sql` | **Created** — PR/PO schema, RPCs, RLS, audit — **applied by owner** | 2026-11-18 |
 | `src/features/procurement/**` | **Created** — PR/PO API, validation, line editor and panels | 2026-11-18 |
 | `src/test/Procurement.test.tsx`, `src/test/procurementValidation.test.ts` | **Created** — PR/PO panel and validation tests | 2026-11-18 |
-| `supabase/migrations/20261118000700_grn_po_linkage.sql` | **Created** — GRN↔PO columns, `create_grn` update, receipts view — pending owner apply | 2026-11-18 |
+| `supabase/migrations/20261118000700_grn_po_linkage.sql` | **Created** — GRN↔PO columns, `create_grn` update, receipts view — **applied by owner** | 2026-11-18 |
 | `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
 | `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
 | `.github/workflows/ci.yml` | Created | 2026-11-18 |
@@ -208,6 +209,9 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
 | Supabase anon denial | `audit_logs` | **Pass** — `42501`, deny by design |
 | Supabase anon write | `POST outlets` as anon | **Pass** — `42501`, new row violates RLS |
+| Migration 0006/0007 objects | REST probes for `purchase_requests`, `purchase_orders`, `purchase_order_receipts`, `grns.po_id`, `grn_lines.po_line_id` | **Pass** — objects exist; anon denied with `42501` |
+| Migration 0007 RPC shape | `create_grn` with 8 args vs the old 7 | **Pass** — 8-arg exists and is role-gated; 7-arg returns `PGRST202` |
+| PR/PO RPC gates | Seven procurement RPCs called as anon | **Pass** — each returns its role-gate message, not 404 |
 | Admin login and scopes | Owner-verified | **Pass** — profile active, `system_admin`, 5 outlets |
 | Secret exclusion | `.env.local` ignored; only publishable key used client-side | **Pass** |
 
@@ -215,10 +219,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Apply migrations 0006 then 0007**, then finish Phase 4: live AC-03 and GRN↔PO runs, counts, adjustments, waste and low-stock alerts. Phases 0–3 are complete and AC-04/AC-05 are verified.
+> **Migrations 0006 and 0007 are applied and verified.** Next: run the live AC-03 and GRN↔PO workflows, then build counts, adjustments, waste and low-stock alerts. Phases 0–3 are complete and AC-04/AC-05 are verified.
 
 Then:
-1. Owner applies `20261118000600_purchase_requests_orders.sql`; run PR → submit → approve → Create PO → approve → ordered → close, and confirm a purchasing officer cannot approve (AC-03).
-2. Owner applies `20261118000700_grn_po_linkage.sql`; receive against an ordered PO, confirm outstanding quantities and `partial`/`complete` status, and confirm an over-receipt appears as `over` (GRN-04).
+1. Run PR → submit → approve → Create PO → approve → ordered → close, and confirm a purchasing officer cannot approve (AC-03).
+2. Receive against an ordered PO, confirm outstanding quantities and `partial`/`complete` status, and confirm an over-receipt appears as `over` (GRN-04).
 3. Build counts, adjustments and waste on top of the same ledger (STK-04, ADJ-01..03, WST-01..04).
 4. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).
