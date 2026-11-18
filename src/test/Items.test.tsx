@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '@/features/auth/auth-context'
@@ -15,7 +15,21 @@ const api = vi.hoisted(() => ({
   updateItemUnitConversion: vi.fn(),
 }))
 
+const stockApi = vi.hoisted(() => ({
+  listStockBalances: vi.fn(),
+  listStockMovements: vi.fn(),
+  listSivs: vi.fn(),
+  createSiv: vi.fn(),
+  postSiv: vi.fn(),
+}))
+
 vi.mock('@/features/items/api', () => api)
+vi.mock('@/features/stock/api', () => stockApi)
+vi.mock('@/features/locations/api', () => ({
+  listLocations: vi.fn().mockResolvedValue([]),
+  createLocation: vi.fn(),
+  updateLocation: vi.fn(),
+}))
 
 const UNITS = [
   {
@@ -102,6 +116,11 @@ beforeEach(() => {
   api.createItemUnitConversion.mockResolvedValue(undefined)
   api.updateItem.mockResolvedValue(undefined)
   api.updateItemUnitConversion.mockResolvedValue(undefined)
+  stockApi.listStockBalances.mockResolvedValue([])
+  stockApi.listStockMovements.mockResolvedValue([])
+  stockApi.listSivs.mockResolvedValue([])
+  stockApi.createSiv.mockResolvedValue('siv-1')
+  stockApi.postSiv.mockResolvedValue(undefined)
 })
 
 describe('Inventory — items', () => {
@@ -121,8 +140,9 @@ describe('Inventory — items', () => {
 
     renderPage()
 
-    expect(await screen.findByText(/could not load items/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+    const section = await screen.findByRole('region', { name: 'Items' })
+    expect(await within(section).findByText(/could not load items/i)).toBeInTheDocument()
+    expect(within(section).getByRole('button', { name: /try again/i })).toBeInTheDocument()
   })
 
   it('creates an item in its base unit', async () => {

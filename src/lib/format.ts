@@ -13,6 +13,29 @@ export function formatCurrency(amount: number): string {
   return currencyFormatter.format(amount)
 }
 
+const quantityFormatter = new Intl.NumberFormat('en-ET', {
+  maximumFractionDigits: 6,
+})
+
+const unitCostFormatter = new Intl.NumberFormat('en-ET', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 6,
+})
+
+/** Stock quantities are in base units and may carry up to six decimals. */
+export function formatQuantity(amount: number): string {
+  return quantityFormatter.format(amount)
+}
+
+/**
+ * FIFO cost per base unit can be far below one birr (for example per gram),
+ * so the internal cost is shown with up to six decimals. Document totals use
+ * formatCurrency instead.
+ */
+export function formatUnitCost(amount: number): string {
+  return unitCostFormatter.format(amount)
+}
+
 export function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value)
 }

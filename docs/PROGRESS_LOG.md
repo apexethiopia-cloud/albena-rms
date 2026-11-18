@@ -302,4 +302,32 @@
 - Phase 4: stock ledger, GRN / SIV, FIFO, counts, adjustments.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 13: 2026-11-18 — Phase 4 Stock Ledger, GRN and SIV Built
+
+- **Phase**: Phase 4 in progress | **Completion**: **35.0%** (unchanged; Phase 4 exit condition still open)
+- **Date**: 2026-11-18 17:40 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Migration 0005 authored** — `20261118000500_stock_ledger.sql`: GRN and SIV headers/lines, append-only `stock_transactions`, FIFO `stock_layers` and `stock_layer_consumptions`, derived `stock_balances` / `stock_ledger_entries` views, unit-factor resolution, role gates, posting RPCs, audit triggers and SELECT-only grants.
+2. **Posting rules** — `post_grn()` writes one `in` row and one FIFO layer per line; `post_siv()` consumes the oldest layers at source, writes paired `out`/`in` rows and creates a destination layer; negative stock and duplicate posting are rejected in the database.
+3. **Stock feature** — `src/features/stock/{api,validation,StockPanel,GrnPanel,SivPanel}.tsx`: ledger-derived balances and movements on `/inventory`, SIV drafts and posting on `/inventory`, GRN drafts and posting on `/purchasing`.
+4. **Role gating** — the UI mirrors `can_post_grn()` / `can_post_siv()`; unauthorized roles see a read-only notice, while the database remains the enforcement boundary.
+5. **Tests** — `stockValidation.test.ts` (17), `Stock.test.tsx` (5) and `Receiving.test.tsx` (6); the existing Inventory and Purchasing suites gained stock and lookup mocks.
+6. **Docs** — Phase 4 marked in progress; GRN/SIV/STK and INV-04 rows updated; OD-06 interim behaviour and the missing location↔outlet link recorded.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 137/137 pass across 19 suites
+- `npm run build` — pass (571 kB JS / 147 kB gzip, 20 kB CSS; chunk-size warning only)
+
+### Outstanding
+- **Owner applies** `20261118000500_stock_ledger.sql`; AC-04 and AC-05 still need a live GRN → balance → SIV → balance check.
+- Phase 4 remainder: purchase requests/orders, GRN ↔ PO linkage, counts, adjustments, waste, low-stock alerts.
+- OD-06 approval thresholds and the stock-location ↔ outlet mapping remain open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 

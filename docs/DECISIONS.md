@@ -117,3 +117,15 @@
 | OD-11 Currency and decimal precision | ✅ **ETB — 2 decimal places assumed** | Phase 1 |
 | OD-12 Hotel features scope | **Open** | Phase 6 |
 | OD-13 Free-tier eligibility and backup/restore expectations | ✅ **Confirmed — Supabase + Cloudflare Pages free tier, no card required** | Phase 1 |
+
+### OD-06 interim implementation (Phase 4, 2026-11-18)
+
+Approval workflows are required, but the owner has not defined thresholds, approver roles or separation-of-duties rules. Phase 4 therefore does **not** invent an approval chain:
+
+- Draft creation and posting are restricted to the roles named in the SRS role table (`can_post_grn()`, `can_post_siv()`).
+- Every posting records `posted_by` and `posted_at`, and the audit log keeps the event.
+- Counts, adjustments and purchase documents remain unbuilt until OD-06 is answered.
+
+### Open issue: stock location ↔ outlet mapping (2026-11-18)
+
+`stock_locations` is a flat list with no outlet reference, so stock cannot be scoped to an outlet by RLS. Until the owner decides the mapping, stock reads and postings are limited only by role, not by outlet. This does not affect master-data outlet scoping elsewhere.

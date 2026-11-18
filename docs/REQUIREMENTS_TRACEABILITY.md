@@ -1,7 +1,7 @@
 # Albena RMS — Requirements Traceability Matrix
 
 **Authoritative Source**: `docs/SRS_v3.0.md` (approved 2026-11-17)
-**Last Updated**: 2026-11-17
+**Last Updated**: 2026-11-18
 
 > A requirement is NOT complete merely because code exists. Each row must have implementation evidence, a migration reference, a test case reference and a verified status before it can be marked Accepted.
 
@@ -14,7 +14,7 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | CON-01 | Internet required; no offline/LAN mode | 0 | — | Architecture decision; no offline code | AC-15, NFR-04 | Not Started |
-| CON-02 | Three distinct cloud user accounts | 2 | `users`, `user_profiles` | Auth module, `scripts/seed-test-users.mjs` | AC-01 | **In Progress** — 1 of 3 accounts exists |
+| CON-02 | Three distinct cloud user accounts | 2 | `users`, `user_profiles` | Auth module, `scripts/seed-test-users.mjs` | AC-01 | **Implemented** — three individual accounts exist |
 | CON-03 | No paid services without owner approval | 0 | — | Policy; docs/QUOTA_LOG.md | — | Not Started |
 | CON-04 | Setup must not require bank card | 0 | - | docs/DEPLOYMENT.md provider check | AC-18 | **Implemented** |
 | CON-05 | Existing DigitalOcean/Odoo untouched | 0 | — | Policy — no connection to that infra | — | Not Started |
@@ -29,10 +29,10 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | SEC-ROLE-01 | Permissions enforced server/DB side | 2 | RLS policies | `supabase/migrations/20261118000100_foundation.sql` (applied); anon denied `audit_logs` | AC-02 | **Implemented** — AC-02 negative test still to be recorded |
-| SEC-ROLE-02 | Individual accounts; no shared logins | 2 | `user_profiles` | Supabase Auth + `src/features/auth/**` | AC-01 | **Implemented** — only 1 of 3 accounts exists |
+| SEC-ROLE-02 | Individual accounts; no shared logins | 2 | `user_profiles` | Supabase Auth + `src/features/auth/**` | AC-01 | **Implemented** — three individual accounts exist |
 | SEC-ROLE-03 | Users only access permitted records/outlets | 2 | RLS outlet filter | `user_outlet_scopes` + RLS | AC-02 | **Implemented** — admin granted all 5 outlets |
 | SEC-ROLE-04 | Role/permission changes audit logged | 2 | `audit_logs` | `write_audit_log()` on `user_roles` | AC-13 | **Implemented** |
-| SEC-ROLE-05 | Disable/reactivate without deleting history | 3 | `user_profiles.status` | `admin_set_user_status()` | - | **In Progress** — RPC done, UI pending |
+| SEC-ROLE-05 | Disable/reactivate without deleting history | 3 | `user_profiles.status` | `admin_set_user_status()` + `UsersPanel` | - | **Implemented** |
 | SEC-ROLE-06 | No plaintext passwords in app tables | 2 | - | Supabase Auth handles credentials | - | **Implemented** |
 
 ---
@@ -93,7 +93,7 @@
 | INV-01 | Item master data fields | 3 | `items` | `src/features/items/**`, `/inventory` | `Items.test.tsx` | **Implemented** — needs authenticated integration check |
 | INV-02 | Item categories (user-maintainable) | 3 | `item_categories` | Seed + RLS applied; selectable in the item form | — | **In Progress** — category CRUD UI pending |
 | INV-03 | Multiple stock locations | 3 | `stock_locations` | `src/features/locations/**`, `/inventory` | `Locations.test.tsx` | **Implemented** - needs authenticated integration check |
-| INV-04 | Stock balances by item + location | 4 | `stock_balances` | Stock ledger view | AC-04,05 | Not Started |
+| INV-04 | Stock balances by item + location | 4 | `stock_balances` view | `src/features/stock/StockPanel.tsx` | AC-04,05 | Implemented |
 | INV-05 | Deactivate items; preserve history | 3 | `items.is_active` | `ItemsPanel.tsx` toggle | `Items.test.tsx` | **Implemented** |
 | INV-06 | Low-stock/reorder alerts | 4 | `inventory_items.reorder_level` | Alert component | RPT-08 | Not Started |
 
@@ -125,11 +125,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| GRN-01 | GRN header fields | 4 | `grns` | `/procurement/grn` | AC-04 | Not Started |
-| GRN-02 | GRN line fields | 4 | `grn_lines` | GRN line entry | AC-04 | Not Started |
-| GRN-03 | Posting increases stock and updates valuation atomically | 4 | DB function | GRN post RPC | AC-04 | Not Started |
-| GRN-04 | Link GRN to PO; record shortages/over-receipts | 4 | `grns.po_id` | GRN-PO linkage | — | Not Started |
-| GRN-05 | Prevent duplicate GRN posting | 4 | `grns.posted_at` | Idempotency guard | — | Not Started |
+| GRN-01 | GRN header fields | 4 | `grns` | `src/features/stock/GrnPanel.tsx` | AC-04 | Implemented |
+| GRN-02 | GRN line fields | 4 | `grn_lines` | GRN line entry | AC-04 | Implemented |
+| GRN-03 | Posting increases stock and updates valuation atomically | 4 | `post_grn()` | GRN post RPC | AC-04 | Implemented |
+| GRN-04 | Link GRN to PO; record shortages/over-receipts | 4 | — (no PO table yet) | GRN-PO linkage | — | Not Started |
+| GRN-05 | Prevent duplicate GRN posting | 4 | `grns.posted_at`, unique source-line index | Idempotency guard | — | Implemented |
 
 ---
 
@@ -137,11 +137,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| SIV-01 | SIV header fields | 4 | `sivs` | `/inventory/siv` | AC-05 | Not Started |
-| SIV-02 | SIV line fields | 4 | `siv_lines` | SIV line entry | AC-05 | Not Started |
-| SIV-03 | Posting updates source and destination atomically | 4 | DB function | SIV post RPC | AC-05 | Not Started |
-| SIV-04 | Linked stock movements and audit events | 4 | `stock_transactions`, `audit_logs` | Stock movement trigger | AC-05,13 | Not Started |
-| SIV-05 | Reject negative-stock transactions | 4 | DB function constraint | Stock check in RPC | — | Not Started |
+| SIV-01 | SIV header fields | 4 | `sivs` | `src/features/stock/SivPanel.tsx` | AC-05 | Implemented |
+| SIV-02 | SIV line fields | 4 | `siv_lines` | SIV line entry | AC-05 | Implemented |
+| SIV-03 | Posting updates source and destination atomically | 4 | `post_siv()` | SIV post RPC | AC-05 | Implemented |
+| SIV-04 | Linked stock movements and audit events | 4 | `stock_transactions`, `audit_logs` | Ledger rows + audit trigger | AC-05,13 | Implemented |
+| SIV-05 | Reject negative-stock transactions | 4 | FIFO layer check in `post_siv()` | Stock check in RPC | — | Implemented |
 
 ---
 
@@ -276,13 +276,13 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| STK-01 | Balances from transactions only | 4 | `stock_transactions` | Stock ledger engine | — | Not Started |
-| STK-02 | Stock increases defined | 4 | `stock_transactions.type` | Transaction types | AC-04 | Not Started |
-| STK-03 | Stock decreases defined | 4 | `stock_transactions.type` | Transaction types | AC-05 | Not Started |
+| STK-01 | Balances from transactions only | 4 | `stock_transactions`, `stock_balances` | `src/features/stock/StockPanel.tsx` | — | Implemented |
+| STK-02 | Stock increases defined | 4 | `stock_transactions.transaction_type` | GRN posting implemented; opening/adjustment/production not built | AC-04 | In Progress |
+| STK-03 | Stock decreases defined | 4 | `stock_transactions.transaction_type` | SIV posting implemented; adjustment/waste not built | AC-05 | In Progress |
 | STK-04 | Counts verify; variances via adjustments | 4 | `inventory_adjustments` | Count reconciliation | AC-06 | Not Started |
 | STK-05 | Menu sales do NOT deduct stock | 6 | — | No auto-deduction | AC-09 | Not Started |
-| STK-06 | Stock ledger record fields | 4 | `stock_transactions` | Ledger schema | — | Not Started |
-| STK-07 | Prevent duplicate posting; preserve reversals | 4 | Idempotency key | Post guard | — | Not Started |
+| STK-06 | Stock ledger record fields | 4 | `stock_transactions`, `stock_ledger_entries` | Ledger schema + history view | — | Implemented |
+| STK-07 | Prevent duplicate posting; preserve reversals | 4 | `posted_at` + unique index | Post guard; reversal flow not built | — | In Progress |
 
 ---
 
@@ -426,7 +426,7 @@
 | OD-03 | Named test users → roles and outlet scopes | Auth and permission tests | — | **Open** |
 | OD-04 | Inventory costing method (weighted average?) | Valuation calculations | — | **Open** |
 | OD-05 | Unit conversion rules; purchase/storage/issue units | Stock and costing accuracy | — | **Open** |
-| OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | — | **Open** |
+| OD-06 | Approval thresholds and SoD rules for PR/PO/GRN/SIV/counts | Controls and fraud prevention | — | **Open** — approval workflows are required, but thresholds and separation of duties are undefined. Phase 4 postings are role-gated and record `posted_by`; no approval chain is implemented. |
 | OD-07 | Taxes, service charges, discounts in scope? | Receipt totals | — | **Open** |
 | OD-08 | Receipt numbering, business identity, language, currency | Receipt presentation | — | **Open** |
 | OD-09 | Reservation capacity rules; table assignment mandatory? | Conflict validation logic | — | **Open** |

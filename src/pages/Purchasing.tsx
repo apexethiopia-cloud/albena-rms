@@ -1,6 +1,7 @@
-import { FileText, PackageCheck, ReceiptText, Truck } from 'lucide-react'
+import { FileText, ReceiptText, TrendingUp } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { SuppliersPanel } from '@/features/suppliers/SuppliersPanel'
+import { GrnPanel } from '@/features/stock/GrnPanel'
 
 const PLANNED = [
   {
@@ -16,13 +17,7 @@ const PLANNED = [
       'Orders raised from approved requests and linked to one supplier, with ordered versus received quantities.',
   },
   {
-    icon: Truck,
-    title: 'Goods receiving notes',
-    detail:
-      'Atomic stock increase and FIFO cost-layer creation on posting (ADR-009), with duplicate-posting protection.',
-  },
-  {
-    icon: PackageCheck,
+    icon: TrendingUp,
     title: 'Supplier performance',
     detail:
       'Delivery history, price changes and shortage tracking for each supplier. Reporting arrives in Phase 7.',
@@ -34,10 +29,12 @@ export function Purchasing() {
     <>
       <PageHeader
         title="Purchasing"
-        description="Supplier master data now; purchase requests, orders and receiving in Phase 4."
+        description="Goods receiving, supplier master data, and the purchasing documents still to come."
       />
 
       <div className="space-y-6">
+        <GrnPanel />
+
         <SuppliersPanel />
 
         <section
@@ -48,7 +45,8 @@ export function Purchasing() {
             Not implemented yet
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Supplier records are live. The purchasing documents below do not exist yet.
+            Receiving and supplier records are live. Purchase requests, purchase orders and
+            supplier reporting are still to be built.
           </p>
 
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">

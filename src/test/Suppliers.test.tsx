@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '@/features/auth/auth-context'
@@ -11,6 +11,27 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('@/features/suppliers/api', () => api)
+
+vi.mock('@/features/items/api', () => ({
+  listItems: vi.fn().mockResolvedValue([]),
+  listUnits: vi.fn().mockResolvedValue([]),
+  listItemUnitConversions: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('@/features/locations/api', () => ({
+  listLocations: vi.fn().mockResolvedValue([]),
+  createLocation: vi.fn(),
+  updateLocation: vi.fn(),
+}))
+
+vi.mock('@/features/stock/api', () => ({
+  listGrns: vi.fn().mockResolvedValue([]),
+  createGrn: vi.fn(),
+  postGrn: vi.fn(),
+  listSivs: vi.fn().mockResolvedValue([]),
+  listStockBalances: vi.fn().mockResolvedValue([]),
+  listStockMovements: vi.fn().mockResolvedValue([]),
+}))
 
 const SUPPLIER = {
   id: 's1',
@@ -76,8 +97,9 @@ describe('Purchasing — suppliers', () => {
 
     renderPage()
 
-    expect(await screen.findByText(/could not load suppliers/i)).toBeInTheDocument()
-    expect(screen.getByText(/apply the pending supabase migration/i)).toBeInTheDocument()
+    const section = await screen.findByRole('region', { name: 'Suppliers' })
+    expect(await within(section).findByText(/could not load suppliers/i)).toBeInTheDocument()
+    expect(within(section).getByText(/apply the pending supabase migration/i)).toBeInTheDocument()
   })
 
   it('creates a supplier with normalized values', async () => {
@@ -170,8 +192,9 @@ describe('Purchasing — suppliers', () => {
 
     await screen.findByText('Fresh Foods PLC')
 
-    expect(screen.queryByRole('button', { name: /new supplier/i })).toBeNull()
-    expect(screen.queryByRole('button', { name: /edit/i })).toBeNull()
-    expect(screen.getByText(/read-only/i)).toBeInTheDocument()
+    const section = screen.getByRole('region', { name: 'Suppliers' })
+    expect(within(section).queryByRole('button', { name: /new supplier/i })).toBeNull()
+    expect(within(section).queryByRole('button', { name: /edit/i })).toBeNull()
+    expect(within(section).getByText(/read-only/i)).toBeInTheDocument()
   })
 })

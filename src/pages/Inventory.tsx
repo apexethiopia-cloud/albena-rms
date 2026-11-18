@@ -1,16 +1,12 @@
-import { Boxes, ClipboardCheck, Factory, Scale, Trash2 } from 'lucide-react'
+import { ClipboardCheck, Factory, Scale, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { ItemsPanel } from '@/features/items/ItemsPanel'
 import { CategoriesPanel } from '@/features/categories/CategoriesPanel'
 import { LocationsPanel } from '@/features/locations/LocationsPanel'
+import { StockPanel } from '@/features/stock/StockPanel'
+import { SivPanel } from '@/features/stock/SivPanel'
 
 const PLANNED = [
-  {
-    icon: Boxes,
-    title: 'Stock ledger and balances',
-    detail:
-      'Balances derived from posted transactions only, by item and stock location. No editable balance column exists (ADR-007).',
-  },
   {
     icon: ClipboardCheck,
     title: 'Inventory counts',
@@ -25,9 +21,9 @@ const PLANNED = [
   },
   {
     icon: Trash2,
-    title: 'Waste and transfers',
+    title: 'Waste',
     detail:
-      'Waste postings and store-to-store transfers, each generating ledger transactions with before/after audit records.',
+      'Approved waste postings that decrease stock and record the FIFO cost. Reports arrive in Phase 7.',
   },
   {
     icon: Factory,
@@ -42,10 +38,14 @@ export function Inventory() {
     <>
       <PageHeader
         title="Inventory"
-        description="Item master data now; the stock ledger, counts and postings arrive in Phase 4."
+        description="Ledger-derived balances, goods issues, item master data and stock locations. Quantities are never edited directly."
       />
 
       <div className="space-y-6">
+        <StockPanel />
+
+        <SivPanel />
+
         <ItemsPanel />
 
         <CategoriesPanel />
@@ -60,8 +60,8 @@ export function Inventory() {
             Not implemented yet
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Items exist. There are no stock balances or movements in the system yet, so every item
-            currently has no recorded quantity.
+            Stock balances and transfers are live. Counts, adjustments, waste and production are
+            still to be built.
           </p>
 
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">

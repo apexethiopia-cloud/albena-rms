@@ -29,6 +29,14 @@ vi.mock('@/features/locations/api', () => ({
   updateLocation: vi.fn(),
 }))
 
+vi.mock('@/features/stock/api', () => ({
+  listStockBalances: vi.fn().mockResolvedValue([]),
+  listStockMovements: vi.fn().mockResolvedValue([]),
+  listSivs: vi.fn().mockResolvedValue([]),
+  createSiv: vi.fn(),
+  postSiv: vi.fn(),
+}))
+
 const CATEGORY = {
   id: 'c1',
   name: 'Meat',

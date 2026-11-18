@@ -112,7 +112,21 @@ flowchart LR
 
 ## Phase 4 — Inventory & Purchasing (20%)
 **SRS Reference**: Section 11, Phase 4
-**Status**: ⏳ Planned
+**Status**: 🚧 **In Progress** — GRN/SIV postings, FIFO ledger and derived balances delivered 2026-11-18; remaining scope below
+
+**Delivered (2026-11-18)**:
+- Goods Receiving Notes (GRN) with atomic stock increase, FIFO layer creation and duplicate-posting protection
+- Store Issue Vouchers (SIV) with atomic source/destination update and FIFO consumption
+- Stock ledger engine (append-only transactions, derived balances, movement history)
+- Base-unit conversion resolution in the database (ADR-010)
+
+**Remaining**:
+- Purchase Request workflow (Draft → Submitted → Approved/Rejected → PO)
+- Purchase Order management and GRN ↔ PO linkage
+- Inventory counting module with variance calculation and approval
+- Inventory adjustments (approved reasons, audit-trailed)
+- Waste recording and posting
+- Low-stock/reorder alert system
 
 **Scope**:
 - Purchase Request workflow (Draft → Submitted → Approved/Rejected → PO)
@@ -125,11 +139,11 @@ flowchart LR
 - Waste recording and posting
 - Low-stock/reorder alert system
 
-**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07).
+**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-04 and AC-05 remain unverified against the live database until migration 0005 is applied.
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 
-**Decisions**: OD-04 FIFO (ADR-009) and OD-05 unit model (ADR-010) both confirmed 2026-11-18.
+**Decisions**: OD-04 FIFO (ADR-009) and OD-05 unit model (ADR-010) both confirmed 2026-11-18. OD-06 approval thresholds remain undefined: postings are role-gated and record `posted_by`, with no approval chain invented.
 
 ---
 
@@ -221,7 +235,7 @@ flowchart LR
 | Phase 1 | 10% | ✅ Complete | 10.0% |
 | Phase 2 | 10% | ✅ Complete | 10.0% |
 | Phase 3 | 10% | ✅ Complete | 10.0% |
-| Phase 4 | 20% | ⏳ Planned | 0% |
+| Phase 4 | 20% | 🚧 In Progress | 0% |
 | Phase 5 | 10% | ⏳ Planned | 0% |
 | Phase 6 | 15% | ⏳ Planned | 0% |
 | Phase 7 | 10% | ⏳ Planned | 0% |

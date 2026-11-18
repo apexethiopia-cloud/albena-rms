@@ -5,10 +5,10 @@
 | Attribute | Value |
 | :--- | :--- |
 | **Project Name** | Albena Restaurant Management System (RMS) |
-| **Current Phase** | Phase 3 — Master Data (complete); Phase 4 next |
-| **Overall Completion** | **35.0%** (Phases 0–3 complete) |
-| **Last Updated** | 2026-11-18 17:05 UTC+3 |
-| **Latest Git Commit** | `cec488c` (category CRUD; user administration follows) |
+| **Current Phase** | Phase 4 — Inventory & Purchasing (in progress); Phases 0–3 complete |
+| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 exit condition not yet met) |
+| **Last Updated** | 2026-11-18 17:40 UTC+3 |
+| **Latest Git Commit** | `688e777` (Phase 4 stock-ledger slice in the working tree) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -28,7 +28,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | **Phase 1** | Foundation (React/Vite, Cloudflare, CI/CD) | 10% | ✅ **Complete** | Yes — app live at `albena-rms.pages.dev` |
 | **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 confirmed by owner** (all three accounts created) |
 | **Phase 3** | Master Data (outlets, suppliers, inventory, users) | 10% | ✅ **Complete** | Master-data CRUD, unit conversions, categories and user/role/outlet administration pass tests |
-| **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock) | 20% | ⏳ Planned | No |
+| **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock) | 20% | 🚧 **In Progress** | No — GRN/SIV postings and the ledger-derived balances are built; PR/PO, counts, adjustments, waste and reorder alerts are not |
 | **Phase 5** | Recipes & Production | 10% | ⏳ Planned | No |
 | **Phase 6** | Restaurant Operations (menu, tables, KDS, POS) | 15% | ⏳ Planned | No |
 | **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
@@ -88,12 +88,24 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Outlet-access editor lists active outlets plus any outlet already granted (so an outlet deactivated later can still be revoked); each change saves immediately.
 - [x] Admin-only write gate in the UI (`system_admin`) mirrored by the RPC `is_admin()` checks and `user_outlet_scopes_admin_write` RLS policy.
 
+### Completed (Phase 4 — stock ledger, GRN and SIV slice)
+- [x] Migration `20261118000500_stock_ledger.sql` authored: `grns`, `grn_lines`, `sivs`, `siv_lines`, append-only `stock_transactions`, FIFO `stock_layers`, `stock_layer_consumptions`, plus the `stock_balances` and `stock_ledger_entries` views.
+- [x] Posting functions (`create_grn`, `post_grn`, `create_siv`, `post_siv`) create drafts and post them atomically; each posting is protected against duplicates by `posted_at` and the source-line unique index.
+- [x] FIFO: each receipt creates a cost layer; each issue consumes the oldest layers first and records the consumed cost; negative stock is rejected (ADR-009).
+- [x] Unit resolution in the database mirrors the item master: fixed factors for kg/L, per-item factors for box/carton/sack, dimension mismatches rejected (ADR-010).
+- [x] Role gates `can_post_grn()` and `can_post_siv()` follow the SRS role table; ledger tables have SELECT-only grants and no direct write policy (ADR-003, ADR-007).
+- [x] GRN panel on `/purchasing`: list, draft creation, two-step posting confirmation, read-only state and database error messages.
+- [x] SIV panel on `/inventory`: list, draft creation with available-at-source guidance, FIFO posting and negative-stock rejection.
+- [x] Stock panel on `/inventory`: ledger-derived balances by item/location, FIFO value and recent movements. No editable balance field exists (ADR-007).
+- [x] Tests: `stockValidation.test.ts` (17), `Stock.test.tsx` (5) and `Receiving.test.tsx` (6), plus stock/lookup mocks in the existing Inventory and Purchasing suites.
+
 ### Outstanding
+- [ ] **Owner**: apply `supabase/migrations/20261118000500_stock_ledger.sql` in Supabase before the stock pages can load or post.
 - [x] **Owner**: the two additional test accounts were created and the GM / Restaurant Manager roles were assigned.
 - [x] AC-01 / AC-02 authenticated end-to-end sign-off confirmed by the owner.
 - [x] Authenticated check of outlets, suppliers, items, categories, stock locations and user administration (owner-confirmed).
-- [ ] Add RLS negative-test SQL script for repeatable authorization checks.
-- [ ] Phase 4: stock ledger, GRN / SIV, FIFO, counts, adjustments.
+- [ ] Phase 4 remainder: purchase requests, purchase orders, GRN ↔ PO linkage, counts, adjustments, waste and low-stock alerts.
+- [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock cannot be enforced (open issue).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 
 ---
@@ -102,13 +114,16 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
-| 🟡 MEDIUM | **Risk** | AC-01 cannot be demonstrated with one account | Phase 2 acceptance | Owner creates two more accounts (dashboard or `scripts/seed-test-users.mjs`) |
+| 🔴 HIGH | **Blocker** | Migration 0005 is not applied yet; the stock, GRN and SIV panels cannot read or post until it is | Phase 4 demonstration | Owner applies `20261118000500_stock_ledger.sql`; pages show a clear "apply the pending migration" message meanwhile |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
+| 🟡 MEDIUM | **Open decision** | OD-06 approval thresholds and separation of duties are undefined | Full Phase 4 acceptance | Interim: posting is role-gated and `posted_by` is recorded; no approval chain invented |
+| 🟡 MEDIUM | **Open issue** | `stock_locations` has no outlet link, so stock cannot be outlet-scoped | OUT-03/04 for stock | Decide the location↔outlet model before reporting |
 | 🟢 LOW | **Risk** | **Service-role key** needed only for the seeding script | Test users | Key lives in `.env.local` only; never in the repo or browser bundle |
 | 🟢 LOW | **Resolved** | OD-04 and OD-05 answered 2026-11-18 (FIFO, base units) | — | Recorded in ADR-009 and ADR-010 |
 | 🟢 LOW | **Resolved** | Master-data migrations 0003/0004 applied 2026-11-18; all six tables respond to REST | — | Anon reads return `200 []`; anon writes return `42501` |
+| 🟢 LOW | **Resolved** | AC-01/AC-02 sign-off | Phase 2 acceptance | Three individual accounts exist; owner confirmed the end-to-end check |
 
 ---
 
@@ -137,6 +152,9 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `supabase/migrations/20261118000200_reference_data.sql` | Created — applied by owner | 2026-11-18 |
 | `supabase/migrations/20261118000300_master_data.sql` | Created — **applied by owner** | 2026-11-18 |
 | `supabase/migrations/20261118000400_master_data_seed.sql` | Created — **applied by owner** | 2026-11-18 |
+| `supabase/migrations/20261118000500_stock_ledger.sql` | Created — **pending owner apply** | 2026-11-18 |
+| `src/features/stock/**` | **Created** — ledger API, unit/GRN/SIV validation, stock/GRN/SIV panels | 2026-11-18 |
+| `src/test/Stock.test.tsx`, `src/test/Receiving.test.tsx`, `src/test/stockValidation.test.ts` | **Created** — Phase 4 panel and validation tests | 2026-11-18 |
 | `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
 | `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
 | `.github/workflows/ci.yml` | Created | 2026-11-18 |
@@ -158,8 +176,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 12 suites, 79 tests (routing, auth, offline banner, formatting, roles, outlet/supplier/item/location validation, and all four panels) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 491 kB JS (133 kB gzip), 19 kB CSS |
+| `npm run test` | 19 suites, 137 tests (routing, auth, offline banner, formatting, roles, master-data validation, stock/GRN/SIV validation, and all panels) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 571 kB JS (147 kB gzip), 20 kB CSS (chunk-size warning only) |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
@@ -172,10 +190,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Phase 4 is next**: the stock ledger engine, GRN / SIV postings and FIFO costing. Phases 0–3 are complete.
+> **Apply migration 0005 first**, then finish Phase 4: purchase requests/orders, GRN ↔ PO linkage, counts, adjustments, waste and low-stock alerts. Phases 0–3 are complete.
 
 Then:
-1. Author the Phase 4 migration: stock transaction ledger, posting functions (atomic GRN / SIV), FIFO cost layers and a ledger-derived balance view (ADR-007, ADR-009).
-2. Build the GRN screen (receive against items and locations, atomic posting).
-3. Build the SIV screen (issue, FIFO consumption, atomic posting).
+1. Owner applies `20261118000500_stock_ledger.sql`; verify GRN → balances → SIV → balances end to end (AC-04, AC-05).
+2. Build purchase requests and purchase orders, then link GRNs to POs with shortage/over-receipt flags (GRN-04).
+3. Build counts, adjustments and waste on top of the same ledger (STK-04, ADJ-01..03, WST-01..04).
 4. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).
