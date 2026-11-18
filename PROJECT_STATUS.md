@@ -5,10 +5,10 @@
 | Attribute | Value |
 | :--- | :--- |
 | **Project Name** | Albena Restaurant Management System (RMS) |
-| **Current Phase** | Phase 4 — Inventory & Purchasing (in progress); Phases 0–3 complete |
-| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 exit condition awaits AC-06/AC-07 live verification) |
-| **Last Updated** | 2026-11-18 23:40 UTC+3 |
-| **Latest Git Commit** | `e5300d1` (live AC-03 and GRN-04 verification records; counts/adjustments/waste slice follows) |
+| **Current Phase** | Phase 4 build complete (verification deferred); Phase 5 — Recipes & Production starting |
+| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 credit releases when AC-06/AC-07 are confirmed in final UAT) |
+| **Last Updated** | 2026-11-18 23:55 UTC+3 |
+| **Latest Git Commit** | `367af5c` (counts/adjustments deployment record) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -28,8 +28,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | **Phase 1** | Foundation (React/Vite, Cloudflare, CI/CD) | 10% | ✅ **Complete** | Yes — app live at `albena-rms.pages.dev` |
 | **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 confirmed by owner** (all three accounts created) |
 | **Phase 3** | Master Data (outlets, suppliers, inventory, users) | 10% | ✅ **Complete** | Master-data CRUD, unit conversions, categories and user/role/outlet administration pass tests |
-| **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock, counts, adjustments, waste, reorder alerts) | 20% | 🚧 **In Progress** | No — every Phase 4 workflow is built; AC-06/AC-07 remain pending migration 0008 and an owner live run |
-| **Phase 5** | Recipes & Production | 10% | ⏳ Planned | No |
+| **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock, counts, adjustments, waste, reorder alerts) | 20% | ✅ **Build complete** | Deferred — all workflows built, migration 0008 applied and structure-verified; AC-06/AC-07 live runs moved to final UAT by the owner (2026-11-18) |
+| **Phase 5** | Recipes & Production | 10% | 🚧 **In Progress** | No |
 | **Phase 6** | Restaurant Operations (menu, tables, KDS, POS) | 15% | ⏳ Planned | No |
 | **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
 | **Phase 8** | Validation & Handover | 10% | ⏳ Planned | No |
@@ -117,7 +117,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Tests: 5 new GRN↔PO cases in `Receiving.test.tsx` plus PO-link normalization in `stockValidation.test.ts`; total 166/166 across 21 suites.
 
 ### Completed (Phase 4 — inventory counts, adjustments, waste and reorder alerts)
-- [x] Migration `20261118000800_counts_adjustments_waste.sql` **authored, not yet applied**: `inventory_adjustments`, `inventory_adjustment_lines`, `inventory_counts`, `inventory_count_lines`, the `stock_reorder_status` and `inventory_count_variances` views, role helpers `can_manage_inventory()` / `can_approve_inventory()` / `can_post_inventory()`, the shared `post_stock_in()` / `post_stock_out()` FIFO helpers, eight workflow RPCs, audit triggers, RLS and grants.
+- [x] Migration `20261118000800_counts_adjustments_waste.sql` **applied by owner and structure-verified** (2026-11-18): all six objects exist, anon is denied with `42501`, and all eight RPCs return their role-gate messages instead of 404.
+- [x] `inventory_adjustments`, `inventory_adjustment_lines`, `inventory_counts`, `inventory_count_lines`, the `stock_reorder_status` and `inventory_count_variances` views, role helpers `can_manage_inventory()` / `can_approve_inventory()` / `can_post_inventory()`, the shared `post_stock_in()` / `post_stock_out()` FIFO helpers, eight workflow RPCs, audit triggers, RLS and grants.
 - [x] Counts count in the item base unit; the sheet snapshots `system_quantity` when created, `variance_quantity` is a generated column, and posting reconciles the ledger to the physical quantity at posting time through `adjustment` transactions with `reference_type = 'inventory_count'` (CNT-01..05, STK-04).
 - [x] Adjustments support increase/decrease lines with damage, spoilage, theft, expired and operational-loss reasons; increases create a FIFO layer, decreases consume the oldest layers (ADJ-01..03).
 - [x] Waste is stored in the same document tables with `kind = 'waste'`, allows decrease lines only, offers the five waste reasons, and posts as a FIFO decrease with the consumed cost recorded (WST-01..03).
@@ -126,15 +127,14 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Reorder alerts compare total on-hand across locations with the item-level reorder level, show the shortage and can reveal tracked items that are not low (INV-06).
 - [x] UI: `AdjustmentPanel` / `WastePanel`, `CountPanel` and `LowStockPanel` mounted on `/inventory`; validation and database error messages cover the new documents.
 - [x] Tests: `stockValidation.test.ts` (26), `InventoryControl.test.tsx` (8) and updated stock/lookup mocks; totals below.
-- [ ] **Owner**: apply migration 0008, then live-verify AC-06 and AC-07 in the deployed app.
+- [x] **Owner**: migration 0008 applied (2026-11-18); AC-06/AC-07 live verification deferred to final UAT.
+- [x] **Agent**: migration 0008 verified through PostgREST — six objects exist, anon denied with `42501`, eight RPCs return role-gate messages.
 
 ### Outstanding
-- [ ] **Owner**: apply `supabase/migrations/20261118000800_counts_adjustments_waste.sql`.
-- [ ] **Owner/agent**: live AC-06 run — count a location below the system quantity, submit, approve as General Manager, post, and confirm the ledger reconciles to the physical quantity with a traceable variance.
-- [ ] **Owner/agent**: live AC-07 run — record waste, approve, post, and confirm stock and FIFO value decrease by the consumed cost.
-- [ ] **Agent**: verify the migration objects and RPC gates through PostgREST after migration 0008 is applied.
+- [ ] **Owner/agent**: AC-06 and AC-07 live runs **deferred to final UAT** by the owner (2026-11-18); panels load and migration objects are verified.
 - [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock cannot be enforced (open issue).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
+- [ ] Phase 5: recipes/version history, costing, production orders and atomic production posting.
 
 ---
 
@@ -143,7 +143,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
 | 🔴 HIGH | **Resolved** | Migrations 0006 and 0007 applied 2026-11-18 and checked through PostgREST | AC-03 and GRN-04 demonstration | Objects and RPCs confirmed; anon denied. Only the live signed-in workflow runs remain |
-| 🔴 HIGH | **Pending action** | Migration `20261118000800_counts_adjustments_waste.sql` is not applied yet | AC-06/AC-07 and the Phase 4 exit condition | Owner applies it in the Supabase SQL editor; the UI reports the missing tables until then |
+| 🔴 HIGH | **Resolved** | Migration `20261118000800_counts_adjustments_waste.sql` applied 2026-11-18 and checked through PostgREST | AC-06/AC-07 and the Phase 4 exit condition | Six objects confirmed; anon denied; eight RPCs role-gated. Live AC-06/AC-07 runs deferred to final UAT |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
@@ -225,6 +225,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | Migration 0006/0007 objects | REST probes for `purchase_requests`, `purchase_orders`, `purchase_order_receipts`, `grns.po_id`, `grn_lines.po_line_id` | **Pass** — objects exist; anon denied with `42501` |
 | Migration 0007 RPC shape | `create_grn` with 8 args vs the old 7 | **Pass** — 8-arg exists and is role-gated; 7-arg returns `PGRST202` |
 | PR/PO RPC gates | Seven procurement RPCs called as anon | **Pass** — each returns its role-gate message, not 404 |
+| Migration 0008 objects | REST probes for `inventory_adjustments`, `inventory_adjustment_lines`, `inventory_counts`, `inventory_count_lines`, `stock_reorder_status`, `inventory_count_variances` | **Pass** — all six exist; anon denied with `42501` |
+| Migration 0008 RPC gates | Eight inventory-control RPCs called as anon with named arguments | **Pass** — each returns its role-gate message, not 404 |
 | AC-03 live workflow | Owner-run in the deployed app | **Pass** — approval recorded, PO reached closed, purchasing officer blocked from approving |
 | GRN-04 live workflow | Owner-run against an ordered PO | **Pass** — pending → partial/complete after posting, over-receipt shown as `over` |
 | Admin login and scopes | Owner-verified | **Pass** — profile active, `system_admin`, 5 outlets |
@@ -234,10 +236,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Counts, adjustments, waste and reorder alerts are built and unit-tested.** The owner must apply migration `20261118000800_counts_adjustments_waste.sql`, then AC-06 and AC-07 can be verified live. Phases 0–3 are complete and AC-03/04/05 plus GRN-04 are verified.
+> **Phase 4 build is complete and migration 0008 is verified.** The owner has deferred detailed UAT (AC-06, AC-07 and the rest of the acceptance criteria) to the end of the project. Next: Phase 5 — recipes, costing and production.
 
 Then:
-1. Apply migration 0008 and verify its objects/RPC gates through PostgREST (anon denied, eight RPCs reachable and role-gated).
-2. Run the live AC-06 count flow: variance captured → approval → posting reconciles the ledger to the count.
-3. Run the live AC-07 waste flow: approval → posting decreases stock and FIFO value by the consumed cost.
+1. Build recipe management with ingredients, units, yield and immutable version history (REC-01..07).
+2. Compute recipe cost from current FIFO layer cost and selling price, gross profit and food-cost percentage (REC-03, REC-04).
+3. Build production orders that consume inputs and create outputs atomically through the ledger (PROD-01..04, STK-02, STK-03).
 4. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).

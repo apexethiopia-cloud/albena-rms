@@ -112,7 +112,7 @@ flowchart LR
 
 ## Phase 4 — Inventory & Purchasing (20%)
 **SRS Reference**: Section 11, Phase 4
-**Status**: 🚧 **In Progress** — GRN/SIV ledger and the PR/PO workflow delivered 2026-11-18; remaining scope below
+**Status**: ✅ **Build complete** — all Phase 4 workflows delivered; live AC-06/AC-07 verification deferred to final UAT
 
 **Delivered (2026-11-18)**:
 - Goods Receiving Notes (GRN) with atomic stock increase, FIFO layer creation and duplicate-posting protection
@@ -129,10 +129,10 @@ flowchart LR
 - Adjustments: increase/decrease documents with SRS reasons, one-shot approval and FIFO posting (ADJ-01..03)
 - Waste: item, quantity, location, date, user and reason, approved and posted as a FIFO decrease (WST-01..03)
 - Reorder alerts: total on-hand across locations compared with the item-level reorder level (INV-06)
-- Migration `20261118000800_counts_adjustments_waste.sql` written; **not yet applied** — AC-06/AC-07 live runs pending
+- Migration `20261118000800_counts_adjustments_waste.sql` **applied by owner and structure-verified** (six objects present, anon denied, eight RPCs role-gated)
 
 **Remaining**:
-- Owner applies migration 0008 and live-verifies AC-06 (count variance → approved adjustment reconciles the ledger) and AC-07 (waste decreases inventory at FIFO cost)
+- Final UAT: AC-06 (count variance → approved posting reconciles the ledger) and AC-07 (waste decreases inventory at FIFO cost); owner deferred detailed testing to the end of the project
 
 **Scope**:
 - Purchase Request workflow (Draft → Submitted → Approved/Rejected → PO)
@@ -145,7 +145,7 @@ flowchart LR
 - Waste recording and posting
 - Low-stock/reorder alert system
 
-**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-03, AC-04, AC-05 and GRN-04 are verified live; counts, adjustments and waste are built and unit-tested, with AC-06/AC-07 awaiting migration 0008 and an owner live run.
+**Exit Condition**: Stock ledger and reconciliation tests pass (AC-03..07). AC-03, AC-04, AC-05 and GRN-04 are verified live; counts, adjustments and waste are built, unit-tested and structurally verified, with AC-06/AC-07 live checks deferred to final UAT.
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 
@@ -155,7 +155,7 @@ flowchart LR
 
 ## Phase 5 — Recipes & Production (10%)
 **SRS Reference**: Section 11, Phase 5
-**Status**: ⏳ Planned
+**Status**: 🚧 **In Progress** — starting 2026-11-18 after Phase 4 build completion
 
 **Scope**:
 - Recipe management (ingredients, quantities, yield, version history)
@@ -241,8 +241,8 @@ flowchart LR
 | Phase 1 | 10% | ✅ Complete | 10.0% |
 | Phase 2 | 10% | ✅ Complete | 10.0% |
 | Phase 3 | 10% | ✅ Complete | 10.0% |
-| Phase 4 | 20% | 🚧 In Progress | 0% |
-| Phase 5 | 10% | ⏳ Planned | 0% |
+| Phase 4 | 20% | ✅ Build complete — final UAT deferred | 0% (releases at final UAT) |
+| Phase 5 | 10% | 🚧 In Progress | 0% |
 | Phase 6 | 15% | ⏳ Planned | 0% |
 | Phase 7 | 10% | ⏳ Planned | 0% |
 | Phase 8 | 10% | ⏳ Planned | 0% |

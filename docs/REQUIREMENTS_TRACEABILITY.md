@@ -95,7 +95,7 @@
 | INV-03 | Multiple stock locations | 3 | `stock_locations` | `src/features/locations/**`, `/inventory` | `Locations.test.tsx` | **Implemented** - needs authenticated integration check |
 | INV-04 | Stock balances by item + location | 4 | `stock_balances` view | `src/features/stock/StockPanel.tsx` | AC-04,05 | Implemented |
 | INV-05 | Deactivate items; preserve history | 3 | `items.is_active` | `ItemsPanel.tsx` toggle | `Items.test.tsx` | **Implemented** |
-| INV-06 | Low-stock/reorder alerts | 4 | `stock_reorder_status` view over `items.reorder_level` + `stock_transactions` (migration 0008) | `src/features/stock/LowStockPanel.tsx`, `/inventory` | `InventoryControl.test.tsx` | **Implemented** — total on-hand across locations compared with the item-level level; live check pending migration 0008 |
+| INV-06 | Low-stock/reorder alerts | 4 | `stock_reorder_status` view over `items.reorder_level` + `stock_transactions` (migration 0008) | `src/features/stock/LowStockPanel.tsx`, `/inventory` | `InventoryControl.test.tsx` | **Implemented** — total on-hand across locations compared with the item-level level; live UAT deferred |
 
 ---
 
@@ -149,7 +149,7 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| CNT-01 | Count sheet header | 4 | `inventory_counts` (migration 0008) | `src/features/stock/CountPanel.tsx`, `/inventory` | `InventoryControl.test.tsx` | **Implemented** — number, date, location, counter and notes; live check pending migration 0008 |
+| CNT-01 | Count sheet header | 4 | `inventory_counts` (migration 0008) | `src/features/stock/CountPanel.tsx`, `/inventory` | `InventoryControl.test.tsx` | **Implemented** — number, date, location, counter and notes; live UAT deferred |
 | CNT-02 | Variance per line | 4 | `inventory_count_lines.system_quantity`, `variance_quantity` (generated) | Count entry UI + `inventory_count_variances` view | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — snapshot taken at sheet creation; variance calculated by the database |
 | CNT-03 | Review and approval before adjustment posting | 4 | `inventory_counts.status` + `submit_/decide_/post_inventory_count()` | Count panel approval and posting gates | `InventoryControl.test.tsx` | **Implemented** — draft → submitted → approved/rejected → posted; posting requires approval and reconciles the ledger to the physical count (STK-04) |
 | CNT-04 | Variance and accuracy reports | 7 | `inventory_count_variances` view (migration 0008) | Report queries | RPT-02 | Not Started — variance view is ready for the Phase 7 report |
@@ -161,7 +161,7 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| ADJ-01 | +/- adjustments for approved reasons | 4 | `inventory_adjustments`, `inventory_adjustment_lines` (migration 0008) | `src/features/stock/AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — increase/decrease lines with damage, spoilage, theft, expired, operational loss; live check pending migration 0008 |
+| ADJ-01 | +/- adjustments for approved reasons | 4 | `inventory_adjustments`, `inventory_adjustment_lines` (migration 0008) | `src/features/stock/AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — increase/decrease lines with damage, spoilage, theft, expired, operational loss; live UAT deferred |
 | ADJ-02 | Require approval per role config | 4 | `can_manage_inventory()`, `can_approve_inventory()`, `can_post_inventory()` | Approval gate in the panel + RPC | `InventoryControl.test.tsx`, `Stock.test.tsx` | **Implemented** — manage/post for admin/GM/storekeeper, approve for admin/GM; OD-06 thresholds still open |
 | ADJ-03 | Post to stock ledger; never overwrite balances | 4 | `post_inventory_adjustment()`, `stock_transactions`, `stock_layers` | Adjustment post RPC | `InventoryControl.test.tsx` | **Implemented** — approved document posts once; increases create a FIFO layer, decreases consume oldest layers; no balance column is written |
 
@@ -171,7 +171,7 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| WST-01 | Waste record fields | 4 | `inventory_adjustments` with `kind = 'waste'` + lines (migration 0008) | `WastePanel` in `AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — item, quantity, location, date, user and reason recorded; FIFO cost written on posting; live check pending migration 0008 |
+| WST-01 | Waste record fields | 4 | `inventory_adjustments` with `kind = 'waste'` + lines (migration 0008) | `WastePanel` in `AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — item, quantity, location, date, user and reason recorded; FIFO cost written on posting; live UAT deferred |
 | WST-02 | Waste types supported | 4 | `inventory_adjustments` reason check | Waste reason selector | `stockValidation.test.ts` | **Implemented** — kitchen waste, burnt food, returned food, expired, spoilage; waste lines can only decrease stock |
 | WST-03 | Post approved waste as inventory decrease | 4 | `post_inventory_adjustment()` | Waste post action | `InventoryControl.test.tsx` | **Implemented** — posts `waste` transactions after approval, consuming FIFO layers |
 | WST-04 | Waste cost and trend reports | 7 | Posted cost on `inventory_adjustment_lines` | Report queries | RPT-05 | Not Started — posted cost is recorded for the Phase 7 report |
@@ -400,8 +400,8 @@
 | AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | **Verified** 2026-11-18 (owner live run) — PR submitted and approved with approver/time/comment, PO created from it and moved draft → approved → ordered → closed; purchasing officer could not approve a PO |
 | AC-04 | GRN posted once; updates correct location and valuation | 4 | **Verified** 2026-11-18 (owner live run) — GRN 2,000 g posted once to the chosen location, balance 2,000 g / ETB 240.00 |
 | AC-05 | SIV/transfer atomic; traceable stock movements | 4 | **Verified** 2026-11-18 (owner live run) — SIV 500 g left 1,500 g / ETB 180.00 (FIFO), over-issue rejected, movements traceable |
-| AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | **In Progress** — count variance, approval and posting built and unit-tested; owner live run pending migration 0008 |
-| AC-07 | Waste and production update inventory correctly | 4,5 | **In Progress** — approved waste posts as a FIFO decrease and is unit-tested; production is Phase 5; owner live run pending migration 0008 |
+| AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | **Implemented** — count variance, approval and posting built and unit-tested; migration 0008 applied and structure-verified; live UAT deferred by the owner |
+| AC-07 | Waste and production update inventory correctly | 4,5 | **In Progress** — approved waste posts as a FIFO decrease and is unit-tested; live check deferred; production arrives in Phase 5 |
 | AC-08 | Recipe costing and food-cost % verified | 5 | Not Started |
 | AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6 | Not Started |
 | AC-10 | Orders appear on KDS; status visible to other users over internet | 6 | Not Started |

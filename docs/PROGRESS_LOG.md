@@ -473,5 +473,31 @@
 - OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
 - RLS negative-test SQL script (AC-02 evidence).
 
+---
+
+## Session 19: 2026-11-18 — Migration 0008 Applied; UAT Deferred; Phase 5 Starts
+
+- **Phase**: Phase 4 build complete; Phase 5 in progress | **Completion**: **35.0%** (Phase 4 credit releases at final UAT)
+- **Date**: 2026-11-18 23:55 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner applied migration 0008** — the inventory counts, adjustments, waste and reorder-alert panels appeared in the deployed app.
+2. **Structure verified through PostgREST** — all six objects (`inventory_adjustments`, `inventory_adjustment_lines`, `inventory_counts`, `inventory_count_lines`, `stock_reorder_status`, `inventory_count_variances`) exist and deny anon with `42501`; all eight inventory-control RPCs return their role-gate messages, not 404.
+3. **Owner decision** — detailed acceptance testing (AC-06, AC-07 and the remaining criteria) is postponed to a single final UAT at the end of the project; Phase 4 is treated as build-complete and Phase 5 begins.
+4. **Docs** — Phase 4 status, blockers and next task updated; Phase 5 marked in progress.
+
+### Verification
+- Migration 0008 objects: **pass** (6/6 exist, anon denied)
+- Migration 0008 RPC gates: **pass** (8/8 role-gated)
+- Panel load in the deployed app: **pass** (owner-confirmed)
+
+### Outstanding
+- Final UAT: AC-06 count reconciliation and AC-07 waste/production inventory effects.
+- OD-06 thresholds and separation of duties remain open; the stock-location ↔ outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+- Phase 5 implementation.
+
+
 
 
