@@ -1,38 +1,36 @@
-import { FileText, ReceiptText, TrendingUp } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { TrendingUp } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { SuppliersPanel } from '@/features/suppliers/SuppliersPanel'
 import { GrnPanel } from '@/features/stock/GrnPanel'
+import { PurchaseRequestsPanel } from '@/features/procurement/PurchaseRequestsPanel'
+import { PurchaseOrdersPanel } from '@/features/procurement/PurchaseOrdersPanel'
+import type { PurchaseRequest } from '@/features/procurement/api'
 
 const PLANNED = [
   {
-    icon: FileText,
-    title: 'Purchase requests',
-    detail:
-      'Draft → submitted → approved or rejected, with the requesting outlet and the reason for rejection kept on the record.',
-  },
-  {
-    icon: ReceiptText,
-    title: 'Purchase orders',
-    detail:
-      'Orders raised from approved requests and linked to one supplier, with ordered versus received quantities.',
-  },
-  {
     icon: TrendingUp,
     title: 'Supplier performance',
-    detail:
-      'Delivery history, price changes and shortage tracking for each supplier. Reporting arrives in Phase 7.',
+    detail: 'Delivery history, price changes and shortage tracking for each supplier. Reporting arrives in Phase 7.',
   },
 ] as const
 
 export function Purchasing() {
+  const [poSeed, setPoSeed] = useState<PurchaseRequest | null>(null)
+  const clearSeed = useCallback(() => setPoSeed(null), [])
+
   return (
     <>
       <PageHeader
         title="Purchasing"
-        description="Goods receiving, supplier master data, and the purchasing documents still to come."
+        description="Purchase requests and orders, goods receiving and supplier master data."
       />
 
       <div className="space-y-6">
+        <PurchaseRequestsPanel onCreatePo={setPoSeed} />
+
+        <PurchaseOrdersPanel seed={poSeed} onSeedHandled={clearSeed} />
+
         <GrnPanel />
 
         <SuppliersPanel />
@@ -45,8 +43,8 @@ export function Purchasing() {
             Not implemented yet
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Receiving and supplier records are live. Purchase requests, purchase orders and
-            supplier reporting are still to be built.
+            Requests, orders and receiving are live. Supplier performance reporting is still to be
+            built.
           </p>
 
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">

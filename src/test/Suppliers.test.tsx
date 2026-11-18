@@ -33,6 +33,18 @@ vi.mock('@/features/stock/api', () => ({
   listStockMovements: vi.fn().mockResolvedValue([]),
 }))
 
+vi.mock('@/features/procurement/api', () => ({
+  listPurchaseRequests: vi.fn().mockResolvedValue([]),
+  listPurchaseOrders: vi.fn().mockResolvedValue([]),
+  createPurchaseRequest: vi.fn(),
+  submitPurchaseRequest: vi.fn(),
+  decidePurchaseRequest: vi.fn(),
+  createPurchaseOrder: vi.fn(),
+  approvePurchaseOrder: vi.fn(),
+  markPurchaseOrderOrdered: vi.fn(),
+  closePurchaseOrder: vi.fn(),
+}))
+
 const SUPPLIER = {
   id: 's1',
   code: 'FRESH',

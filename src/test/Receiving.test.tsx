@@ -27,9 +27,22 @@ const itemsApi = vi.hoisted(() => ({
   updateItemUnitConversion: vi.fn(),
 }))
 
+const procurementApi = vi.hoisted(() => ({
+  listPurchaseRequests: vi.fn(),
+  listPurchaseOrders: vi.fn(),
+  createPurchaseRequest: vi.fn(),
+  submitPurchaseRequest: vi.fn(),
+  decidePurchaseRequest: vi.fn(),
+  createPurchaseOrder: vi.fn(),
+  approvePurchaseOrder: vi.fn(),
+  markPurchaseOrderOrdered: vi.fn(),
+  closePurchaseOrder: vi.fn(),
+}))
+
 vi.mock('@/features/stock/api', () => stockApi)
 vi.mock('@/features/suppliers/api', () => suppliersApi)
 vi.mock('@/features/items/api', () => itemsApi)
+vi.mock('@/features/procurement/api', () => procurementApi)
 vi.mock('@/features/locations/api', () => ({
   listLocations: vi.fn(),
   createLocation: vi.fn(),
@@ -156,6 +169,9 @@ beforeEach(() => {
   itemsApi.createItemUnitConversion.mockResolvedValue(undefined)
   itemsApi.updateItem.mockResolvedValue(undefined)
   itemsApi.updateItemUnitConversion.mockResolvedValue(undefined)
+
+  procurementApi.listPurchaseRequests.mockResolvedValue([])
+  procurementApi.listPurchaseOrders.mockResolvedValue([])
 
   vi.mocked(listLocations).mockResolvedValue(LOCATIONS)
 })
