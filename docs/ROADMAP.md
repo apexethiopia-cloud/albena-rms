@@ -215,7 +215,7 @@ flowchart LR
 - `/operations` page with `MenuPanel`, `TablesPanel`, `ReservationsPanel`, `OrdersPanel` and `KitchenDisplayPanel`; `BusinessSettingsPanel` mounted on `/settings`
 - Role gates mirror the SRS table: menu/layout = admin/GM/RM; table status = +waiter/cashier; reservations/orders = +waiter; kitchen status = +executive chef/kitchen staff; close = admin/GM/RM/cashier; business settings = admin/GM
 - Tests: `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12); full suite 252/252 across 28 suites
-- Commits `ac31955` (slice 1) and `3ed1273` (slice 2) pushed to `main`; Cloudflare serves `assets/index-bR3rdj_e.js` (811,264 bytes)
+- Commits `ac31955` (slice 1) and `3ed1273` (slice 2) pushed to `main`; Cloudflare serves `assets/index-fqmOEPuP.js` (811,382 bytes)
 
 **Remaining**:
 - Owner applies migration 0009, then 0010; agent verifies the tables, views and RPC gates through PostgREST

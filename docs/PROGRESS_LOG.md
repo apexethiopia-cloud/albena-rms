@@ -550,14 +550,14 @@
 9. **Receipt footer gap** - the footer was editable but not stored on receipts; `receipt_footer` was added to the receipts table and `close_order()` snapshot, and the receipt view now prints it. Migration 0010 had not been applied, so no follow-up migration is needed.
 10. **UI and navigation** - the `/operations` placeholder was replaced with `MenuPanel`, `TablesPanel`, `ReservationsPanel`, `OrdersPanel` and `KitchenDisplayPanel`; `BusinessSettingsPanel` was added to `/settings`.
 11. **Tests** - `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12) cover payloads, role gates, order/KDS flow, receipt rendering and business settings.
-12. **Commits** - slice 1 `ac31955`; slice 2 `3ed1273` (13 files, 3,112 insertions); both pushed to `main`.
+12. **Commits** - slice 1 `ac31955`; slice 2 `3ed1273` (13 files, 3,112 insertions); docs and receipt-footer fix `a80f90f`; all pushed to `main`.
 
 ### Verification
 - `npm run typecheck` - pass
 - `npm run lint` - pass (zero warnings)
 - `npm run test` - 252/252 pass across 28 suites
 - `npm run build` - pass (811.08 kB JS / 186.65 kB gzip, 24.76 kB CSS; chunk-size warning only)
-- Live deployment - `https://albena-rms.pages.dev` serves `assets/index-C14jpLIO.js` (811,383 bytes) containing New order, Kitchen display, Close & print receipt, Business & receipts, `receipt_number`, `split_order` and `merge_orders`
+- Live deployment - `https://albena-rms.pages.dev` serves `assets/index-fqmOEPuP.js` (811,382 bytes) containing New order, Kitchen display, Close & print receipt, Business & receipts, `receipt_number`, `split_order`, `merge_orders` and `receipt_footer`
 - Migrations 0009 and 0010 - authored, **not yet applied**
 
 ### Outstanding

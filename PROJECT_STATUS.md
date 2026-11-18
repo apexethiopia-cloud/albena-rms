@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 6 build complete — awaiting migrations 0009 and 0010, then final UAT |
 | **Overall Completion** | **35.0%** (Phases 0–3 complete; Phases 4–6 credit releases at final UAT) |
 | **Last Updated** | 2026-11-18 23:30 UTC+3 |
-| **Latest Git Commit** | `3ed1273` (Phase 6 slice 2: orders, KDS and receipt settings) |
+| **Latest Git Commit** | `a80f90f` (Phase 6 docs + receipt footer) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -165,7 +165,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Settings: `BusinessSettingsPanel` edits the receipt identity and VAT rate; write access is limited to admin/GM and everyone else sees a read-only summary (OD-08).
 - [x] Order guardrails: merging requires a manager and same-outlet open orders; split must leave at least one line behind; transfers ignore tables that already have an open order.
 - [x] Tests: `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12) cover payloads, role gates, the order/KDS flow, receipt rendering and business settings.
-- [x] Committed as `3ed1273` (13 files, 3,112 insertions) and pushed to `main`; a follow-up snapshot fix stores the receipt footer on each receipt. Cloudflare serves `assets/index-C14jpLIO.js` (811,383 bytes) containing the order, KDS and receipt markers.
+- [x] Committed as `3ed1273` (13 files, 3,112 insertions) and pushed to `main`; a follow-up snapshot fix stores the receipt footer on each receipt. Cloudflare serves `assets/index-fqmOEPuP.js` (811,382 bytes) containing the order, KDS and receipt markers.
 
 ### Outstanding
 - [ ] **Owner**: apply `supabase/migrations/20261118000900_recipes_production.sql`.
@@ -280,7 +280,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `npm run build` | Production bundle | **Pass** — 811.08 kB JS (186.65 kB gzip), 24.76 kB CSS (chunk-size warning only) |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback; `assets/index-BSJnI50i.js` (670,647 bytes) contains the reorder, count, adjustment and waste panel markers |
 | Live deployment (Phase 5) | `https://albena-rms.pages.dev` root and served bundle | **Pass** — 200; `assets/index-BKF57faz.js` (715,354 bytes) contains the `/kitchen` route, New recipe/New production actions, food cost, `recipe_version_costs`, `create_recipe` and `post_production_order` |
-| Live deployment (Phase 6) | `https://albena-rms.pages.dev` root and served bundle | **Pass** — 200; `assets/index-C14jpLIO.js` (811,383 bytes) contains New order, Kitchen display, Close & print receipt, Business & receipts, `receipt_number`, `split_order` and `merge_orders` |
+| Live deployment (Phase 6) | `https://albena-rms.pages.dev` root and served bundle | **Pass** — 200; `assets/index-fqmOEPuP.js` (811,382 bytes) contains New order, Kitchen display, Close & print receipt, Business & receipts, `receipt_number`, `split_order`, `merge_orders` and `receipt_footer` |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
 | Supabase anon denial | `audit_logs` | **Pass** — `42501`, deny by design |
