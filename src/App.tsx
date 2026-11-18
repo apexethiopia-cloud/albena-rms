@@ -9,6 +9,7 @@ import { Inventory } from '@/pages/Inventory'
 import { Kitchen } from '@/pages/Kitchen'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
+import { Operations } from '@/pages/Operations'
 import { Purchasing } from '@/pages/Purchasing'
 import { Settings } from '@/pages/Settings'
 
@@ -27,23 +28,7 @@ export function AppRoutes() {
 
           <Route path="kitchen" element={<Kitchen />} />
 
-          <Route
-            path="operations"
-            element={
-              <ComingSoon
-                title="Operations"
-                phase="Phase 6"
-                description="Menus, tables, reservations, orders, KDS and receipts."
-                planned={[
-                  'Menu items with price snapshots preserved at sale time',
-                  'Table status, merge, split and transfer',
-                  'Reservation lifecycle with overlap detection (OD-09 pending)',
-                  'Kitchen display with live updates over Supabase Realtime',
-                  'Receipt printing and PDF output',
-                ]}
-              />
-            }
-          />
+          <Route path="operations" element={<Operations />} />
 
           <Route
             path="reports"

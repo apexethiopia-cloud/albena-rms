@@ -71,7 +71,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="border-t border-slate-200 px-5 py-4">
-        <p className="text-xs font-medium text-slate-500">Phase 5 · Recipes &amp; production</p>
+        <p className="text-xs font-medium text-slate-500">Phase 6 · Restaurant operations</p>
         <p className="mt-0.5 text-xs text-slate-400">v0.1.0</p>
       </div>
     </>

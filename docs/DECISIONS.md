@@ -130,6 +130,26 @@
 
 ---
 
+## ADR-013: Restaurant Operations, VAT-Inclusive Receipts and Order Concurrency
+- **Date**: 2026-11-18 | **Status**: Accepted
+- **SRS Reference**: MENU-01..03, TBL-01..04, RES-01..04, ORD-01..06, KDS-01..05, RCT-01..05, AC-10, AC-11, AC-14, OD-01, OD-07..OD-10, OD-12, ADR-007, ADR-008
+- **Context**: Phase 6 adds menus, tables, reservations, orders, a kitchen display and receipts. Five open decisions blocked it; the owner answered them on 2026-11-18. The menu entity also lets recipes move from a text menu-item name to a real reference.
+- **Decision**:
+  - **Menu and price snapshots.** `menu_items` holds code, name, category, VAT-inclusive selling price, optional recipe link and active flag. Order lines copy the item code, name and unit price at entry, so later menu edits never rewrite a closed or historical order (MENU-03, RCT-05).
+  - **VAT (OD-07).** Menu prices include VAT. VAT is extracted once at order close: `vat = round(total × 15 / 115, 2)`, `subtotal = total − vat`. No service charge, no discounts and no other tax is applied because the owner selected VAT only. The rate lives in `business_settings` so a future legal change is an edit, not a code change.
+  - **Receipts (OD-08).** Numbering is per outlet per business day: `<outlet code>-YYYYMMDD-####`. Numbers reset daily and are allocated atomically by `next_document_number()`. The business name, TIN, address, phone and receipt footer are editable in Settings and are snapshotted onto each receipt. Output is browser print / print-to-PDF (RCT-02); no payment credentials are handled (RCT-04).
+  - **Reservations (OD-09, OD-10).** A reservation stores the number, outlet, guest name, phone, date, time, party size, optional table and special requests. Table assignment is optional. One active reservation per table and exact date/time is enforced by a partial unique index; the UI warns when the number of active reservations for an outlet, date and time exceeds the active table count. Guest profiles and cross-visit history do not exist, a deliberate deviation from RES-03; RES-01 name and phone remain.
+  - **Hotel features (OD-12).** Room charges, room service and guest folios are out of scope for the prototype.
+  - **Order lifecycle.** `pending → sent_to_kitchen → preparing → ready → served → closed`, plus `cancelled`. Waiters/restaurant managers/admin take, modify, send, transfer and split orders; kitchen staff/executive chef move orders to preparing/ready; waiters mark served; cashier (and managers/admin) close. Modifying or cancelling after the order is sent requires a manager. Closing requires the order to be served.
+  - **Concurrency (AC-14).** Orders carry a `revision`. Every mutating RPC takes the expected revision and raises SQLSTATE `40001` on mismatch, which the UI reports as a visible refresh-and-retry conflict. Reservations rely on row locks plus status-transition validation.
+  - **Table state.** Opening an order on an available or reserved table marks it occupied. Closing, cancelling, transferring away or merging away frees the table only when no other open order remains. Tables in cleaning or closed state cannot receive orders. Status changes are role-gated; a table with an open order cannot be marked available.
+  - **Merge and split.** Split moves selected whole lines to a new order and requires at least one line to remain on the original. Merge moves all lines to a target order and cancels the source with an audit reason. Both record the acting user and preserve price snapshots.
+  - **KDS (KDS-01..05).** The kitchen display reads orders in sent/preparing/ready states and updates them through `set_order_status()`. `orders` and `order_lines` join the `supabase_realtime` publication so connected clients receive changes; each event triggers a refetch under RLS. Offline KDS remains out of scope.
+  - **Roles**: menu and table layout = System Administrator/General Manager/Restaurant Manager; table status also Waiter/Cashier; reservations and order taking = those plus Waiter; kitchen status = System Administrator/General Manager/Restaurant Manager/Executive Chef/Kitchen Staff; close = System Administrator/General Manager/Restaurant Manager/Cashier; business settings = System Administrator/General Manager.
+- **Consequences**: Migration `20261118001000_restaurant_operations.sql` adds the tables, views, triggers, RLS and fifteen RPCs. Recipe costing can later join `menu_items.recipe_id`; theoretical consumption (REC-07, COST-01..03) still needs sales reporting in Phase 7. Outlet scoping of reads remains role-based because stock locations and outlets are still not linked and all test users hold every role.
+
+---
+
 ## Open Decisions Log (OD-01 to OD-13)
 
 > These require owner confirmation before the relevant phase begins. Developers must NOT invent business policy.
@@ -143,12 +163,12 @@
 | OD-04 Inventory costing method | ✅ **FIFO** (owner decision 2026-11-18, ADR-009) | Phase 4 |
 | OD-05 Unit conversion rules | ✅ **Base units + item-specific factors** (ADR-010) | Phase 4 |
 | OD-06 Approval thresholds and SoD | ✅ **Approval workflows required (yes)** | Phase 4 |
-| OD-07 Taxes, service charges, discounts | **Open** | Phase 6 |
-| OD-08 Receipt format, numbering, language, currency | ✅ **ETB (Ethiopian Birr)** — numbering/format TBC | Phase 6 |
-| OD-09 Reservation capacity and table assignment rules | **Open** | Phase 6 |
-| OD-10 Guest profile retention and privacy rules | **Open** | Phase 6 |
+| OD-07 Taxes, service charges, discounts | ✅ **VAT 15% only; menu prices include VAT; no service charge or discounts** (ADR-013) | Phase 6 |
+| OD-08 Receipt format, numbering, language, currency | ✅ **ETB; `<outlet>-YYYYMMDD-####` per outlet per business day; identity editable in Settings** (ADR-013) | Phase 6 |
+| OD-09 Reservation capacity and table assignment rules | ✅ **Optional table; exact-slot double-booking blocked; overbooking warning** (ADR-013) | Phase 6 |
+| OD-10 Guest profile retention and privacy rules | ✅ **Name and phone on the reservation only; no profile or history** (ADR-013) | Phase 6 |
 | OD-11 Currency and decimal precision | ✅ **ETB — 2 decimal places assumed** | Phase 1 |
-| OD-12 Hotel features scope | **Open** | Phase 6 |
+| OD-12 Hotel features scope | ✅ **Deferred — no room charges, room service or folios** (ADR-013) | Phase 6 |
 | OD-13 Free-tier eligibility and backup/restore expectations | ✅ **Confirmed — Supabase + Cloudflare Pages free tier, no card required** | Phase 1 |
 
 ### OD-06 interim implementation (Phase 4, 2026-11-18)
