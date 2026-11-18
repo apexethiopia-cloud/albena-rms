@@ -82,15 +82,14 @@ flowchart LR
 
 ## Phase 3 — Master Data (10%)
 **SRS Reference**: Section 11, Phase 3
-**Status**: 🟡 **IN PROGRESS** — outlets, suppliers, items and stock locations delivered; conversions and user administration pending.
+**Status**: 🟡 **IN PROGRESS** — outlets, suppliers, items, stock locations and unit conversions delivered; user administration pending.
 
 **Scope**:
 - ✅ Outlet management UI: list, create, edit, deactivate/reactivate (no deletes)
 - ✅ Supplier management UI: list, create, edit, deactivate/reactivate (no deletes)
 - ✅ Item master UI: list, create, edit, deactivate/reactivate; category, base unit, optional purchase unit, reorder level
 - ✅ Stock-location management UI: list, create, edit, deactivate/reactivate (no deletes)
-- Business workspace, outlets and location management UI
-- Item unit-conversion editor (box / carton / sack factors)
+- ✅ Item unit-conversion editor (box / carton / sack factors, created + edit factor, per item)
 - Stock location management
 - User management UI (assign roles, outlet scopes, disable/reactivate)
 

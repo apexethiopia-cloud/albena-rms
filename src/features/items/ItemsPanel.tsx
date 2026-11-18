@@ -15,10 +15,13 @@ import { formatDate } from '@/lib/format'
 import { hasRole, useAuth } from '@/features/auth/auth-context'
 import {
   createItem,
+  createItemUnitConversion,
   listCategories,
+  listItemUnitConversions,
   listItems,
   listUnits,
   updateItem,
+  updateItemUnitConversion,
   type Category,
   type Item,
   type Unit,
@@ -68,12 +71,16 @@ export function ItemsPanel() {
   const [items, setItems] = useState<Item[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [conversions, setConversions] = useState<
+    Array<{ item_id: string; unit_id: string; base_factor: number }>
+  >([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
 
   const [mode, setMode] = useState<FormMode | null>(null)
   const [form, setForm] = useState<ItemInput>(EMPTY)
+  const [factor, setFactor] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -87,12 +94,13 @@ export function ItemsPanel() {
     setLoading(true)
     setLoadError(null)
 
-    Promise.all([listItems(), listUnits(), listCategories()])
-      .then(([itemRows, unitRows, categoryRows]) => {
+    Promise.all([listItems(), listUnits(), listCategories(), listItemUnitConversions()])
+      .then(([itemRows, unitRows, categoryRows, conversionRows]) => {
         if (cancelled) return
         setItems(itemRows)
         setUnits(unitRows)
         setCategories(categoryRows)
+        setConversions(conversionRows)
       })
       .catch((error: unknown) => {
         if (!cancelled) setLoadError(toMessage(error))
@@ -113,6 +121,18 @@ export function ItemsPanel() {
   )
   const baseUnits = useMemo(() => units.filter((unit) => unit.is_base), [units])
   const purchaseUnits = useMemo(() => units.filter((unit) => !unit.is_base), [units])
+  const conversionByItemUnit = useMemo(
+    () =>
+      new Map(
+        conversions.map(
+          (conversion) => [
+            `${conversion.item_id}:${conversion.unit_id}`,
+            conversion.base_factor,
+          ] as [string, number],
+        ),
+      ),
+    [conversions],
+  )
 
   const reload = () => setReloadToken((token) => token + 1)
 
@@ -129,6 +149,7 @@ export function ItemsPanel() {
   const openCreate = () => {
     setMode({ kind: 'create' })
     setForm({ ...EMPTY, baseUnitId: baseUnits[0]?.id ?? '' })
+    setFactor('')
     setFieldErrors({})
     setFormError(null)
     setNotice(null)
@@ -137,6 +158,11 @@ export function ItemsPanel() {
   const openEdit = (item: Item) => {
     setMode({ kind: 'edit', item })
     setForm(fromItem(item))
+    setFactor(
+      item.purchase_unit_id
+        ? String(conversionByItemUnit.get(`${item.id}:${item.purchase_unit_id}`) ?? '')
+        : '',
+    )
     setFieldErrors({})
     setFormError(null)
     setNotice(null)
@@ -150,15 +176,38 @@ export function ItemsPanel() {
     setFieldErrors(result.errors)
     if (!result.valid) return
 
+    const purchaseUnitId = form.purchaseUnitId || ''
+    const purchaseUnit = purchaseUnitId ? unitById.get(purchaseUnitId) : undefined
+    const needsConversion =
+      !!purchaseUnitId && !!purchaseUnit && purchaseUnit.base_factor === null
+
+    if (needsConversion) {
+      const parsedFactor = Number(factor)
+      if (!factor.trim() || !Number.isFinite(parsedFactor) || parsedFactor <= 0) {
+        setFieldErrors((current) => ({
+          ...current,
+          purchaseUnit: 'Enter how many base units one purchase unit contains for this item.',
+        }))
+        return
+      }
+    }
+
     setSaving(true)
     setFormError(null)
 
     try {
+      let itemId: string | null = null
       if (mode.kind === 'create') {
-        await createItem(result.normalized)
+        itemId = await createItem(result.normalized)
+        if (needsConversion) {
+          await createItemUnitConversion(itemId, purchaseUnitId, Number(factor))
+        }
         setNotice(`Item ${result.normalized.code} created.`)
       } else {
         await updateItem(mode.item.id, result.normalized)
+        if (needsConversion) {
+          await updateItemUnitConversion(mode.item.id, purchaseUnitId, Number(factor))
+        }
         setNotice(`Item ${result.normalized.code} updated.`)
       }
       closeForm()
@@ -385,7 +434,12 @@ export function ItemsPanel() {
               <select
                 id="item-purchase-unit"
                 value={form.purchaseUnitId}
-                onChange={(event) => setField('purchaseUnitId')(event.target.value)}
+                onChange={(event) => {
+                  setField('purchaseUnitId')(event.target.value)
+                  setFactor(event.target.value ? '' : '')
+                }}
+                aria-invalid={Boolean(fieldErrors.purchaseUnit)}
+                aria-describedby={fieldErrors.purchaseUnit ? 'item-purchase-unit-error' : undefined}
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500"
               >
                 <option value="">Same as base unit</option>
@@ -399,8 +453,36 @@ export function ItemsPanel() {
               {needsConversion && (
                 <p className="mt-1 text-xs text-amber-700">
                   {selectedPurchaseUnit?.name} has no universal size. A per-item factor is required
-                  before this unit can be received; the conversion editor is not built yet.
+                  before this unit can be received.
                 </p>
+              )}
+              {needsConversion && (
+                <div className="mt-2">
+                  <label
+                    htmlFor="item-purchase-factor"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    Purchase unit factor
+                  </label>
+                  <input
+                    id="item-purchase-factor"
+                    inputMode="decimal"
+                    value={factor}
+                    onChange={(event) => setFactor(event.target.value)}
+                    aria-invalid={Boolean(fieldErrors.purchaseUnit)}
+                    aria-describedby={fieldErrors.purchaseUnit ? 'item-purchase-unit-error' : undefined}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 sm:max-w-56"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    How many base units (g / ml / piece) one {selectedPurchaseUnit?.name} contains
+                    for this item.
+                  </p>
+                  {fieldErrors.purchaseUnit && (
+                    <p id="item-purchase-unit-error" className="mt-1 text-xs text-red-700">
+                      {fieldErrors.purchaseUnit}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 

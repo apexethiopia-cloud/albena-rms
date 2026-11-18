@@ -8,8 +8,11 @@ const api = vi.hoisted(() => ({
   listItems: vi.fn(),
   listUnits: vi.fn(),
   listCategories: vi.fn(),
+  listItemUnitConversions: vi.fn(),
   createItem: vi.fn(),
+  createItemUnitConversion: vi.fn(),
   updateItem: vi.fn(),
+  updateItemUnitConversion: vi.fn(),
 }))
 
 vi.mock('@/features/items/api', () => api)
@@ -94,8 +97,11 @@ beforeEach(() => {
   api.listItems.mockResolvedValue([ITEM])
   api.listUnits.mockResolvedValue(UNITS)
   api.listCategories.mockResolvedValue(CATEGORIES)
+  api.listItemUnitConversions.mockResolvedValue([])
   api.createItem.mockResolvedValue(undefined)
+  api.createItemUnitConversion.mockResolvedValue(undefined)
   api.updateItem.mockResolvedValue(undefined)
+  api.updateItemUnitConversion.mockResolvedValue(undefined)
 })
 
 describe('Inventory — items', () => {
@@ -155,7 +161,26 @@ describe('Inventory — items', () => {
     await user.selectOptions(screen.getByLabelText('Purchase unit'), 'unit-box')
 
     expect(await screen.findByText(/no universal size/i)).toBeInTheDocument()
-    expect(screen.getByText(/conversion editor is not built yet/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/purchase unit factor/i)).toBeInTheDocument()
+  })
+
+  it('creates an item and records its purchase unit factor', async () => {
+    api.createItem.mockResolvedValue('new-item-id')
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText('Tomato, fresh')
+    await user.click(screen.getByRole('button', { name: /new item/i }))
+    await user.type(screen.getByLabelText('Code'), 'COFFEE_BEAN')
+    await user.type(screen.getByLabelText('Item name'), 'Coffee Bean')
+    await user.selectOptions(screen.getByLabelText('Purchase unit'), 'unit-box')
+    await user.type(screen.getByLabelText(/purchase unit factor/i), '20')
+
+    await user.click(screen.getByRole('button', { name: /create item/i }))
+
+    await waitFor(() => {
+      expect(api.createItemUnitConversion).toHaveBeenCalledWith('new-item-id', 'unit-box', 20)
+    })
   })
 
   it('blocks an invalid item before calling the database', async () => {

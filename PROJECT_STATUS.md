@@ -78,15 +78,16 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Supplier write gate matches the `suppliers_write` policy: System Administrator, General Manager, Purchasing Officer.
 - [x] Missing-table errors (`PGRST205`/`42P01`) explain that a pending migration must be applied, instead of showing a raw PostgREST message.
 - [x] `/inventory` route now renders a real page (no longer a placeholder).
-- [x] Item master panel: list, create, edit, deactivate/reactivate with category, base unit, optional purchase unit and reorder level.
+- [x] Item master panel: list, create, edit, deactivate/reactivate with category, base unit, optional purchase unit, reorder level.
+- [x] Item unit-conversion factor entry for purchase units without a universal size (box / carton / sack), recorded per item via `item_unit_conversions`.
 - [x] Item write gate matches the `items_write` policy: System Administrator, General Manager, Purchasing Officer, Storekeeper, Executive Chef.
 - [x] Base units limited to the seeded gram / millilitre / piece; reorder level validated as a non-negative decimal in the base unit.
-- [x] Box/carton/sack purchase units are selectable but flagged in the form as needing a per-item factor (editor not built yet).
+- [x] Box/carton/sack purchase units are selectable; when selected, a per-item factor is required and recorded via `item_unit_conversions` (create + edit).
 
 ### Outstanding
-- [ ] **Owner**: create the two remaining test accounts and verify AC-01 / AC-02.
-- [ ] Integration-test outlets, suppliers and items with an authenticated account (migrations are applied; all three UIs are written and unit-tested).
-- [ ] Item unit-conversion editor for box / carton / sack factors.
+- [x] **Owner**: the two additional test accounts were created and the GM / Restaurant Manager roles were assigned.
+- [ ] AC-01 / AC-02 verification sign-off after confirming the new logins.
+- [ ] Integration-test outlets, suppliers, items and stock locations with an authenticated account (migrations are applied; all four UIs are written and unit-tested).
 - [ ] Category CRUD UI, user administration UI (roles, outlet scopes, disable/reactivate).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 
@@ -171,4 +172,4 @@ Completion percentage calculated from SRS Phase exit conditions only.
 Then:
 1. Open `/settings`, `/purchasing` and `/inventory` and create one outlet, one supplier and one item with the administrator account. This is the first end-to-end check of RLS with a real session.
 2. Run the RLS negative tests: signed-out and role-less requests must be rejected (AC-02).
-3. Build the item unit-conversion editor (box / carton / sack factors) and the stock-location screen.
+3. Build the stock-location screen and the category CRUD, then start the Phase 4 stock ledger (GRN / SIV / FIFO).

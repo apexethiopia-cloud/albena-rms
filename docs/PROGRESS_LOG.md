@@ -232,3 +232,25 @@
 - Stock locations: still need an authenticated check (the panel is written and unit-tested; seeded locations can only be read with a real session).
 - Category CRUD UI, user administration UI.
 - AC-01/AC-02 evidence needs the two remaining test accounts.
+
+---
+
+## Session 10: 2026-11-18 — Item Unit-Conversion Editor Built
+
+- **Phase**: Phase 3 in progress | **Completion**: **25.0%** (unchanged; Phase 3 exit condition still open)
+- **Date**: 2026-11-18 14:45 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+
+### Actions Completed
+1. **Item conversion API**: `listItemUnitConversions`, `createItemUnitConversion`, `updateItemUnitConversion` against `item_unit_conversions`; `createItem` now returns the new item id.
+2. **Item form**: when a purchase unit with a null global factor (box / carton / sack) is selected, a required per-item factor field appears and is submitted with create/update.
+3. **Tests**: added mock exports for the new API functions and a new test covering item creation + conversion recording.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 80/80 pass across 12 suites
+- `npm run build` — pass (491 kB JS / 133 kB gzip, 19 kB CSS)
+
+### Outstanding
+- Same as previous session, plus an authenticated end-to-end check.

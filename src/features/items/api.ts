@@ -63,15 +63,60 @@ export async function listCategories(): Promise<Category[]> {
   return (data ?? []) as unknown as Category[]
 }
 
-export async function createItem(input: NormalizedItem): Promise<void> {
-  const { error } = await requireSupabase().from('items').insert({
+export async function createItem(input: NormalizedItem): Promise<string> {
+  const { data, error } = await requireSupabase().from('items').insert({
     code: input.code,
     name: input.name,
     category_id: input.categoryId,
     base_unit_id: input.baseUnitId,
     purchase_unit_id: input.purchaseUnitId,
     reorder_level: input.reorderLevel,
-  })
+  }).select('id').single()
+
+  if (error) throw new Error(describeItemDbError(error))
+  if (!data) throw new Error(describeItemDbError({ message: 'The insert returned no row' }))
+  return (data as { id: string }).id
+}
+
+export async function listItemUnitConversions(): Promise<
+  Array<{ item_id: string; unit_id: string; base_factor: number }>
+> {
+  const { data, error } = await requireSupabase()
+    .from('item_unit_conversions')
+    .select('item_id, unit_id, base_factor')
+
+  if (error) throw new Error(describeItemDbError(error))
+  return (data ?? []) as unknown as Array<{
+    item_id: string
+    unit_id: string
+    base_factor: number
+  }>
+}
+
+export async function createItemUnitConversion(
+  itemId: string,
+  unitId: string,
+  baseFactor: number,
+): Promise<void> {
+  const { error } = await requireSupabase()
+    .from('item_unit_conversions')
+    .insert({ item_id: itemId, unit_id: unitId, base_factor: baseFactor })
+    .select('item_id, unit_id, base_factor')
+    .single()
+
+  if (error) throw new Error(describeItemDbError(error))
+}
+
+export async function updateItemUnitConversion(
+  itemId: string,
+  unitId: string,
+  baseFactor: number,
+): Promise<void> {
+  const { error } = await requireSupabase()
+    .from('item_unit_conversions')
+    .update({ base_factor: baseFactor })
+    .eq('item_id', itemId)
+    .eq('unit_id', unitId)
 
   if (error) throw new Error(describeItemDbError(error))
 }
