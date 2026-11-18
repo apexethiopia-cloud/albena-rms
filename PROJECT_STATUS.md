@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 6 build complete — migrations 0009/0010 applied and verified; hotfix 0011 pending |
 | **Overall Completion** | **35.0%** (Phases 0–3 complete; Phases 4–6 credit releases at final UAT) |
 | **Last Updated** | 2026-11-19 00:30 UTC+3 |
-| **Latest Git Commit** | `docs` — Phase 5/6 migration verification and hotfix 0011 |
+| **Latest Git Commit** | `ca84ac2` (Phase 5/6 verification + receipt footer hotfix 0011) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
