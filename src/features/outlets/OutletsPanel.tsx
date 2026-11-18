@@ -29,10 +29,9 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function OutletsPanel() {
   const { state } = useAuth()
   const user = state.status === 'signed-in' ? state.user : null
-  // Convenience only. PostgreSQL RLS rejects writes from other roles anyway (ADR-003).
-  const canManage = user
-    ? hasRole(user.roles, 'system_admin') || hasRole(user.roles, 'general_manager')
-    : false
+  // Convenience only, and deliberately narrower than the master-data policies:
+  // the applied `outlets_admin_write` policy allows system_admin only (ADR-003).
+  const canManage = user ? hasRole(user.roles, 'system_admin') : false
 
   const [outlets, setOutlets] = useState<Outlet[]>([])
   const [loading, setLoading] = useState(true)
@@ -179,8 +178,8 @@ export function OutletsPanel() {
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
             <span>
-              Read-only. Changing outlets requires the System Administrator or General Manager role,
-              and the database rejects the write without it.
+              Read-only. Changing outlets requires the System Administrator role, and the database
+              rejects the write without it.
             </span>
           </div>
         )}

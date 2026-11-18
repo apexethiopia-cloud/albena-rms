@@ -148,4 +148,13 @@ describe('Settings — outlets', () => {
     expect(screen.queryByRole('button', { name: /deactivate/i })).toBeNull()
     expect(screen.getByText(/read-only/i)).toBeInTheDocument()
   })
+
+  it('hides write controls from a General Manager, because the policy allows admin only', async () => {
+    renderSettings(['general_manager'])
+
+    await screen.findByText('Main Restaurant')
+
+    expect(screen.queryByRole('button', { name: /new outlet/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /deactivate/i })).toBeNull()
+  })
 })
