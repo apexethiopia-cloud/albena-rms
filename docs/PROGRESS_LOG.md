@@ -596,4 +596,28 @@
 
 
 
+## Session 23: 2026-11-19 - Hotfix 0011 Applied and Re-Verified; Phase 6 Closed
+
+- **Phase**: Phase 6 verified live; Phase 7 next | **Completion**: **35.0%** credited (Phases 4-6 release at final UAT)
+- **Date**: 2026-11-19 01:00 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner applied 0011** - `20261118001100_receipt_footer_and_function_privileges.sql` ran successfully on the live project.
+2. **Footer fixed** - `receipts?select=id,receipt_number,receipt_footer` now returns `42501 permission denied for table receipts` instead of `42703 column does not exist`, confirming the column and schema-cache reload. `close_order()` is the version that snapshots `business_settings.receipt_footer`.
+3. **Privilege hole closed** - `occupy_table`, `free_table_if_idle`, `next_document_number`, `insert_recipe_version_lines`, `post_stock_in` and `post_stock_out` all return `401` / `42501 permission denied for function` to anon.
+4. **No regressions** - sample probes of `recipes`, `reservations`, `can_close_orders`, `close_order` and `business_today` return `401`/`42501`, not `404`/`PGRST202`.
+5. **Records updated** - `PROJECT_STATUS.md`, `ROADMAP.md` and this log now show 0009/0010/0011 applied and verified; the hotfix blocker is resolved and the recommended next task is Phase 7.
+
+### Verification
+- Post-hotfix probe script - 12 checks, all expected outcomes (`401`/`42501`, no `42703`/`404`)
+- Application tests - unchanged since the last green run (252/252 across 28 suites); no application code changed
+
+### Outstanding
+- Final UAT: AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
+- Phase 7 reporting/dashboard build (RPT-01..09, KDS-04, COST-01..03).
+- OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
+
+
+
 

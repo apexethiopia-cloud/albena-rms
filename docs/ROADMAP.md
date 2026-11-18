@@ -188,7 +188,7 @@ flowchart LR
 
 ## Phase 6 — Restaurant Operations (15%)
 **SRS Reference**: Section 11, Phase 6
-**Status**: ✅ **Build complete** — migrations 0009/0010 applied and verified; hotfix 0011 pending, then final UAT
+**Status**: ✅ **Build complete** — migrations 0010/0011 applied and verified; final UAT deferred
 
 **Scope**:
 - Menu management (items, categories, pricing, deactivation)
@@ -216,10 +216,9 @@ flowchart LR
 - Tests: `menuValidation.test.ts`, `tablesReservationsValidation.test.ts`, `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12); full suite 252/252 across 28 suites
 - Commits `ac31955` (slice 1) and `3ed1273` (slice 2) pushed to `main`; Cloudflare serves `assets/index-fqmOEPuP.js` (811,382 bytes)
 - Migrations 0009 and 0010 applied by the owner and verified through PostgREST: all 16 objects and 33 RPCs resolve; anon is denied with `42501`, not `404`
-- Verification gap: the applied 0010 predates the receipt-footer snapshot, so `receipts.receipt_footer` is missing. Hotfix `20261118001100_receipt_footer_and_function_privileges.sql` adds it, recreates `close_order()`, and revokes anonymous EXECUTE on ungated helpers
+- Verification gap: the applied 0010 predated the receipt-footer snapshot, so `receipts.receipt_footer` was missing. Hotfix `20261118001100_receipt_footer_and_function_privileges.sql` added it, recreated `close_order()`, and revoked anonymous EXECUTE on ungated helpers; applied 2026-11-19 and re-verified
 
 **Remaining**:
-- Owner applies hotfix 0011; agent confirms the footer column and that anon can no longer execute the helpers
 - Final UAT: AC-10 (KDS flow), AC-11 (order/table workflow), AC-14 (concurrent table/order handling) and AC-15 (reservations), deferred by the owner with the rest of UAT
 - KDS-04 prep-time reporting and the Phase 7 reservation/guest-history reports remain in Phase 7
 - Outlet scoping of stock/recipes still needs the `stock_locations` ↔ outlet decision; Phase 6 reads are role-based
