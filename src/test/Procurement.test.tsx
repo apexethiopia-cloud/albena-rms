@@ -20,6 +20,7 @@ const stockApi = vi.hoisted(() => ({
   listGrns: vi.fn(),
   createGrn: vi.fn(),
   postGrn: vi.fn(),
+  listPurchaseOrderReceipts: vi.fn(),
 }))
 
 const suppliersApi = vi.hoisted(() => ({
@@ -187,6 +188,7 @@ beforeEach(() => {
   stockApi.listGrns.mockResolvedValue([])
   stockApi.createGrn.mockResolvedValue('grn-1')
   stockApi.postGrn.mockResolvedValue(undefined)
+  stockApi.listPurchaseOrderReceipts.mockResolvedValue([])
 
   suppliersApi.listSuppliers.mockResolvedValue([SUPPLIER])
   suppliersApi.createSupplier.mockResolvedValue(undefined)

@@ -23,15 +23,19 @@ import {
 } from '@/features/items/api'
 import { listLocations, type StockLocation } from '@/features/locations/api'
 import { listSuppliers, type Supplier } from '@/features/suppliers/api'
+import { listPurchaseOrders, type PurchaseOrder } from '@/features/procurement/api'
 import {
   createGrn,
   listGrns,
+  listPurchaseOrderReceipts,
   postGrn,
   type Grn,
   type Numberish,
+  type PurchaseOrderReceipt,
 } from './api'
 import {
   previewLine,
+  resolveUnitFactor,
   validateGrn,
   type GrnDraft,
   type StockContext,
@@ -47,6 +51,13 @@ function emptyLine(key: number): StockLineDraft {
   return { key: `grn-line-${key}`, itemId: '', quantity: '', unitId: '', unitCost: '' }
 }
 
+const RECEIPT_STATUS_CLASSES: Record<string, string> = {
+  pending: 'bg-slate-100 text-slate-700',
+  partial: 'bg-sky-50 text-sky-800',
+  complete: 'bg-emerald-50 text-emerald-700',
+  over: 'bg-amber-50 text-amber-900',
+}
+
 function initialForm(locationId: string): GrnDraft {
   return {
     grnNumber: '',
@@ -55,6 +66,7 @@ function initialForm(locationId: string): GrnDraft {
     receivedDate: toIsoDate(new Date()),
     locationId,
     notes: '',
+    poId: '',
     lines: [emptyLine(1)],
   }
 }
@@ -78,6 +90,8 @@ export function GrnPanel() {
     Array<{ item_id: string; unit_id: string; base_factor: number }>
   >([])
   const [locations, setLocations] = useState<StockLocation[]>([])
+  const [orders, setOrders] = useState<PurchaseOrder[]>([])
+  const [receipts, setReceipts] = useState<PurchaseOrderReceipt[]>([])
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -89,6 +103,7 @@ export function GrnPanel() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [formNotice, setFormNotice] = useState<string | null>(null)
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [confirmPostId, setConfirmPostId] = useState<string | null>(null)
@@ -126,6 +141,20 @@ export function GrnPanel() {
         if (!cancelled) setLoading(false)
       })
 
+    // GRN ↔ PO linkage needs migrations 0006 and 0007. If they are not applied yet,
+    // receiving still works without a purchase order, so this failure is not fatal.
+    Promise.all([listPurchaseOrders(), listPurchaseOrderReceipts()])
+      .then(([orderRows, receiptRows]) => {
+        if (cancelled) return
+        setOrders(orderRows)
+        setReceipts(receiptRows)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setOrders([])
+        setReceipts([])
+      })
+
     return () => {
       cancelled = true
     }
@@ -140,6 +169,11 @@ export function GrnPanel() {
     () => locations.filter((location) => location.is_active),
     [locations],
   )
+  // A delivery is received against an order that has at least been approved.
+  const receivableOrders = useMemo(
+    () => orders.filter((order) => order.status === 'approved' || order.status === 'ordered'),
+    [orders],
+  )
   const supplierById = useMemo(
     () => new Map(suppliers.map((supplier) => [supplier.id, supplier])),
     [suppliers],
@@ -150,6 +184,11 @@ export function GrnPanel() {
   )
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const unitById = useMemo(() => new Map(units.map((unit) => [unit.id, unit])), [units])
+  const orderById = useMemo(() => new Map(orders.map((order) => [order.id, order])), [orders])
+  const receiptByLineId = useMemo(
+    () => new Map(receipts.map((receipt) => [receipt.po_line_id, receipt])),
+    [receipts],
+  )
 
   const context: StockContext = useMemo(
     () => ({ items, units, conversions }),
@@ -167,11 +206,64 @@ export function GrnPanel() {
     [units, context],
   )
 
+  const selectPurchaseOrder = (poId: string) => {
+    const order = poId ? orderById.get(poId) : null
+
+    if (!order) {
+      lineSequence.current = 1
+      setForm((current) => ({
+        ...current,
+        poId: '',
+        lines: current.lines.map((line) => ({ ...line, poLineId: undefined })),
+      }))
+      setFormNotice(null)
+      return
+    }
+
+    const outstanding = receipts.filter(
+      (receipt) => receipt.po_id === order.id && Number(receipt.outstanding_base_quantity) > 0,
+    )
+
+    const seeded: StockLineDraft[] = outstanding.map((receipt, index) => {
+      const resolved = resolveUnitFactor(receipt.item_id, receipt.ordered_unit_id, context)
+      const baseUnitId = itemById.get(receipt.item_id)?.base_unit_id ?? receipt.ordered_unit_id
+      const unitId = resolved.factor === null ? baseUnitId : receipt.ordered_unit_id
+      const quantity =
+        resolved.factor === null
+          ? Number(receipt.outstanding_base_quantity)
+          : Number(receipt.outstanding_base_quantity) / resolved.factor
+      return {
+        key: `grn-po-${order.id}-${index + 1}`,
+        itemId: receipt.item_id,
+        unitId,
+        quantity: String(Number(quantity.toFixed(6))),
+        unitCost: String(receipt.unit_cost),
+        poLineId: receipt.po_line_id,
+      }
+    })
+
+    lineSequence.current = Math.max(seeded.length, 1)
+    setForm((current) => ({
+      ...current,
+      poId: order.id,
+      supplierId: order.supplier_id,
+      lines: seeded.length > 0 ? seeded : [emptyLine(lineSequence.current)],
+    }))
+    setFieldErrors({})
+    setFormError(null)
+    setFormNotice(
+      seeded.length > 0
+        ? `Loaded ${seeded.length} outstanding line${seeded.length === 1 ? '' : 's'} from ${order.po_number}. Adjust the quantities to match the delivery.`
+        : `${order.po_number} has no outstanding lines. Add a line only if this delivery is outside the order.`,
+    )
+  }
+
   const openCreate = () => {
     lineSequence.current = 1
     setForm(initialForm(activeLocations[0]?.id ?? ''))
     setFieldErrors({})
     setFormError(null)
+    setFormNotice(null)
     setNotice(null)
     setFormOpen(true)
   }
@@ -180,6 +272,7 @@ export function GrnPanel() {
     setFormOpen(false)
     setFieldErrors({})
     setFormError(null)
+    setFormNotice(null)
   }
 
   const setField = (key: keyof GrnDraft) => (value: string) => {
@@ -212,7 +305,7 @@ export function GrnPanel() {
 
   const selectItem = (index: number, itemId: string) => {
     const item = itemById.get(itemId)
-    setLine(index, { itemId, unitId: item?.base_unit_id ?? '' })
+    setLine(index, { itemId, unitId: item?.base_unit_id ?? '', poLineId: undefined })
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -367,7 +460,42 @@ export function GrnPanel() {
             </div>
           )}
 
+          {formNotice && (
+            <div
+              role="status"
+              className="mt-3 flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"
+            >
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" aria-hidden="true" />
+              <span>{formNotice}</span>
+            </div>
+          )}
+
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label htmlFor="grn-po" className="block text-sm font-medium text-slate-700">
+                Purchase order <span className="font-normal text-slate-400">(optional)</span>
+              </label>
+              <select
+                id="grn-po"
+                value={form.poId}
+                onChange={(event) => selectPurchaseOrder(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 sm:max-w-md"
+              >
+                <option value="">No purchase order — receive without a link</option>
+                {receivableOrders.map((order) => (
+                  <option key={order.id} value={order.id}>
+                    {order.po_number} · {supplierById.get(order.supplier_id)?.name ?? 'Unknown'} ·{' '}
+                    {order.status}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                Approved and ordered purchase orders only. Selecting one fixes the supplier and
+                loads its outstanding lines; shortages and over-receipts are recorded for review
+                against the order.
+              </p>
+            </div>
+
             <div>
               <label htmlFor="grn-number" className="block text-sm font-medium text-slate-700">
                 GRN number
@@ -397,9 +525,10 @@ export function GrnPanel() {
                 id="grn-supplier"
                 value={form.supplierId}
                 onChange={(event) => setField('supplierId')(event.target.value)}
+                disabled={Boolean(form.poId)}
                 aria-invalid={Boolean(fieldErrors.supplierId)}
                 className={cn(
-                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500',
+                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 disabled:bg-slate-100 disabled:text-slate-500',
                   fieldErrors.supplierId ? 'border-red-400' : 'border-slate-300',
                 )}
               >
@@ -410,6 +539,11 @@ export function GrnPanel() {
                   </option>
                 ))}
               </select>
+              {form.poId && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Fixed by the selected purchase order.
+                </p>
+              )}
               {fieldErrors.supplierId && (
                 <p className="mt-1 text-xs text-red-700">{fieldErrors.supplierId}</p>
               )}
@@ -537,6 +671,21 @@ export function GrnPanel() {
                   {form.lines.map((line, index) => {
                     const preview = previewLine(line, context)
                     const availableUnits = unitsForItem(line.itemId)
+                    const receipt = line.poLineId
+                      ? receiptByLineId.get(line.poLineId)
+                      : undefined
+                    const outstandingBase = receipt
+                      ? Number(receipt.outstanding_base_quantity)
+                      : null
+                    const baseUnitCode = (() => {
+                      const item = itemById.get(line.itemId)
+                      return item ? unitById.get(item.base_unit_id)?.code ?? '' : ''
+                    })()
+                    const overReceipt =
+                      receipt !== undefined &&
+                      preview.baseQuantity !== null &&
+                      outstandingBase !== null &&
+                      preview.baseQuantity > outstandingBase
 
                     return (
                       <tr key={line.key}>
@@ -557,6 +706,29 @@ export function GrnPanel() {
                           {fieldErrors[`line-${index}-item`] && (
                             <p className="mt-1 text-xs text-red-700">
                               {fieldErrors[`line-${index}-item`]}
+                            </p>
+                          )}
+                          {receipt && (
+                            <p
+                              data-testid={`grn-line-${index + 1}-receipt`}
+                              className="mt-1 max-w-[16rem] text-xs text-slate-500"
+                            >
+                              PO line: ordered{' '}
+                              {number(receipt.ordered_quantity).toLocaleString('en-ET')}{' '}
+                              {receipt.ordered_unit_code}, received{' '}
+                              {number(receipt.received_base_quantity).toLocaleString('en-ET')}{' '}
+                              {baseUnitCode}, outstanding{' '}
+                              {number(receipt.outstanding_base_quantity).toLocaleString('en-ET')}{' '}
+                              {baseUnitCode} ({receipt.receipt_status})
+                            </p>
+                          )}
+                          {overReceipt && (
+                            <p
+                              role="status"
+                              className="mt-1 max-w-[16rem] rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900"
+                            >
+                              Exceeds the outstanding quantity. Over-receipts are recorded for
+                              review.
                             </p>
                           )}
                         </td>
@@ -728,6 +900,14 @@ export function GrnPanel() {
                         {supplierById.get(document.supplier_id)?.name ?? 'Unknown supplier'} ·{' '}
                         Invoice {document.invoice_number} ·{' '}
                         {locationById.get(document.location_id)?.name ?? 'Unknown location'}
+                        {document.po_id && (
+                          <>
+                            {' · '}
+                            <span className="font-medium text-slate-700">
+                              {orderById.get(document.po_id)?.po_number ?? 'Purchase order'}
+                            </span>
+                          </>
+                        )}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500">
                         Received {formatDate(document.received_date)}
@@ -829,6 +1009,77 @@ export function GrnPanel() {
           </div>
         )}
       </div>
+
+      {receipts.length > 0 && (
+        <section
+          aria-labelledby="po-receipts-heading"
+          className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 px-5 py-3">
+            <h3 id="po-receipts-heading" className="text-sm font-semibold text-slate-900">
+              Purchase order receipts
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-600">
+              Ordered against received per purchase order line, using posted GRNs only. Drafts do
+              not count, and over-receipts stay visible for review (GRN-04).
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th scope="col" className="px-5 py-2 font-medium">Purchase order</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">Item</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">Ordered</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">Received</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">Outstanding</th>
+                  <th scope="col" className="py-2 pr-5 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {receipts.map((receipt) => {
+                  const baseUnitId = itemById.get(receipt.item_id)?.base_unit_id
+                  const baseUnitCode = baseUnitId ? unitById.get(baseUnitId)?.code ?? '' : ''
+                  return (
+                    <tr key={receipt.po_line_id}>
+                      <td className="px-5 py-2 whitespace-nowrap font-medium text-slate-900">
+                        {receipt.po_number}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {receipt.item_name}{' '}
+                        <span className="text-xs text-slate-500">({receipt.item_code})</span>
+                      </td>
+                      <td className="py-2 pr-3 text-right whitespace-nowrap tabular-nums">
+                        {number(receipt.ordered_quantity).toLocaleString('en-ET')}{' '}
+                        {receipt.ordered_unit_code}
+                      </td>
+                      <td className="py-2 pr-3 text-right whitespace-nowrap tabular-nums">
+                        {number(receipt.received_base_quantity).toLocaleString('en-ET')}{' '}
+                        {baseUnitCode}
+                      </td>
+                      <td className="py-2 pr-3 text-right whitespace-nowrap tabular-nums">
+                        {number(receipt.outstanding_base_quantity).toLocaleString('en-ET')}{' '}
+                        {baseUnitCode}
+                      </td>
+                      <td className="py-2 pr-5">
+                        <span
+                          className={cn(
+                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
+                            RECEIPT_STATUS_CLASSES[receipt.receipt_status] ??
+                              'bg-slate-100 text-slate-700',
+                          )}
+                        >
+                          {receipt.receipt_status}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </section>
   )
 }

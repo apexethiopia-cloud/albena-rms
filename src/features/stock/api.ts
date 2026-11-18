@@ -17,6 +17,7 @@ export type GrnLine = {
   line_total: Numberish
   base_quantity: Numberish | null
   base_unit_cost: Numberish | null
+  po_line_id: string | null
   created_at: string
 }
 
@@ -28,6 +29,7 @@ export type Grn = {
   received_date: string
   location_id: string
   notes: string | null
+  po_id: string | null
   created_by: string | null
   created_at: string
   posted_by: string | null
@@ -93,12 +95,32 @@ export type StockMovement = {
   reference_number: string | null
 }
 
+export type ReceiptStatus = 'pending' | 'partial' | 'complete' | 'over'
+
+export type PurchaseOrderReceipt = {
+  po_id: string
+  po_number: string
+  po_status: string
+  po_line_id: string
+  item_id: string
+  item_code: string
+  item_name: string
+  ordered_unit_id: string
+  ordered_unit_code: string
+  ordered_quantity: Numberish
+  unit_cost: Numberish
+  ordered_base_quantity: Numberish
+  received_base_quantity: Numberish
+  outstanding_base_quantity: Numberish
+  receipt_status: ReceiptStatus
+}
+
 const GRN_COLUMNS = `
-  id, grn_number, supplier_id, invoice_number, received_date, location_id, notes,
+  id, grn_number, supplier_id, invoice_number, received_date, location_id, notes, po_id,
   created_by, created_at, posted_by, posted_at,
   grn_lines (
     id, grn_id, item_id, unit_id, quantity, unit_cost, line_total,
-    base_quantity, base_unit_cost, created_at
+    base_quantity, base_unit_cost, po_line_id, created_at
   )
 `
 
@@ -126,17 +148,34 @@ export async function createGrn(input: NormalizedGrn): Promise<string> {
     p_received_date: input.receivedDate,
     p_location_id: input.locationId,
     p_notes: input.notes,
+    p_po_id: input.poId,
     p_lines: input.lines.map((line) => ({
       item_id: line.itemId,
       unit_id: line.unitId,
       quantity: line.quantity,
       unit_cost: line.unitCost,
+      po_line_id: line.poLineId,
     })),
   })
 
   if (error) throw new Error(describeStockDbError(error))
   if (!data) throw new Error('The GRN was saved but no reference was returned. Refresh the list.')
   return data as string
+}
+
+export async function listPurchaseOrderReceipts(): Promise<PurchaseOrderReceipt[]> {
+  const { data, error } = await requireSupabase()
+    .from('purchase_order_receipts')
+    .select(
+      `po_id, po_number, po_status, po_line_id, item_id, item_code, item_name,
+       ordered_unit_id, ordered_unit_code, ordered_quantity, unit_cost,
+       ordered_base_quantity, received_base_quantity, outstanding_base_quantity,
+       receipt_status`,
+    )
+    .order('po_number', { ascending: true })
+
+  if (error) throw new Error(describeStockDbError(error))
+  return (data ?? []) as unknown as PurchaseOrderReceipt[]
 }
 
 export async function postGrn(id: string): Promise<void> {

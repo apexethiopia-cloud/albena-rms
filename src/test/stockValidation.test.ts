@@ -51,6 +51,7 @@ function grn(overrides: Partial<GrnDraft> = {}): GrnDraft {
     receivedDate: '2026-11-18',
     locationId: 'location-1',
     notes: 'Delivery',
+    poId: '',
     lines: [
       { key: 'a', itemId: 'egg', quantity: '2', unitId: 'box', unitCost: '120.00' },
     ],
@@ -112,9 +113,34 @@ describe('GRN validation', () => {
     if (!result.valid) return
     expect(result.value.grnNumber).toBe('GRN-0001')
     expect(result.value.notes).toBe('Delivery')
+    expect(result.value.poId).toBeNull()
     expect(result.value.lines).toEqual([
-      { itemId: 'egg', unitId: 'box', quantity: 2, unitCost: 120 },
+      { itemId: 'egg', unitId: 'box', quantity: 2, unitCost: 120, poLineId: null },
     ])
+  })
+
+  it('keeps the purchase order and line links on a linked receipt', () => {
+    const result = validateGrn(
+      grn({
+        poId: 'po-1',
+        lines: [
+          {
+            key: 'a',
+            itemId: 'egg',
+            quantity: '2',
+            unitId: 'box',
+            unitCost: '120.00',
+            poLineId: 'pol-1',
+          },
+        ],
+      }),
+      CONTEXT,
+    )
+
+    expect(result.valid).toBe(true)
+    if (!result.valid) return
+    expect(result.value.poId).toBe('po-1')
+    expect(result.value.lines[0]?.poLineId).toBe('pol-1')
   })
 
   it('rejects a unit without a conversion', () => {

@@ -15,6 +15,8 @@ export type StockLineDraft = {
   quantity: string
   unitId: string
   unitCost: string
+  /** Receipt only: the purchase order line this line fulfils (GRN-04). */
+  poLineId?: string
 }
 
 export type GrnDraft = {
@@ -24,6 +26,8 @@ export type GrnDraft = {
   receivedDate: string
   locationId: string
   notes: string
+  /** Receipt only: optional purchase order this delivery fulfils (GRN-04). */
+  poId: string
   lines: StockLineDraft[]
 }
 
@@ -41,6 +45,7 @@ export type NormalizedGrnLine = {
   unitId: string
   quantity: number
   unitCost: number
+  poLineId: string | null
 }
 
 export type NormalizedSivLine = {
@@ -56,6 +61,7 @@ export type NormalizedGrn = {
   receivedDate: string
   locationId: string
   notes: string | null
+  poId: string | null
   lines: NormalizedGrnLine[]
 }
 
@@ -224,6 +230,7 @@ function validateLines(
         unitId: line.unitId,
         quantity,
         unitCost,
+        poLineId: line.poLineId ?? null,
       })
     }
   })
@@ -266,6 +273,7 @@ export function validateGrn(input: GrnDraft, context: StockContext): Validation<
       receivedDate: input.receivedDate,
       locationId: input.locationId,
       notes: input.notes.trim() || null,
+      poId: input.poId || null,
       lines: lines.normalized,
     },
   }

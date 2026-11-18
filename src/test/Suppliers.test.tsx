@@ -28,6 +28,7 @@ vi.mock('@/features/stock/api', () => ({
   listGrns: vi.fn().mockResolvedValue([]),
   createGrn: vi.fn(),
   postGrn: vi.fn(),
+  listPurchaseOrderReceipts: vi.fn().mockResolvedValue([]),
   listSivs: vi.fn().mockResolvedValue([]),
   listStockBalances: vi.fn().mockResolvedValue([]),
   listStockMovements: vi.fn().mockResolvedValue([]),

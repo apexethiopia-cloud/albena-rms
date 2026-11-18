@@ -8,6 +8,7 @@ const stockApi = vi.hoisted(() => ({
   listGrns: vi.fn(),
   createGrn: vi.fn(),
   postGrn: vi.fn(),
+  listPurchaseOrderReceipts: vi.fn(),
 }))
 
 const suppliersApi = vi.hoisted(() => ({
@@ -105,6 +106,7 @@ const DRAFT_GRN = {
   received_date: '2026-11-18',
   location_id: 'l-main',
   notes: null,
+  po_id: null,
   created_by: 'u1',
   created_at: '2026-11-18T10:00:00.000Z',
   posted_by: null,
@@ -120,9 +122,58 @@ const DRAFT_GRN = {
       line_total: 240,
       base_quantity: null,
       base_unit_cost: null,
+      po_line_id: null,
       created_at: '2026-11-18T10:00:00.000Z',
     },
   ],
+}
+
+const PURCHASE_ORDER = {
+  id: 'po-1',
+  po_number: 'PO-0001',
+  supplier_id: 's1',
+  pr_id: null,
+  order_date: '2026-11-18',
+  expected_date: null,
+  notes: null,
+  status: 'ordered',
+  created_by: 'u1',
+  created_at: '2026-11-18T09:00:00.000Z',
+  approved_by: 'u2',
+  approved_at: '2026-11-18T09:30:00.000Z',
+  ordered_at: '2026-11-18T09:45:00.000Z',
+  closed_at: null,
+  updated_at: '2026-11-18T09:45:00.000Z',
+  purchase_order_lines: [
+    {
+      id: 'pol-1',
+      po_id: 'po-1',
+      item_id: 'i-tomato',
+      unit_id: 'u-kg',
+      quantity: 5,
+      unit_cost: 120,
+      line_total: 600,
+      created_at: '2026-11-18T09:00:00.000Z',
+    },
+  ],
+}
+
+const RECEIPT = {
+  po_id: 'po-1',
+  po_number: 'PO-0001',
+  po_status: 'ordered',
+  po_line_id: 'pol-1',
+  item_id: 'i-tomato',
+  item_code: 'TOMATO',
+  item_name: 'Tomato, fresh',
+  ordered_unit_id: 'u-kg',
+  ordered_unit_code: 'kg',
+  ordered_quantity: 5,
+  unit_cost: 120,
+  ordered_base_quantity: 5000,
+  received_base_quantity: 2000,
+  outstanding_base_quantity: 3000,
+  receipt_status: 'partial',
 }
 
 function authValue(roles: string[]): AuthContextValue {
@@ -156,6 +207,7 @@ beforeEach(() => {
   stockApi.listGrns.mockResolvedValue([])
   stockApi.createGrn.mockResolvedValue('grn-1')
   stockApi.postGrn.mockResolvedValue(undefined)
+  stockApi.listPurchaseOrderReceipts.mockResolvedValue([])
 
   suppliersApi.listSuppliers.mockResolvedValue([SUPPLIER])
   suppliersApi.createSupplier.mockResolvedValue(undefined)
@@ -176,7 +228,7 @@ beforeEach(() => {
   vi.mocked(listLocations).mockResolvedValue(LOCATIONS)
 })
 
-describe('Purchasing — goods receiving', () => {
+describe('Purchasing - goods receiving', () => {
   it('lists receiving notes and distinguishes drafts from posted documents', async () => {
     stockApi.listGrns.mockResolvedValue([
       DRAFT_GRN,
@@ -205,7 +257,7 @@ describe('Purchasing — goods receiving', () => {
     expect(within(section).getByText('GRN-0002')).toBeInTheDocument()
     expect(within(section).getByText('Draft')).toBeInTheDocument()
     expect(within(section).getByText('Posted')).toBeInTheDocument()
-    expect(within(section).getByText(/2 documents · 1 draft/i)).toBeInTheDocument()
+    expect(within(section).getByText(/2 documents .* 1 draft/i)).toBeInTheDocument()
   })
 
   it('creates a GRN draft with normalized header and line values', async () => {
@@ -233,10 +285,75 @@ describe('Purchasing — goods receiving', () => {
         receivedDate: expect.any(String),
         locationId: 'l-main',
         notes: null,
-        lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2, unitCost: 120 }],
+        poId: null,
+        lines: [
+          { itemId: 'i-tomato', unitId: 'u-kg', quantity: 2, unitCost: 120, poLineId: null },
+        ],
       })
     })
     expect(await screen.findByRole('status')).toHaveTextContent(/GRN GRN-0001 saved as a draft/i)
+  })
+
+  it('links a GRN to a purchase order and seeds its outstanding lines', async () => {
+    procurementApi.listPurchaseOrders.mockResolvedValue([PURCHASE_ORDER])
+    stockApi.listPurchaseOrderReceipts.mockResolvedValue([RECEIPT])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /goods receiving notes/i })
+    await within(section).findByText(/no receiving notes yet/i)
+    await user.click(within(section).getByRole('button', { name: /new grn/i }))
+
+    await user.selectOptions(screen.getByLabelText('Purchase order (optional)'), 'po-1')
+
+    const supplier = screen.getByLabelText('Supplier') as HTMLSelectElement
+    expect(supplier.value).toBe('s1')
+    expect(supplier).toBeDisabled()
+    expect(screen.getByLabelText('Quantity for line 1')).toHaveValue('3')
+    expect(screen.getByLabelText('Unit cost for line 1')).toHaveValue('120')
+    expect(screen.getByTestId('grn-line-1-receipt')).toHaveTextContent(
+      /ordered 5 kg.*outstanding 3,000 g.*partial/i,
+    )
+    expect(within(section).getByText(/loaded 1 outstanding line from PO-0001/i)).toBeInTheDocument()
+  })
+
+  it('warns when the entered quantity exceeds the outstanding amount', async () => {
+    procurementApi.listPurchaseOrders.mockResolvedValue([PURCHASE_ORDER])
+    stockApi.listPurchaseOrderReceipts.mockResolvedValue([RECEIPT])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /goods receiving notes/i })
+    await within(section).findByText(/no receiving notes yet/i)
+    await user.click(within(section).getByRole('button', { name: /new grn/i }))
+    await user.selectOptions(screen.getByLabelText('Purchase order (optional)'), 'po-1')
+
+    const quantity = screen.getByLabelText('Quantity for line 1')
+    await user.clear(quantity)
+    await user.type(quantity, '4')
+
+    expect(within(section).getByText(/exceeds the outstanding quantity/i)).toBeInTheDocument()
+  })
+
+  it('shows ordered, received and outstanding quantities per purchase order line', async () => {
+    stockApi.listPurchaseOrderReceipts.mockResolvedValue([RECEIPT])
+    renderPage()
+
+    const receipts = await screen.findByRole('region', { name: /purchase order receipts/i })
+    expect(within(receipts).getByText('PO-0001')).toBeInTheDocument()
+    expect(within(receipts).getByText('partial')).toBeInTheDocument()
+    expect(within(receipts).getByText('2,000 g')).toBeInTheDocument()
+    expect(within(receipts).getByText('3,000 g')).toBeInTheDocument()
+    expect(within(receipts).getByText(/posted GRNs only/i)).toBeInTheDocument()
+  })
+
+  it('shows the purchase order number on a linked document', async () => {
+    stockApi.listGrns.mockResolvedValue([{ ...DRAFT_GRN, po_id: 'po-1' }])
+    procurementApi.listPurchaseOrders.mockResolvedValue([PURCHASE_ORDER])
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /goods receiving notes/i })
+    expect(await within(section).findByText('PO-0001')).toBeInTheDocument()
   })
 
   it('blocks an incomplete line before calling the database', async () => {
