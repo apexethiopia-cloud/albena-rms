@@ -323,6 +323,7 @@
 - `npm run lint` — pass (zero warnings)
 - `npm run test` — 137/137 pass across 19 suites
 - `npm run build` — pass (571 kB JS / 147 kB gzip, 20 kB CSS; chunk-size warning only)
+- Commit `a0a2d4b` pushed to `main`; Cloudflare deployed it (`index-DS0f0qag.js`, 571 kB) and the served bundle contains the GRN, SIV and stock-ledger panels.
 
 ### Outstanding
 - **Owner applies** `20261118000500_stock_ledger.sql`; AC-04 and AC-05 still need a live GRN → balance → SIV → balance check.

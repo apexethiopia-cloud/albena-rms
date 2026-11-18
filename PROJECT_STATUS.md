@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 4 — Inventory & Purchasing (in progress); Phases 0–3 complete |
 | **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 exit condition not yet met) |
 | **Last Updated** | 2026-11-18 17:40 UTC+3 |
-| **Latest Git Commit** | `688e777` (Phase 4 stock-ledger slice in the working tree) |
+| **Latest Git Commit** | `a0a2d4b` (Phase 4 stock ledger, GRN and SIV slice) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
