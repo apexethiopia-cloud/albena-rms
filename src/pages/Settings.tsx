@@ -2,6 +2,7 @@ import { Boxes, ClipboardList } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { OutletsPanel } from '@/features/outlets/OutletsPanel'
 import { UsersPanel } from '@/features/users/UsersPanel'
+import { BusinessSettingsPanel } from '@/features/settings/BusinessSettingsPanel'
 
 const PLANNED = [
   {
@@ -28,6 +29,8 @@ export function Settings() {
 
       <div className="space-y-6">
         <OutletsPanel />
+
+        <BusinessSettingsPanel />
 
         <UsersPanel />
 

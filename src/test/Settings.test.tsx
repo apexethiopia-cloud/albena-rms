@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '@/features/auth/auth-context'
@@ -22,12 +22,30 @@ vi.mock('@/features/users/api', () => ({
   revokeOutletScope: vi.fn(),
 }))
 
+const settingsApi = vi.hoisted(() => ({
+  getBusinessSettings: vi.fn(),
+  updateBusinessSettings: vi.fn(),
+}))
+
+vi.mock('@/features/settings/api', () => settingsApi)
+
 const OUTLET = {
   id: 'o1',
   code: 'MAIN',
   name: 'Main Restaurant',
   is_active: true,
   created_at: '2026-11-18T08:00:00.000Z',
+  updated_at: '2026-11-18T08:00:00.000Z',
+}
+
+const BUSINESS_SETTINGS = {
+  id: true,
+  business_name: 'Albena Restaurant',
+  tin: 'TIN-001',
+  address: 'Bole, Addis Ababa',
+  phone: '+251911000000',
+  vat_rate: '15.00',
+  receipt_footer: 'Thank you',
   updated_at: '2026-11-18T08:00:00.000Z',
 }
 
@@ -61,6 +79,8 @@ beforeEach(() => {
   api.listOutlets.mockResolvedValue([OUTLET])
   api.createOutlet.mockResolvedValue(undefined)
   api.updateOutlet.mockResolvedValue(undefined)
+  settingsApi.getBusinessSettings.mockResolvedValue(BUSINESS_SETTINGS)
+  settingsApi.updateBusinessSettings.mockResolvedValue(undefined)
 })
 
 describe('Settings — outlets', () => {
@@ -166,5 +186,80 @@ describe('Settings — outlets', () => {
 
     expect(screen.queryByRole('button', { name: /new outlet/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /deactivate/i })).toBeNull()
+  })
+})
+
+describe('Settings — business and receipts', () => {
+  it('loads the identity printed on receipts', async () => {
+    renderSettings()
+
+    const section = await screen.findByRole('region', {
+      name: /business & receipts/i,
+    })
+
+    expect(
+      await within(section).findByDisplayValue('Albena Restaurant'),
+    ).toBeInTheDocument()
+    expect(within(section).getByLabelText('TIN')).toHaveValue('TIN-001')
+    expect(within(section).getByLabelText('VAT rate')).toHaveValue('15')
+    expect(within(section).getByLabelText('Receipt footer')).toHaveValue('Thank you')
+  })
+
+  it('saves the business identity and VAT rate', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+
+    const section = await screen.findByRole('region', {
+      name: /business & receipts/i,
+    })
+    const name = await within(section).findByLabelText('Business name')
+    await user.clear(name)
+    await user.type(name, 'Albena Lakeview')
+
+    await user.click(within(section).getByRole('button', { name: /save settings/i }))
+
+    await waitFor(() =>
+      expect(settingsApi.updateBusinessSettings).toHaveBeenCalledWith({
+        businessName: 'Albena Lakeview',
+        tin: 'TIN-001',
+        address: 'Bole, Addis Ababa',
+        phone: '+251911000000',
+        vatRate: 15,
+        receiptFooter: 'Thank you',
+      }),
+    )
+    expect(await within(section).findByText(/were saved/i)).toBeInTheDocument()
+  })
+
+  it('blocks an invalid VAT rate', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+
+    const section = await screen.findByRole('region', {
+      name: /business & receipts/i,
+    })
+    const vat = await within(section).findByLabelText('VAT rate')
+    await user.clear(vat)
+    await user.type(vat, '150')
+    await user.click(within(section).getByRole('button', { name: /save settings/i }))
+
+    expect(
+      await within(section).findByText(/between 0 and 100/i),
+    ).toBeInTheDocument()
+    expect(settingsApi.updateBusinessSettings).not.toHaveBeenCalled()
+  })
+
+  it('shows the settings read-only for a waiter', async () => {
+    renderSettings(['waiter'])
+
+    const section = await screen.findByRole('region', {
+      name: /business & receipts/i,
+    })
+
+    expect(await within(section).findByText('Albena Restaurant')).toBeInTheDocument()
+    expect(
+      within(section).queryByRole('button', { name: /save settings/i }),
+    ).not.toBeInTheDocument()
+    expect(within(section).getByText(/read-only/i)).toBeInTheDocument()
   })
 })
