@@ -14,7 +14,7 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | CON-01 | Internet required; no offline/LAN mode | 0 | — | Architecture decision; no offline code | AC-15, NFR-04 | Not Started |
-| CON-02 | Three distinct cloud user accounts | 2 | `users`, `user_profiles` | Auth module, `scripts/seed-test-users.mjs` | AC-01 | **In Progress** — users not yet created |
+| CON-02 | Three distinct cloud user accounts | 2 | `users`, `user_profiles` | Auth module, `scripts/seed-test-users.mjs` | AC-01 | **In Progress** — 1 of 3 accounts exists |
 | CON-03 | No paid services without owner approval | 0 | — | Policy; docs/QUOTA_LOG.md | — | Not Started |
 | CON-04 | Setup must not require bank card | 0 | - | docs/DEPLOYMENT.md provider check | AC-18 | **Implemented** |
 | CON-05 | Existing DigitalOcean/Odoo untouched | 0 | — | Policy — no connection to that infra | — | Not Started |
@@ -28,11 +28,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| SEC-ROLE-01 | Permissions enforced server/DB side | 2 | RLS policies | `supabase/migrations/20261118000100_foundation.sql` | AC-02 | **In Progress** — migration not yet applied |
-| SEC-ROLE-02 | Individual accounts; no shared logins | 2 | `user_profiles` | Supabase Auth + `src/features/auth/**` | AC-01 | **In Progress** |
-| SEC-ROLE-03 | Users only access permitted records/outlets | 2 | RLS outlet filter | `user_outlet_scopes` + RLS | AC-02 | **In Progress** |
-| SEC-ROLE-04 | Role/permission changes audit logged | 2 | `audit_logs` | `write_audit_log()` on `user_roles` | AC-13 | **In Progress** |
-| SEC-ROLE-05 | Disable/reactivate without deleting history | 3 | `user_profiles.status` | `admin_set_user_status()` | - | **In Progress** — UI in Phase 3 |
+| SEC-ROLE-01 | Permissions enforced server/DB side | 2 | RLS policies | `supabase/migrations/20261118000100_foundation.sql` (applied); anon denied `audit_logs` | AC-02 | **Implemented** — AC-02 negative test still to be recorded |
+| SEC-ROLE-02 | Individual accounts; no shared logins | 2 | `user_profiles` | Supabase Auth + `src/features/auth/**` | AC-01 | **Implemented** — only 1 of 3 accounts exists |
+| SEC-ROLE-03 | Users only access permitted records/outlets | 2 | RLS outlet filter | `user_outlet_scopes` + RLS | AC-02 | **Implemented** — admin granted all 5 outlets |
+| SEC-ROLE-04 | Role/permission changes audit logged | 2 | `audit_logs` | `write_audit_log()` on `user_roles` | AC-13 | **Implemented** |
+| SEC-ROLE-05 | Disable/reactivate without deleting history | 3 | `user_profiles.status` | `admin_set_user_status()` | - | **In Progress** — RPC done, UI pending |
 | SEC-ROLE-06 | No plaintext passwords in app tables | 2 | - | Supabase Auth handles credentials | - | **Implemented** |
 
 ---
@@ -41,11 +41,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| ARC-01 | One shared cloud app and DB | 1-2 | Supabase project `naxhjpmaovnuplfjdgdu` | Cloudflare Pages + Supabase | AC-01 | **In Progress** — app deployed, schema pending |
+| ARC-01 | One shared cloud app and DB | 1-2 | Supabase project `naxhjpmaovnuplfjdgdu` | Cloudflare Pages + Supabase | AC-01 | **Implemented** — app deployed, schema applied |
 | ARC-02 | Desktop + tablet responsive | 1 | - | `src/components/layout/AppShell.tsx` (Tailwind responsive classes) | Manual UI test | **Implemented** |
 | ARC-03 | No service-role key in frontend | 1 | - | `.env.example`; `src/lib/env.ts` (only `VITE_*` values) | AC-17 | **Implemented** |
-| ARC-04 | Only anon/publishable keys in client | 1 | — | Supabase client init | AC-17 | Not Started |
-| ARC-05 | DB schema changes as migration files | 2+ | All migrations | `supabase/migrations/` | - | **In Progress** |
+| ARC-04 | Only anon/publishable keys in client | 1 | — | `src/lib/supabase.ts` (publishable key only, verified in bundle) | AC-17 | **Implemented** |
+| ARC-05 | DB schema changes as migration files | 2+ | All migrations | `supabase/migrations/` (0001–0004) | - | **Implemented** |
 | ARC-06 | Multi-step ops atomic in DB transactions | 4+ | DB functions | Supabase RPC functions | AC-05 | Not Started |
 | ARC-07 | Clear error state on connectivity loss | 1 | - | `src/components/NetworkStatusBanner.tsx` | AC-15, `NetworkStatusBanner.test.tsx` | **Implemented** |
 | ARC-08 | No offline queue or background sync | 0 | — | Architecture decision; not implemented | — | Not Started |
@@ -57,11 +57,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| USR-01 | Create, edit, disable, reactivate users | 3 | `user_profiles` | `/settings/users` | — | Not Started |
-| USR-02 | Assign roles and permissions | 3 | `user_roles` | Role assignment UI | AC-02 | Not Started |
+| USR-01 | Create, edit, disable, reactivate users | 3 | `user_profiles` | Supabase Auth (create) + `admin_set_user_status()` | — | **In Progress** — account creation is dashboard/script only; admin UI pending |
+| USR-02 | Assign roles and permissions | 3 | `user_roles` | `admin_assign_role()` RPC | AC-02 | **In Progress** — RPC done, UI pending |
 | USR-03 | Password reset via auth provider | 2 | — | Supabase Auth reset flow | — | Not Started |
-| USR-04 | Record user metadata; no raw passwords | 2 | `user_profiles` | User profile table | — | Not Started |
-| USR-05 | Audit user/role changes | 2 | `audit_logs` | Audit trigger | AC-13 | Not Started |
+| USR-04 | Record user metadata; no raw passwords | 2 | `user_profiles` | `handle_new_user()` trigger, `full_name` | — | **Implemented** |
+| USR-05 | Audit user/role changes | 2 | `audit_logs` | Triggers on `user_profiles`, `user_roles` | AC-13 | **Implemented** |
 
 ---
 
@@ -69,10 +69,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| OUT-01 | Multiple outlets supported | 3 | `outlets` | Outlet management | — | Not Started |
+| OUT-01 | Multiple outlets supported | 3 | `outlets` | `src/features/outlets/**`, `/settings` | — | **Implemented** — 5 outlets seeded; CRUD verified by unit tests |
 | OUT-02 | Outlet-specific orders/reports | 3,7 | `orders.outlet_id` | Report filters | RPT-01,02 | Not Started |
-| OUT-03 | Users scoped to one or more outlets | 3 | `user_outlet_scopes` | RLS outlet filter | AC-02 | Not Started |
-| OUT-04 | Prevent cross-outlet access by default | 2 | RLS policies | RLS row filter | AC-02 | Not Started |
+| OUT-03 | Users scoped to one or more outlets | 3 | `user_outlet_scopes` | RLS outlet filter | AC-02 | **Implemented** — scopes granted; UI pending |
+| OUT-04 | Prevent cross-outlet access by default | 2 | RLS policies | RLS row filter | AC-02 | **Implemented** — anon reads filtered; AC-02 negative test pending |
 
 ---
 
@@ -80,8 +80,8 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| SUP-01 | Supplier master data fields | 3 | `suppliers` | `/procurement/suppliers` | — | Not Started |
-| SUP-02 | CRUD and deactivate suppliers | 3 | `suppliers` | Supplier management UI | — | Not Started |
+| SUP-01 | Supplier master data fields | 3 | `suppliers` | `supabase/migrations/20261118000300_master_data.sql` | — | **In Progress** — schema written, not applied |
+| SUP-02 | CRUD and deactivate suppliers | 3 | `suppliers` | Supplier management UI (not built) | — | **In Progress** — RLS policy written, UI pending |
 | SUP-03 | Supplier history and performance reports | 7 | — | Report queries | RPT-03 | Not Started |
 
 ---
@@ -90,9 +90,9 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| INV-01 | Item master data fields | 3 | `inventory_items` | `/inventory/items` | — | Not Started |
-| INV-02 | Item categories (user-maintainable) | 3 | `item_categories` | Category management | — | Not Started |
-| INV-03 | Multiple stock locations | 3 | `stock_locations` | Location management | — | Not Started |
+| INV-01 | Item master data fields | 3 | `items` | `20261118000300_master_data.sql` | — | **In Progress** — schema written, not applied |
+| INV-02 | Item categories (user-maintainable) | 3 | `item_categories` | Seed + RLS written; UI pending | — | **In Progress** |
+| INV-03 | Multiple stock locations | 3 | `stock_locations` | Seed + RLS written; UI pending | — | **In Progress** |
 | INV-04 | Stock balances by item + location | 4 | `stock_balances` | Stock ledger view | AC-04,05 | Not Started |
 | INV-05 | Deactivate items; preserve history | 3 | `inventory_items.status` | Item management | — | Not Started |
 | INV-06 | Low-stock/reorder alerts | 4 | `inventory_items.reorder_level` | Alert component | RPT-08 | Not Started |
@@ -316,11 +316,11 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| AUD-01 | Log: login/logout, create, modify, post, cancel, approve, role changes | 2+ | `audit_logs` | Audit trigger functions | AC-13 | Not Started |
-| AUD-02 | Capture: timestamp, actor, action, record ref, before/after | 2+ | `audit_logs` | Audit trigger schema | AC-13 | Not Started |
-| AUD-03 | Audit records append-only for ordinary users | 2 | RLS on `audit_logs` | No delete/update policy; grants revoked | AC-13 | **In Progress** |
-| AUD-04 | Audit access restricted to authorized roles | 2 | RLS on `audit_logs` | Admin / GM / auditor select policy | AC-02 | **In Progress** |
-| AUD-05 | No passwords or tokens in logs | 2 | — | Audit trigger excludes auth fields | — | Not Started |
+| AUD-01 | Log: login/logout, create, modify, post, cancel, approve, role changes | 2+ | `audit_logs` | Triggers on identity/master-data tables | AC-13 | **In Progress** — data changes logged; auth login/logout events not logged |
+| AUD-02 | Capture: timestamp, actor, action, record ref, before/after | 2+ | `audit_logs` | `write_audit_log()` | AC-13 | **Implemented** |
+| AUD-03 | Audit records append-only for ordinary users | 2 | RLS on `audit_logs` | No delete/update policy; grants revoked; anon denied `42501` | AC-13 | **Implemented** |
+| AUD-04 | Audit access restricted to authorized roles | 2 | RLS on `audit_logs` | Admin / GM / auditor select policy | AC-02 | **Implemented** |
+| AUD-05 | No passwords or tokens in logs | 2 | - | Audit triggers never read `auth.users` secrets | - | **Implemented** |
 
 ---
 

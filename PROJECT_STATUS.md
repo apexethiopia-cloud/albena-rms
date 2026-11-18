@@ -5,10 +5,10 @@
 | Attribute | Value |
 | :--- | :--- |
 | **Project Name** | Albena Restaurant Management System (RMS) |
-| **Current Phase** | Phase 2 — Backend & Identity (in progress) |
-| **Overall Completion** | **15.0%** (Phase 0 and Phase 1 complete; Phase 2 code written, migrations pending apply) |
-| **Last Updated** | 2026-11-18 12:30 UTC+3 |
-| **Latest Git Commit** | `aa826b9` (Phase 2 auth + schema) + `be1f548` (decisions and status docs) |
+| **Current Phase** | Phase 3 — Master Data (in progress) |
+| **Overall Completion** | **25.0%** (Phases 0–2 complete; Phase 3 outlets delivered) |
+| **Last Updated** | 2026-11-18 13:15 UTC+3 |
+| **Latest Git Commit** | *(to be updated after commit)* |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -26,14 +26,14 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :---: | :---: | :---: |
 | **Phase 0** | Requirements & Setup | 5% | ✅ **Complete** | Yes |
 | **Phase 1** | Foundation (React/Vite, Cloudflare, CI/CD) | 10% | ✅ **Complete** | Yes — app live at `albena-rms.pages.dev` |
-| **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | 🟡 **In Progress** | No — migrations not yet applied |
-| **Phase 3** | Master Data (outlets, suppliers, inventory) | 10% | ⏳ Planned | No |
+| **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 unverified** (2 of 3 accounts missing) |
+| **Phase 3** | Master Data (outlets, suppliers, inventory) | 10% | 🟡 **In Progress** | No — outlets done; suppliers, items, locations pending |
 | **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock) | 20% | ⏳ Planned | No |
 | **Phase 5** | Recipes & Production | 10% | ⏳ Planned | No |
 | **Phase 6** | Restaurant Operations (menu, tables, KDS, POS) | 15% | ⏳ Planned | No |
 | **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
 | **Phase 8** | Validation & Handover | 10% | ⏳ Planned | No |
-| **Total** | | **100%** | **15.0% Complete** | |
+| **Total** | | **100%** | **25.0% Complete** | |
 
 ---
 
@@ -44,33 +44,41 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] React + TypeScript + Vite + Tailwind application with routing and app shell.
 - [x] Offline / network-error banner (ARC-07).
 - [x] ETB (2 decimals) and `Africa/Addis_Ababa` formatting helpers with tests.
-- [x] 14 tests, ESLint clean, strict typecheck, production build.
 - [x] CI workflow; SPA `_redirects` and security `_headers`.
 - [x] **Cloudflare Pages deployment live** — `https://albena-rms.pages.dev` (root and `/inventory` both 200).
 
-### Completed (Phase 2 — written, pending apply)
+### Completed (Phase 2, verified live 2026-11-18)
 - [x] Owner decisions recorded: **FIFO costing (OD-04, ADR-009)** and **unit conversion model (OD-05, ADR-010)**.
-- [x] Supabase project connected; publishable key stored in `.env.local` only.
-- [x] Migration `20261118000100_foundation.sql`: roles, user_profiles, user_roles, outlets, user_outlet_scopes, audit_logs.
+- [x] Supabase project connected; publishable key stored in `.env.local` and Cloudflare env vars only.
+- [x] Migration `20261118000100_foundation.sql` **applied**: roles, user_profiles, user_roles, outlets, user_outlet_scopes, audit_logs.
 - [x] RLS enabled on all six tables with least-privilege policies.
 - [x] `SECURITY DEFINER` helpers (`is_active_user`, `has_role`, `is_admin`) to avoid policy recursion.
 - [x] Append-only audit triggers on identity and outlet tables.
 - [x] New-user trigger creating a profile, plus backfill for existing accounts.
 - [x] Admin RPCs: `admin_set_user_status`, `admin_assign_role`.
-- [x] Migration `20261118000200_reference_data.sql`: 10 SRS roles and 5 outlets (idempotent).
-- [x] `scripts/seed-test-users.mjs` for the three test users (service-role key, local only).
+- [x] Migration `20261118000200_reference_data.sql` **applied**: 10 SRS roles and 5 outlets.
+- [x] `scripts/seed-test-users.mjs` for test-user provisioning (service-role key, local only).
 - [x] Frontend auth: Supabase client, `AuthProvider`, `ProtectedRoute`, login page, sign-out, disabled-account state.
-- [x] `supabase/README.md` with apply instructions and the schema/RLS map.
+- [x] **Owner verification**: administrator authenticates; profile active; `system_admin` role and all five outlet scopes assigned.
+- [x] **External verification by agent**: `roles`, `user_profiles`, `outlets`, `user_roles` return `200 []` to anon (RLS filtering); `audit_logs` returns `42501` to anon (deny by design); unknown table returns `PGRST205` (proves tables exist).
+- [x] Cloudflare build verified to contain the Supabase project ref, so the environment variables reached the build.
 
-### In Progress
-- [ ] **Apply the two migrations** to the Supabase project (SQL editor or `supabase db push`).
-- [ ] **Create the three test users** and assign roles/outlets.
-- [ ] Re-deploy to Cloudflare Pages with the new auth build.
+### Completed (Phase 3 — outlets)
+- [x] Migration `20261118000300_master_data.sql` authored: `stock_locations`, `item_categories`, `units`, `item_unit_conversions`, `suppliers`, `items`, RLS policies, audit triggers, comments.
+- [x] Migration `20261118000400_master_data_seed.sql` authored: 4 stock locations, 9 categories, unit catalogue with fixed kg/L factors and item-specific box/carton/sack factors.
+- [x] `/settings` route now renders a real page (no longer a placeholder).
+- [x] Outlet panel: list, create, edit, deactivate/reactivate; never deletes.
+- [x] Client-side validation (code pattern, name length, trimming, uppercasing) and database error mapping (`23505` duplicate, `42501` permission).
+- [x] Write controls hidden for roles without management rights; the database enforces the same rule regardless.
+- [x] Loading, empty, load-failure, action-error and success states.
+- [x] Explicit "Not implemented yet" section on the Settings page so scope is unambiguous.
 
-### Outstanding (Next Session)
-- [ ] Verify AC-01 (three logins) and AC-02 (unauthorized access fails).
-- [ ] Add RLS negative-test SQL script.
-- [ ] Begin Phase 3 master data: outlets, locations, suppliers, item categories/items.
+### Outstanding
+- [ ] **Owner**: apply `20261118000300_master_data.sql`, then `20261118000400_master_data_seed.sql`.
+- [ ] **Owner**: create the two remaining test accounts and verify AC-01 / AC-02.
+- [ ] Build suppliers, item master and stock-location screens (after the migration is applied).
+- [ ] Add RLS negative-test SQL script for repeatable authorization checks.
+- [ ] User administration UI (roles, outlet scopes, disable/reactivate).
 
 ---
 
@@ -78,7 +86,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
-| 🟡 MEDIUM | **Blocker** | Phase 2 migrations have not been applied; the live app will show "profile missing" until then | Phase 2 exit | Owner runs the SQL or Supabase CLI link; agent cannot authenticate to the database |
+| 🟡 MEDIUM | **Blocker** | Master-data migration 0003/0004 not applied; suppliers, items and locations cannot be used yet | Phase 3 items/suppliers | Owner runs the two SQL files in order; agent has no database credentials |
+| 🟡 MEDIUM | **Risk** | AC-01 cannot be demonstrated with one account | Phase 2 acceptance | Owner creates two more accounts (dashboard or `scripts/seed-test-users.mjs`) |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
@@ -92,21 +101,27 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | File | Action | Date |
 | :--- | :--- | :--- |
 | `src/**` | Created — shell, pages, auth, lib, tests | 2026-11-18 |
-| `src/features/auth/**` | **Created** — context, provider, route guard | 2026-11-18 |
-| `src/pages/Login.tsx` | **Created** | 2026-11-18 |
-| `src/lib/supabase.ts` | **Created** | 2026-11-18 |
-| `supabase/migrations/20261118000100_foundation.sql` | **Created** — schema, RLS, audit | 2026-11-18 |
-| `supabase/migrations/20261118000200_reference_data.sql` | **Created** — roles + outlets | 2026-11-18 |
-| `supabase/README.md` | **Created** — apply + seeding guide | 2026-11-18 |
-| `scripts/seed-test-users.mjs` | **Created** — local admin script | 2026-11-18 |
-| `.github/workflows/ci.yml` | **Created** | 2026-11-18 |
-| `public/favicon.svg`, `_redirects`, `_headers` | **Created** | 2026-11-18 |
+| `src/features/auth/**` | Created — context, provider, route guard | 2026-11-18 |
+| `src/features/outlets/validation.ts` | **Created** — outlet validation + DB error mapping | 2026-11-18 |
+| `src/features/outlets/api.ts` | **Created** — outlet data access via RLS client | 2026-11-18 |
+| `src/features/outlets/OutletsPanel.tsx` | **Created** — list/create/edit/deactivate UI | 2026-11-18 |
+| `src/pages/Settings.tsx` | **Created** — settings page with outlet panel | 2026-11-18 |
+| `src/pages/Login.tsx` | Created | 2026-11-18 |
+| `src/lib/supabase.ts` | Created | 2026-11-18 |
+| `supabase/migrations/20261118000100_foundation.sql` | Created — applied by owner | 2026-11-18 |
+| `supabase/migrations/20261118000200_reference_data.sql` | Created — applied by owner | 2026-11-18 |
+| `supabase/migrations/20261118000300_master_data.sql` | **Created — pending apply** | 2026-11-18 |
+| `supabase/migrations/20261118000400_master_data_seed.sql` | **Created — pending apply** | 2026-11-18 |
+| `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
+| `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
+| `.github/workflows/ci.yml` | Created | 2026-11-18 |
+| `public/favicon.svg`, `_redirects`, `_headers` | Created | 2026-11-18 |
 | `package.json`, `package-lock.json` | Corrected; dependencies pinned | 2026-11-18 |
 | `vite.config.ts`, `tsconfig*.json`, `.eslintrc.cjs` | Corrected | 2026-11-18 |
-| `docs/DECISIONS.md` | Added ADR-009 (FIFO), ADR-010 (units); OD-04/05 resolved | 2026-11-18 |
-| `docs/ROADMAP.md` | Phase 1 complete, Phase 2 in progress, blockers cleared | 2026-11-18 |
-| `docs/REQUIREMENTS_TRACEABILITY.md` | Phase 1 + Phase 2 rows updated | 2026-11-18 |
-| `docs/DEPLOYMENT.md` | npm build, Node 20, SPA files, OD-13 confirmed | 2026-11-18 |
+| `docs/DECISIONS.md` | ADR-009 (FIFO), ADR-010 (units); OD-04/05 resolved | 2026-11-18 |
+| `docs/ROADMAP.md` | Phase 2 complete, Phase 3 in progress | 2026-11-18 |
+| `docs/REQUIREMENTS_TRACEABILITY.md` | Phase 2 + outlet rows updated | 2026-11-18 |
+| `docs/DEPLOYMENT.md` | npm build, Node 20, SPA files, env-var troubleshooting | 2026-11-18 |
 | `docs/PROGRESS_LOG.md`, `PROJECT_STATUS.md` | Updated | 2026-11-18 |
 | `docs/FAST_TRACK_PLAN.md` | Created; Day 1 marked complete | 2026-11-18 |
 
@@ -118,10 +133,13 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 4 suites, 14 tests (routing, auth redirects, offline banner, formatting, roles) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 426 kB JS (122 kB gzip), 16 kB CSS |
-| Live deployment | `https://albena-rms.pages.dev` root + `/inventory` + favicon | **Pass** — 200, asset hashes match local build |
+| `npm run test` | 6 suites, 32 tests (routing, auth redirects, offline banner, formatting, roles, outlet validation, outlet panel) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 444 kB JS (126 kB gzip), 18 kB CSS |
+| Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
+| Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
+| Supabase anon denial | `audit_logs` | **Pass** — `42501`, deny by design |
+| Admin login and scopes | Owner-verified | **Pass** — profile active, `system_admin`, 5 outlets |
 | Secret exclusion | `.env.local` ignored; only publishable key used client-side | **Pass** |
 
 ---
@@ -129,10 +147,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 ## 7. Recommended Next Task
 
 > **Owner action (2 steps)**:
-> 1. Apply `supabase/migrations/20261118000100_foundation.sql` then `20261118000200_reference_data.sql` (SQL editor, in order).
-> 2. Create the three test users (Dashboard → Authentication → Users, or run `scripts/seed-test-users.mjs` with the service-role key in `.env.local`).
+> 1. Apply `supabase/migrations/20261118000300_master_data.sql`, then `20261118000400_master_data_seed.sql`.
+> 2. Create the two remaining test accounts so AC-01 can be recorded.
 
 Then:
-1. Sign in at the deployed URL with each of the three accounts (AC-01).
+1. Open `/settings` at the deployed URL and exercise outlet create, edit and deactivate with the administrator account.
 2. Run the RLS negative tests: signed-out and role-less requests must be rejected (AC-02).
-3. Re-deploy and begin Phase 3 master data.
+3. Build the supplier and item master screens on the now-applied schema.

@@ -120,3 +120,33 @@
 - Apply both migrations to Supabase (agent has no database credentials).
 - Create the three test users; verify AC-01 and AC-02.
 - Re-deploy the auth build to Cloudflare Pages.
+
+---
+
+## Session 6: 2026-11-18 — Phase 2 Verified Live, Phase 3 Outlet Management
+
+- **Phase**: Phase 2 complete → Phase 3 in progress | **Completion**: 15% → **25.0%**
+- **Date**: 2026-11-18 13:15 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+- **Starting state**: Owner had applied both Phase 2 migrations and created the administrator account; the agent had not yet verified any of it.
+
+### Actions Completed
+1. **Phase 2 verified from outside the app**: anon REST reads return `200 []` for `roles`, `user_profiles`, `outlets` and `user_roles` (RLS filtering, tables present); `audit_logs` returns `42501` (deny by design); an unknown table returns `PGRST205`. Cloudflare's bundle contains the project ref, proving the build received the environment variables.
+2. **Master-data migrations authored** (pending owner apply): `stock_locations`, `item_categories`, `units`, `item_unit_conversions`, `suppliers`, `items`; RLS for every table; audit triggers; unit seeds with fixed kg/L factors and NULL factors for box/carton/sack (ADR-010).
+3. **Outlet feature built**: `validation.ts` (code pattern, name limits, normalization, `23505`/`42501` error mapping), `api.ts` (RLS client), `OutletsPanel.tsx` (list, create, edit, deactivate/reactivate, loading/empty/error/success states).
+4. **Settings page created** and wired to `/settings`, replacing the placeholder. It contains the live outlet panel plus an explicit "Not implemented yet" list so scope is unambiguous.
+5. **Write controls gated by role** (System Administrator, General Manager) while documenting that PostgreSQL RLS is the real boundary.
+6. **Dashboard and shell updated** to Phase 3 and the verified state.
+7. **Tests added**: 11 outlet-validation tests and 7 outlet-panel tests (list, load failure with retry, create, invalid submit, edit, deactivate, read-only role).
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 32/32 pass across 6 suites
+- `npm run build` — pass (444 kB JS / 126 kB gzip, 18 kB CSS)
+
+### Outstanding
+- Owner applies `20261118000300_master_data.sql` then `20261118000400_master_data_seed.sql`.
+- Owner creates the two remaining test accounts; AC-01 and AC-02 remain unrecorded.
+- Suppliers, item master, stock locations and user administration UI.
+- RLS negative-test SQL script for repeatable authorization proof.

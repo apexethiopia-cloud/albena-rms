@@ -59,7 +59,8 @@ flowchart LR
 
 ## Phase 2 — Backend & Identity (10%)
 **SRS Reference**: Section 11, Phase 2
-**Status**: 🟡 **IN PROGRESS** (migrations written; pending apply to Supabase)
+**Status**: ✅ **COMPLETE** (2026-11-18) — schema, RLS and administrator authentication verified live.
+⚠️ **AC-01 remains unverified**: only the administrator account exists, so "three test users authenticate" has not been demonstrated.
 
 **Scope**:
 - Supabase project initialization and schema migration setup
@@ -71,17 +72,20 @@ flowchart LR
 
 **Exit Condition**: Three test users authenticate and authorization tests pass (AC-01, AC-02).
 
+**Delivered**: `roles`, `user_profiles`, `user_roles`, `outlets`, `user_outlet_scopes`, `audit_logs`; RLS on all six tables; `SECURITY DEFINER` policy helpers; append-only audit triggers; new-user profile trigger; admin RPCs; login/logout/disabled-account UI. Owner applied both migrations and verified the administrator login, role and five outlet scopes.
+
 **Requirements addressed**: SEC-ROLE-01..06, ARC-05, ARC-06, USR-01..05, OUT-04, AUD-01..05, NFR-01, NFR-05..09, AC-01, AC-02, AC-13, AC-17
 
-**Blocked by**: OD-02 (tenancy model), OD-03 (test user role assignments)
+**Open acceptance item**: create the two remaining test accounts, then record AC-01 and AC-02 results. OD-02 and OD-03 are resolved.
 
 ---
 
 ## Phase 3 — Master Data (10%)
 **SRS Reference**: Section 11, Phase 3
-**Status**: ⏳ Planned
+**Status**: 🟡 **IN PROGRESS** — outlet management delivered; suppliers, items, stock locations and user administration pending.
 
 **Scope**:
+- ✅ Outlet management UI: list, create, edit, deactivate/reactivate (no deletes)
 - Business workspace, outlets and location management UI
 - Supplier management (create, edit, deactivate)
 - Inventory item master (create, edit, categories, deactivate)
@@ -90,9 +94,14 @@ flowchart LR
 
 **Exit Condition**: Master data CRUD and access scopes pass tests.
 
+**Delivered so far**:
+- Migrations `20261118000300_master_data.sql` and `20261118000400_master_data_seed.sql` authored: `stock_locations`, `item_categories`, `units`, `item_unit_conversions`, `suppliers`, `items`, RLS, audit triggers, reference seeds. **Not yet applied.**
+- Settings page at `/settings` with the outlet panel: RLS-gated write controls, client validation, duplicate-code and permission error mapping, deactivate instead of delete.
+- FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles.
+
 **Requirements addressed**: OUT-01..03, SUP-01..02, INV-01..05, USR-01..05, SEC-ROLE-05
 
-**Blocked by**: OD-01, OD-02, OD-05 (unit conversions)
+**Depends on**: owner applying migrations 0003 and 0004 before suppliers, items and locations can be used. OD-01, OD-02 and OD-05 are resolved (ADR-010).
 
 ---
 
