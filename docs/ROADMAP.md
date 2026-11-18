@@ -155,7 +155,7 @@ flowchart LR
 
 ## Phase 5 — Recipes & Production (10%)
 **SRS Reference**: Section 11, Phase 5
-**Status**: 🚧 **In Progress** — starting 2026-11-18 after Phase 4 build completion
+**Status**: 🚧 **Build complete** — awaiting owner application of migration 0009 and final UAT
 
 **Scope**:
 - Recipe management (ingredients, quantities, yield, version history)
@@ -164,11 +164,26 @@ flowchart LR
 - Atomic production posting (consume inputs, produce outputs)
 - Theoretical consumption baseline for variance reporting
 
-**Exit Condition**: Costing and production calculations pass (AC-07, AC-08, AC-09).
+**Delivered (2026-11-18)**:
+- `recipes`, immutable `recipe_versions` and `recipe_version_lines`; drafts append a version, publishing archives the previous published version (REC-01, REC-02)
+- `recipe_version_costs` view derives total cost, cost per portion, gross profit and food cost % from the current FIFO weighted-average ingredient cost across locations (REC-03, REC-04)
+- Recipe definitions never touch stock (REC-06); menu item remains text until the Phase 6 menu entity exists
+- `production_orders` and `production_inputs` with actual output, optional expected output, generated yield %, responsible user, date and location (PROD-01, PROD-02)
+- `post_production_order()` consumes every input through FIFO and creates the output layer at the consumed cost in one transaction (PROD-03, PROD-04, STK-02/03)
+- `/kitchen` page with the Recipes and Production panels, plus validation, role gates, read-only states and refresh/confirm flows
+- Tests: `recipesValidation.test.ts` (16) and `Kitchen.test.tsx` (8)
+- Migration `20261118000900_recipes_production.sql` written; **not yet applied**
+
+**Remaining**:
+- Owner applies migration 0009; agent verifies objects and RPC gates through PostgREST
+- Final UAT: AC-07 production posting and AC-08 costing (deferred by the owner with the rest of UAT)
+- REC-05 and REC-07 theoretical consumption need Phase 6 sales (COST-01..03 in Phase 7)
+
+**Exit Condition**: Costing and production calculations pass (AC-07, AC-08, AC-09). Build and unit tests are complete; AC-07/AC-08 live checks are deferred to final UAT and AC-09 remains partial until Phase 6.
 
 **Requirements addressed**: REC-01..07, PROD-01..04, COST-01..03
 
-**Decisions**: consumes FIFO layer costs (ADR-009) in base units (ADR-010).
+**Decisions**: consumes FIFO layer costs (ADR-009) in base units (ADR-010); recipe versioning, costing and production posting recorded in ADR-012.
 
 ---
 
@@ -242,7 +257,7 @@ flowchart LR
 | Phase 2 | 10% | ✅ Complete | 10.0% |
 | Phase 3 | 10% | ✅ Complete | 10.0% |
 | Phase 4 | 20% | ✅ Build complete — final UAT deferred | 0% (releases at final UAT) |
-| Phase 5 | 10% | 🚧 In Progress | 0% |
+| Phase 5 | 10% | 🚧 Build complete — final UAT deferred | 0% (releases at final UAT) |
 | Phase 6 | 15% | ⏳ Planned | 0% |
 | Phase 7 | 10% | ⏳ Planned | 0% |
 | Phase 8 | 10% | ⏳ Planned | 0% |

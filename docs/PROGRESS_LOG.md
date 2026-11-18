@@ -498,6 +498,37 @@
 - RLS negative-test SQL script (AC-02 evidence).
 - Phase 5 implementation.
 
+---
+
+## Session 20: 2026-11-18 — Phase 5 Recipes, Costing and Production Build
+
+- **Phase**: Phase 5 build complete; migration 0009 awaiting the owner | **Completion**: **35.0%** (Phase 4 and Phase 5 credit releases at final UAT)
+- **Date**: 2026-11-18 23:59 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Migration 0009** — `20261118000900_recipes_production.sql` adds `recipes`, immutable `recipe_versions` and `recipe_version_lines`, `production_orders` and `production_inputs`, the `recipe_version_costs` view, role helpers, seven SECURITY DEFINER RPCs, audit triggers, RLS and grants.
+2. **Recipe lifecycle** — `create_recipe` writes version 1; `create_recipe_version` appends a draft; `publish_recipe_version` archives the previously published version without deleting history; `update_recipe` edits header metadata only (code stays immutable).
+3. **Costing** — `recipe_version_costs` uses the weighted average unit cost of the remaining FIFO layers per ingredient across all locations, then derives total cost, cost per portion, gross profit and food cost %. Ingredients without layers cost zero and set `lines_without_cost` so the UI can warn.
+4. **Production** — `create_production_order` validates inputs, resolves base quantities through `stock_unit_factor()` and rejects duplicate inputs; `post_production_order` consumes every input FIFO and creates the output layer at the total consumed cost in one transaction. Drafts never move stock.
+5. **UI** — new `/kitchen` page with `RecipesPanel` (create recipe, new version, publish, cost table, read-only role state) and `ProductionPanel` (draft form, input editor, confirm-post, history, yield %); "Kitchen" nav item added; Production removed from the Inventory planned list; footer updated.
+6. **Validation** — recipe/version/production validation split into `features/recipes/validation.ts` and `features/production/validation.ts`, including database error mapping for duplicate codes/numbers, publish conflicts, shortages and posted orders.
+7. **Tests** — `recipesValidation.test.ts` (16) and `Kitchen.test.tsx` (8) cover payload normalization, units, duplicate inputs, publish, costing display, confirm-post and both role gates.
+8. **Docs** — ADR-012 recorded; REC/PROD/COST and AC-07/AC-08/AC-09 rows updated; roadmap, project status and this log refreshed.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 206/206 pass across 24 suites
+- `npm run build` — pass (715.36 kB JS / 170.07 kB gzip, 23.59 kB CSS; chunk-size warning only)
+
+### Outstanding
+- Owner applies migration 0009; agent verifies the five tables, costing view and seven RPC gates through PostgREST.
+- Final UAT: AC-06 count reconciliation, AC-07 production posting and AC-08 recipe costing.
+- REC-05/REC-07 theoretical consumption needs Phase 6 sales; COST-01..03 remain Phase 7.
+- OD-06 thresholds and separation of duties remain open; the stock-location to outlet mapping remains open.
+- RLS negative-test SQL script (AC-02 evidence).
+
 
 
 

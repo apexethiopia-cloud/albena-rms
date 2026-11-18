@@ -5,10 +5,10 @@
 | Attribute | Value |
 | :--- | :--- |
 | **Project Name** | Albena Restaurant Management System (RMS) |
-| **Current Phase** | Phase 4 build complete (verification deferred); Phase 5 — Recipes & Production starting |
-| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 credit releases when AC-06/AC-07 are confirmed in final UAT) |
-| **Last Updated** | 2026-11-18 23:55 UTC+3 |
-| **Latest Git Commit** | `367af5c` (counts/adjustments deployment record) |
+| **Current Phase** | Phase 5 build complete — awaiting migration 0009 and final UAT |
+| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 and Phase 5 credit releases at final UAT) |
+| **Last Updated** | 2026-11-18 23:59 UTC+3 |
+| **Latest Git Commit** | `fedf5aa` (last pushed; Phase 5 slice follows) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -29,7 +29,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 confirmed by owner** (all three accounts created) |
 | **Phase 3** | Master Data (outlets, suppliers, inventory, users) | 10% | ✅ **Complete** | Master-data CRUD, unit conversions, categories and user/role/outlet administration pass tests |
 | **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock, counts, adjustments, waste, reorder alerts) | 20% | ✅ **Build complete** | Deferred — all workflows built, migration 0008 applied and structure-verified; AC-06/AC-07 live runs moved to final UAT by the owner (2026-11-18) |
-| **Phase 5** | Recipes & Production | 10% | 🚧 **In Progress** | No |
+| **Phase 5** | Recipes & Production (versioned recipes, FIFO costing, production posting) | 10% | ✅ **Build complete** | Deferred — recipes, costing and production built and unit-tested; migration 0009 awaits the owner; AC-07/AC-08 live runs moved to final UAT |
 | **Phase 6** | Restaurant Operations (menu, tables, KDS, POS) | 15% | ⏳ Planned | No |
 | **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
 | **Phase 8** | Validation & Handover | 10% | ⏳ Planned | No |
@@ -130,11 +130,25 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] **Owner**: migration 0008 applied (2026-11-18); AC-06/AC-07 live verification deferred to final UAT.
 - [x] **Agent**: migration 0008 verified through PostgREST — six objects exist, anon denied with `42501`, eight RPCs return role-gate messages.
 
+### Completed (Phase 5 — recipes, costing and production)
+- [x] Migration `20261118000900_recipes_production.sql` **authored, not yet applied**: `recipes`, `recipe_versions`, `recipe_version_lines`, `production_orders`, `production_inputs`, the `recipe_version_costs` view, role helpers `can_manage_recipes()` / `can_manage_production()`, seven workflow RPCs, audit triggers, RLS and grants.
+- [x] Recipe history is append-only: creating a recipe writes version 1, editing writes a new draft version, and publishing archives the previous published version without deleting it (REC-01, REC-02).
+- [x] Ingredient lines store the entered unit and the base quantity resolved through `stock_unit_factor()` at creation, so a unit with no conversion is rejected up front (ADR-010).
+- [x] `recipe_version_costs` derives total cost, cost per portion, gross profit and food cost % from the current FIFO weighted-average ingredient cost across all locations; ingredients without layers cost zero and are flagged (REC-03, REC-04).
+- [x] Recipe creation and publishing never touch stock (REC-06, ADR-008).
+- [x] Production orders record date, location, actual output, optional expected output with a generated yield %, responsible user and inputs (PROD-01, PROD-02).
+- [x] `post_production_order()` consumes every input FIFO through `post_stock_out()` and creates the output layer at the consumed cost in one transaction; drafts and definitions never move stock (PROD-03, PROD-04, STK-02/03).
+- [x] Roles: manage recipes and production = System Administrator, General Manager, Executive Chef, matching the SRS role table; no approval step or threshold is invented (OD-06 still open).
+- [x] UI: `/kitchen` page with the Recipes panel (create, new version, publish, cost table) and the Production panel (draft, input editor, confirm-and-post, history); "Kitchen" nav item added and Production removed from the Inventory planned list.
+- [x] Tests: `recipesValidation.test.ts` (16) and `Kitchen.test.tsx` (8); totals below.
+
 ### Outstanding
-- [ ] **Owner/agent**: AC-06 and AC-07 live runs **deferred to final UAT** by the owner (2026-11-18); panels load and migration objects are verified.
-- [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock cannot be enforced (open issue).
+- [ ] **Owner**: apply `supabase/migrations/20261118000900_recipes_production.sql`.
+- [ ] **Agent**: after migration 0009 is applied, verify the five tables plus costing view and the seven RPC gates through PostgREST.
+- [ ] **Owner/agent**: AC-06 count reconciliation plus AC-07 production posting and AC-08 costing live runs **deferred to final UAT** by the owner (2026-11-18).
+- [ ] REC-05/REC-07 theoretical consumption needs Phase 6 sales; COST-01..03 report work remains in Phase 7.
+- [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock and recipe costing cannot be enforced (open issue).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
-- [ ] Phase 5: recipes/version history, costing, production orders and atomic production posting.
 
 ---
 
@@ -143,6 +157,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | Priority | Type | Description | Blocking | Mitigation |
 | :---: | :--- | :--- | :--- | :--- |
 | 🔴 HIGH | **Resolved** | Migrations 0006 and 0007 applied 2026-11-18 and checked through PostgREST | AC-03 and GRN-04 demonstration | Objects and RPCs confirmed; anon denied. Only the live signed-in workflow runs remain |
+| 🔴 HIGH | **Pending action** | Migration `20261118000900_recipes_production.sql` is not applied yet | Phase 5 live panels | Owner applies it in the Supabase SQL editor; the UI reports the missing objects until then |
 | 🔴 HIGH | **Resolved** | Migration `20261118000800_counts_adjustments_waste.sql` applied 2026-11-18 and checked through PostgREST | AC-06/AC-07 and the Phase 4 exit condition | Six objects confirmed; anon denied; eight RPCs role-gated. Live AC-06/AC-07 runs deferred to final UAT |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
@@ -194,6 +209,11 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `src/features/stock/CountPanel.tsx` | **Created** — count sheet with system/physical/variance and approval/posting | 2026-11-18 |
 | `src/features/stock/LowStockPanel.tsx` | **Created** — reorder alert table | 2026-11-18 |
 | `src/test/InventoryControl.test.tsx` | **Created** — reorder, adjustment, waste and count panels plus role gates | 2026-11-18 |
+| `supabase/migrations/20261118000900_recipes_production.sql` | **Created** — recipes/versions/lines, production orders/inputs, costing view, 7 RPCs, RLS/audit — **not yet applied** | 2026-11-18 |
+| `src/features/recipes/**` | **Created** — recipe API, validation, costing table and version UI | 2026-11-18 |
+| `src/features/production/**` | **Created** — production API, validation, draft/post panel | 2026-11-18 |
+| `src/pages/Kitchen.tsx` | **Created** — `/kitchen` page mounting both panels | 2026-11-18 |
+| `src/test/recipesValidation.test.ts`, `src/test/Kitchen.test.tsx` | **Created** — Phase 5 validation and panel tests | 2026-11-18 |
 | `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
 | `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
 | `.github/workflows/ci.yml` | Created | 2026-11-18 |
@@ -215,8 +235,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 22 suites, 182 tests (routing, auth, offline banner, formatting, roles, master-data, stock/GRN/SIV, PR/PO, GRN↔PO, counts/adjustments/waste and reorder alerts) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 670.43 kB JS (162.87 kB gzip), 23.27 kB CSS (chunk-size warning only) |
+| `npm run test` | 24 suites, 206 tests (routing, auth, offline banner, formatting, roles, master-data, stock/GRN/SIV, PR/PO, GRN↔PO, counts/adjustments/waste, reorder alerts, recipes/costing and production) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 715.36 kB JS (170.07 kB gzip), 23.59 kB CSS (chunk-size warning only) |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback; `assets/index-BSJnI50i.js` (670,647 bytes) contains the reorder, count, adjustment and waste panel markers |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
@@ -227,6 +247,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | PR/PO RPC gates | Seven procurement RPCs called as anon | **Pass** — each returns its role-gate message, not 404 |
 | Migration 0008 objects | REST probes for `inventory_adjustments`, `inventory_adjustment_lines`, `inventory_counts`, `inventory_count_lines`, `stock_reorder_status`, `inventory_count_variances` | **Pass** — all six exist; anon denied with `42501` |
 | Migration 0008 RPC gates | Eight inventory-control RPCs called as anon with named arguments | **Pass** — each returns its role-gate message, not 404 |
+| Phase 5 unit tests | `recipesValidation.test.ts` (16) and `Kitchen.test.tsx` (8) | **Pass** — recipe/version/production payloads, publish, costing display, confirm-post and role gates |
+| Migration 0009 | Authored, **not yet applied** | **Awaiting owner** |
 | AC-03 live workflow | Owner-run in the deployed app | **Pass** — approval recorded, PO reached closed, purchasing officer blocked from approving |
 | GRN-04 live workflow | Owner-run against an ordered PO | **Pass** — pending → partial/complete after posting, over-receipt shown as `over` |
 | Admin login and scopes | Owner-verified | **Pass** — profile active, `system_admin`, 5 outlets |
@@ -236,10 +258,9 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Phase 4 build is complete and migration 0008 is verified.** The owner has deferred detailed UAT (AC-06, AC-07 and the rest of the acceptance criteria) to the end of the project. Next: Phase 5 — recipes, costing and production.
+> **Phase 5 build is complete.** Migration 0009 awaits the owner; recipes, version history, FIFO costing and atomic production posting are built, unit-tested and wired into `/kitchen`. Final UAT covers AC-06, AC-07 and AC-08.
 
 Then:
-1. Build recipe management with ingredients, units, yield and immutable version history (REC-01..07).
-2. Compute recipe cost from current FIFO layer cost and selling price, gross profit and food-cost percentage (REC-03, REC-04).
-3. Build production orders that consume inputs and create outputs atomically through the ledger (PROD-01..04, STK-02, STK-03).
-4. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).
+1. Owner applies `20261118000900_recipes_production.sql`; agent verifies the objects and RPC gates through PostgREST.
+2. Start Phase 6 — Restaurant Operations (menus, tables, reservations, orders, KDS, receipts), resolving OD-07..OD-10 and OD-12 before the affected slice.
+3. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).

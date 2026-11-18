@@ -182,10 +182,10 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| PROD-01 | Record raw→semi/finished production | 5 | `production_orders` | `/kitchen/production` | AC-07 | Not Started |
-| PROD-02 | Production record fields | 5 | `production_orders` | Production form | AC-07 | Not Started |
-| PROD-03 | Post: decrease inputs, increase output atomically | 5 | DB function | Production post RPC | AC-07 | Not Started |
-| PROD-04 | Production history and traceable movements | 5 | `stock_transactions` | Stock ledger | — | Not Started |
+| PROD-01 | Record raw→semi/finished production | 5 | `production_orders` | `/kitchen` (`ProductionPanel.tsx`) | `Kitchen.test.tsx` | **Implemented** — live UAT deferred |
+| PROD-02 | Production record fields | 5 | `production_orders`, `production_inputs` | Production form | `Kitchen.test.tsx` | **Implemented** — inputs, quantities, actual/expected output, yield %, date, location, responsible user |
+| PROD-03 | Post: decrease inputs, increase output atomically | 5 | `post_production_order()`, `post_stock_in/out()` | Production post RPC | `Kitchen.test.tsx` | **Implemented** — one transaction consumes input FIFO layers and creates the output layer |
+| PROD-04 | Production history and traceable movements | 5 | `production_orders`, `stock_transactions` | Production table + stock ledger | `Kitchen.test.tsx` | **Implemented** — posted inputs/output reference the production order in the ledger |
 
 ---
 
@@ -193,12 +193,12 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| REC-01 | Recipe master data fields | 5 | `recipes`, `recipe_ingredients` | `/kitchen/recipes` | AC-08 | Not Started |
-| REC-02 | Create/edit with version history | 5 | `recipe_versions` | Recipe version UI | AC-08 | Not Started |
-| REC-03 | Calculate cost, selling price, GP, food cost % | 5 | DB computed or function | Recipe costing calc | AC-08 | Not Started |
-| REC-04 | Food Cost % = Cost ÷ Price × 100 | 5 | — | Costing formula | AC-08 | Not Started |
-| REC-05 | Use recipes for costing, engineering, theoretical consumption | 5,7 | — | Costing + reports | AC-08,09 | Not Started |
-| REC-06 | Recipes do NOT auto-deduct stock | 5 | — | No auto-deduction logic | AC-09 | Not Started |
+| REC-01 | Recipe master data fields | 5 | `recipes`, `recipe_versions`, `recipe_version_lines` | `/kitchen` (`RecipesPanel.tsx`) | `Kitchen.test.tsx` | **Implemented** — live UAT deferred |
+| REC-02 | Create/edit with version history | 5 | `recipe_versions`, `create_recipe_version()`, `publish_recipe_version()` | Recipe version UI | `Kitchen.test.tsx` | **Implemented** — drafts are append-only; publishing archives the previous version |
+| REC-03 | Calculate cost, selling price, GP, food cost % | 5 | View `recipe_version_costs` | Recipe costing table | `Kitchen.test.tsx` | **Implemented** — current FIFO weighted-average ingredient cost per version |
+| REC-04 | Food Cost % = Cost ÷ Price × 100 | 5 | View `recipe_version_costs` | Costing view | `recipesValidation.test.ts` | **Implemented** — cost per portion ÷ selling price × 100 |
+| REC-05 | Use recipes for costing, engineering, theoretical consumption | 5,7 | View `recipe_version_costs` | Costing live; theoretical consumption in Phase 7 | — | **Partial** — costing is live; theoretical consumption needs Phase 6 sales |
+| REC-06 | Recipes do NOT auto-deduct stock | 5 | — | Recipe RPCs never write stock | `Kitchen.test.tsx` | **Implemented** — only `post_production_order()` moves stock |
 | REC-07 | Theoretical consumption uses recipe versions + sales | 7 | — | Variance report query | COST-01 | Not Started |
 
 ---
@@ -401,9 +401,9 @@
 | AC-04 | GRN posted once; updates correct location and valuation | 4 | **Verified** 2026-11-18 (owner live run) — GRN 2,000 g posted once to the chosen location, balance 2,000 g / ETB 240.00 |
 | AC-05 | SIV/transfer atomic; traceable stock movements | 4 | **Verified** 2026-11-18 (owner live run) — SIV 500 g left 1,500 g / ETB 180.00 (FIFO), over-issue rejected, movements traceable |
 | AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | **Implemented** — count variance, approval and posting built and unit-tested; migration 0008 applied and structure-verified; live UAT deferred by the owner |
-| AC-07 | Waste and production update inventory correctly | 4,5 | **In Progress** — approved waste posts as a FIFO decrease and is unit-tested; live check deferred; production arrives in Phase 5 |
-| AC-08 | Recipe costing and food-cost % verified | 5 | Not Started |
-| AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6 | Not Started |
+| AC-07 | Waste and production update inventory correctly | 4,5 | **Implemented** — approved waste and posted production both move stock through the FIFO ledger and are unit-tested; live UAT deferred by the owner |
+| AC-08 | Recipe costing and food-cost % verified | 5 | **Implemented** — `recipe_version_costs` computes cost per portion, gross profit and food cost %; panel tested; live UAT deferred |
+| AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6 | **Partial** — recipe definitions never deduct stock (REC-06); menu sales and theoretical consumption arrive with Phase 6 |
 | AC-10 | Orders appear on KDS; status visible to other users over internet | 6 | Not Started |
 | AC-11 | Table/reservation/order/receipt workflows per permissions | 6 | Not Started |
 | AC-12 | Reports/dashboard reconcile to test data; respect access scope | 7 | Not Started |

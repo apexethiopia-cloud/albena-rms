@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
 import { Inventory } from '@/pages/Inventory'
+import { Kitchen } from '@/pages/Kitchen'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
 import { Purchasing } from '@/pages/Purchasing'
@@ -23,6 +24,8 @@ export function AppRoutes() {
           <Route path="inventory" element={<Inventory />} />
 
           <Route path="purchasing" element={<Purchasing />} />
+
+          <Route path="kitchen" element={<Kitchen />} />
 
           <Route
             path="operations"

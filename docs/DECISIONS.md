@@ -113,6 +113,23 @@
 
 ---
 
+## ADR-012: Recipe Versioning, FIFO-Based Costing and Production Posting
+- **Date**: 2026-11-18 | **Status**: Accepted
+- **SRS Reference**: REC-01..07, PROD-01..04, COST-01..03, STK-02/03, AC-07, AC-08, ADR-007..011
+- **Context**: Phase 5 needs recipes with history and food costing, plus production that turns inputs into outputs without breaking the ledger rules. The menu entity is Phase 6, and stock locations are not yet outlet-scoped.
+- **Decision**:
+  - **Recipe header + immutable versions.** `recipes` holds code, name, menu item name and notes; `recipe_versions` holds the yield, selling price, notes and status (`draft`, `published`, `archived`). Every edit is a new version, so history is never overwritten. Publishing a draft archives the previous published version and stamps `published_by`, `published_at` and `effective_from`.
+  - **Ingredient lines store both the entered quantity/unit and the resolved base quantity.** The database resolves the factor at creation through `stock_unit_factor()` (ADR-010) and rejects a unit with no conversion, so later costing does not depend on re-entering a factor.
+  - **Costing uses the current FIFO layer cost.** `recipe_version_costs` computes, per ingredient, the weighted average unit cost of the remaining FIFO layers across all locations, then derives total cost, cost per portion, gross profit and food cost % (cost per portion / selling price × 100). An ingredient with no remaining layers costs zero and increments `lines_without_cost`, which the UI flags. No standard cost or price list is invented.
+  - **Recipes never move stock (REC-06, ADR-008).** Creating, versioning or publishing a recipe touches no stock table.
+  - **Production orders are drafts until posted.** `production_orders` records date, location, actual output, optional expected output and a generated `yield_percentage`, the responsible user and notes; `production_inputs` records each consumed item and base quantity. There is no approval step because the SRS does not require one.
+  - **Posting is one transaction.** `post_production_order()` locks the order, consumes every input through `post_stock_out()` (FIFO, same helper as issues, waste and count losses), records `posted_cost` per input, and creates the output layer through `post_stock_in()` at the total consumed cost divided by the output base quantity. Drafts and definitions never affect the ledger (PROD-03).
+  - **Roles**: manage recipes and production = `system_admin`, `general_manager`, `executive_chef`, matching the SRS role table. No separation of duties or thresholds are invented (OD-06 still open).
+  - **Menu item stays text** until the Phase 6 menu entity exists; replacing it with a foreign key is a later migration, not a new rule here (CON-07).
+- **Consequences**: Migration `20261118000900_recipes_production.sql` adds the tables, costing view, seven RPCs, audit triggers, RLS and grants. Phase 7 can build theoretical consumption from published versions plus sales; outlet-scoped costing waits for the stock-location to outlet mapping.
+
+---
+
 ## Open Decisions Log (OD-01 to OD-13)
 
 > These require owner confirmation before the relevant phase begins. Developers must NOT invent business policy.
