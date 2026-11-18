@@ -83,12 +83,13 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Item write gate matches the `items_write` policy: System Administrator, General Manager, Purchasing Officer, Storekeeper, Executive Chef.
 - [x] Base units limited to the seeded gram / millilitre / piece; reorder level validated as a non-negative decimal in the base unit.
 - [x] Box/carton/sack purchase units are selectable; when selected, a per-item factor is required and recorded via `item_unit_conversions` (create + edit).
+- [x] Category panel: list, create, edit, deactivate/reactivate with name + sort-order validation, mounted on the `/inventory` page (write gate mirrors `item_categories_write`).
 
 ### Outstanding
 - [x] **Owner**: the two additional test accounts were created and the GM / Restaurant Manager roles were assigned.
 - [ ] AC-01 / AC-02 verification sign-off after confirming the new logins.
 - [ ] Integration-test outlets, suppliers, items and stock locations with an authenticated account (migrations are applied; all four UIs are written and unit-tested).
-- [ ] Category CRUD UI, user administration UI (roles, outlet scopes, disable/reactivate).
+- [ ] User administration UI (roles, outlet scopes, disable/reactivate).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 
 ---
@@ -172,4 +173,4 @@ Completion percentage calculated from SRS Phase exit conditions only.
 Then:
 1. Open `/settings`, `/purchasing` and `/inventory` and create one outlet, one supplier and one item with the administrator account. This is the first end-to-end check of RLS with a real session.
 2. Run the RLS negative tests: signed-out and role-less requests must be rejected (AC-02).
-3. Build the stock-location screen and the category CRUD, then start the Phase 4 stock ledger (GRN / SIV / FIFO).
+3. Build the user administration UI, then start the Phase 4 stock ledger (GRN / SIV / FIFO).

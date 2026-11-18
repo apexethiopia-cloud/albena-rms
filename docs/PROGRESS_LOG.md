@@ -254,3 +254,26 @@
 
 ### Outstanding
 - Same as previous session, plus an authenticated end-to-end check.
+
+---
+
+## Session 11: 2026-11-18 — Category CRUD Built
+
+- **Phase**: Phase 3 in progress | **Completion**: **25.0%** (unchanged; Phase 3 exit condition still open)
+- **Date**: 2026-11-18 15:55 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+
+### Actions Completed
+1. **Category feature built**: validation (required name, 80-char max, whole-number sort order), data access (list/create/update) against `item_categories`, and a full panel with list/create/edit/deactivate.
+2. **Inventory page updated**: `/inventory` now renders the item panel followed by the category panel followed by the stock-location panel.
+3. **Tests**: new `Categories.test.tsx` (8 panel tests against the Inventory page) and `categoryValidation.test.ts` (6 validation tests).
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 94/94 pass across 14 suites
+- `npm run build` — pass (493 kB JS / 133 kB gzip, 19 kB CSS)
+
+### Outstanding
+- Same as previous session, plus the authenticated end-to-end check.
+

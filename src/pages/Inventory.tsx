@@ -1,6 +1,7 @@
 import { Boxes, ClipboardCheck, Factory, Scale, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { ItemsPanel } from '@/features/items/ItemsPanel'
+import { CategoriesPanel } from '@/features/categories/CategoriesPanel'
 import { LocationsPanel } from '@/features/locations/LocationsPanel'
 
 const PLANNED = [
@@ -46,6 +47,8 @@ export function Inventory() {
 
       <div className="space-y-6">
         <ItemsPanel />
+
+        <CategoriesPanel />
 
         <LocationsPanel />
 

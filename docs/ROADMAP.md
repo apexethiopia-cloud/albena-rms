@@ -82,7 +82,7 @@ flowchart LR
 
 ## Phase 3 — Master Data (10%)
 **SRS Reference**: Section 11, Phase 3
-**Status**: 🟡 **IN PROGRESS** — outlets, suppliers, items, stock locations and unit conversions delivered; user administration pending.
+**Status**: 🟡 **IN PROGRESS** — master data UI delivered for outlets, suppliers, items, stock locations, unit conversions and categories; user administration pending.
 
 **Scope**:
 - ✅ Outlet management UI: list, create, edit, deactivate/reactivate (no deletes)
@@ -90,7 +90,7 @@ flowchart LR
 - ✅ Item master UI: list, create, edit, deactivate/reactivate; category, base unit, optional purchase unit, reorder level
 - ✅ Stock-location management UI: list, create, edit, deactivate/reactivate (no deletes)
 - ✅ Item unit-conversion editor (box / carton / sack factors, created + edit factor, per item)
-- Stock location management
+- ✅ Category management UI: list, create, edit, deactivate/reactivate (no deletes), mounted on `/inventory`
 - User management UI (assign roles, outlet scopes, disable/reactivate)
 
 **Exit Condition**: Master data CRUD and access scopes pass tests.
@@ -99,9 +99,9 @@ flowchart LR
 - Migrations `20261118000300_master_data.sql` and `20261118000400_master_data_seed.sql` **applied**: `stock_locations`, `item_categories`, `units`, `item_unit_conversions`, `suppliers`, `items`, RLS, audit triggers, reference seeds. Verified: all six tables respond to REST; anon writes return `42501`.
 - Settings page at `/settings` with the outlet panel (admin-only writes, matching the policy).
 - Purchasing page at `/purchasing` with the supplier panel (admin / GM / purchasing officer).
-- Inventory page at `/inventory` with the item panel (admin / GM / purchasing / storekeeper / chef) and the stock-location panel (admin / GM).
+- Inventory page at `/inventory` with the item panel, the category panel and the stock-location panel, each gated by its own RLS-backed write policy; the stock ledger section states plainly that no balances or movements exist yet.
 - Shared Postgres error mapping (`src/lib/errors.ts`), including a clear message when a table is missing because a migration has not been applied.
-- FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles for outlets, suppliers, items and locations.
+- FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles for outlets, suppliers, items, categories and locations; item tests cover base-unit creation and purchase-unit factor recording.
 
 **Requirements addressed**: OUT-01..03, SUP-01..02, INV-01..05, USR-01..05, SEC-ROLE-05
 
