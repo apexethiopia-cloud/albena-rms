@@ -465,6 +465,7 @@
 - `npm run lint` — pass (zero warnings)
 - `npm run test` — 182/182 pass across 22 suites
 - `npm run build` — pass (670.43 kB JS / 162.87 kB gzip, 23.27 kB CSS; chunk-size warning only)
+- Commit `da8a3f2` pushed to `main`; Cloudflare deployed the slice (`assets/index-BSJnI50i.js`, 670,647 bytes) and the served bundle contains the reorder, count, adjustment and waste panel markers.
 
 ### Outstanding
 - **Owner applies** `20261118000800_counts_adjustments_waste.sql`, then runs AC-06 (count variance → approval → posting reconciles the ledger) and AC-07 (waste decreases stock and FIFO value).

@@ -217,7 +217,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `npm run lint` | ESLint, zero warnings | **Pass** |
 | `npm run test` | 22 suites, 182 tests (routing, auth, offline banner, formatting, roles, master-data, stock/GRN/SIV, PR/PO, GRN↔PO, counts/adjustments/waste and reorder alerts) | **Pass** |
 | `npm run build` | Production bundle | **Pass** — 670.43 kB JS (162.87 kB gzip), 23.27 kB CSS (chunk-size warning only) |
-| Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback |
+| Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback; `assets/index-BSJnI50i.js` (670,647 bytes) contains the reorder, count, adjustment and waste panel markers |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
 | Supabase anon denial | `audit_logs` | **Pass** — `42501`, deny by design |
