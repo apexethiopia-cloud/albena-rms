@@ -89,3 +89,34 @@
 - Cloudflare Pages project + first deployment (Phase 1 exit condition).
 - Commit and push to `origin/main` (owner credentials required).
 - OD-04 (costing) and OD-05 (units) before Phase 4.
+
+---
+
+## Session 5: 2026-11-18 — Phase 1 Accepted Live, Phase 2 Identity Built
+
+- **Phase**: Phase 1 complete → Phase 2 in progress | **Completion**: 5% → **15.0%**
+- **Date**: 2026-11-18 12:30 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+
+### Actions Completed
+1. **Phase 1 exit verified**: `https://albena-rms.pages.dev` serves the exact local build (matching asset hashes); `/inventory` deep link returns 200, so the SPA fallback works in production.
+2. **Owner decisions recorded**: OD-04 **FIFO** (ADR-009) and OD-05 **unit conversion model** (ADR-010). OD-04 had been assumed weighted-average; that assumption is now superseded in the docs.
+3. **Supabase connected**: project `naxhjpmaovnuplfjdgdu`; publishable key stored only in `.env.local` (gitignored). Auth health endpoint verified.
+4. **Phase 2 schema authored**: `roles`, `user_profiles`, `user_roles`, `outlets`, `user_outlet_scopes`, `audit_logs`; RLS on all six; least-privilege policies; append-only audit triggers; new-user profile trigger; backfill; admin RPCs.
+5. **Reference data migration**: 10 SRS roles and 5 outlets, idempotent.
+6. **Test-user provisioning**: `scripts/seed-test-users.mjs` (local-only, service-role key), respecting OD-03 full access with all outlets.
+7. **Frontend auth**: Supabase client with publishable key only, `AuthProvider`, `ProtectedRoute` with loading/unconfigured/disabled states, login page, sign-out in the shell, signed-in identity card on the dashboard.
+8. **Docs**: `supabase/README.md` (apply + schema map), roadmap/status/traceability updated, deployment guide references the project.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass
+- `npm run test` — 14/14 pass across 4 suites
+- `npm run build` — pass (426 kB JS / 122 kB gzip)
+- Live URL — 200 at root and `/inventory`
+- Supabase `/auth/v1/health` — GoTrue v2.198.0
+
+### Outstanding
+- Apply both migrations to Supabase (agent has no database credentials).
+- Create the three test users; verify AC-01 and AC-02.
+- Re-deploy the auth build to Cloudflare Pages.

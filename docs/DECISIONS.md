@@ -70,6 +70,33 @@
 
 ---
 
+## ADR-009: FIFO Inventory Costing
+- **Date**: 2026-11-18 | **Status**: Accepted (owner decision)
+- **SRS Reference**: OD-04, INV-01, GRN-03, STK-06, COST-01..03
+- **Context**: The SRS left the costing method open. The owner selected FIFO on 2026-11-18.
+- **Decision**: Inventory is valued using first-in, first-out cost layers.
+  - Each posted receipt (GRN, positive adjustment, production output) creates a cost layer: item, location, quantity received, unit cost, received timestamp.
+  - Each posted issue (SIV, waste, negative adjustment, production consumption) consumes the oldest available layers first and records the consumed layer costs on the stock transaction.
+  - Stock value at any location = sum of remaining layer quantity × layer unit cost.
+  - A negative adjustment, waste posting or SIV that cannot be covered by existing layers is rejected (no negative stock) unless an owner-approved rule permits it.
+- **Consequences**: Requires a `stock_layers` table alongside `stock_transactions`. Weighted-average valuation is **not** implemented. Recipe and food-cost calculations use FIFO layer cost at calculation time. Historical layers are never rewritten; corrections are new, traceable transactions (DATA-02).
+
+---
+
+## ADR-010: Unit Conversion Model
+- **Date**: 2026-11-18 | **Status**: Accepted (owner decision)
+- **SRS Reference**: OD-05, INV-01, PR-01, GRN-02, SIV-02
+- **Context**: The owner confirmed these conversion families: kilogram ↔ gram, litre ↔ millilitre, box ↔ individual pieces, carton ↔ bottles, sack ↔ kilogram.
+- **Decision**:
+  - Stock is always stored in a **base unit per dimension**: gram (mass), millilitre (volume), piece (count).
+  - Fixed conversions: `1 kg = 1000 g`, `1 L = 1000 mL`.
+  - Item-specific conversions (`box → piece`, `carton → bottle`, `sack → kg`) are configured **per item** in `item_unit_conversions` with an explicit factor. No global factor is assumed for these, because a carton, box or sack has no universal size.
+  - An item cannot be purchased, received or issued in a unit that has no configured conversion to its base unit.
+  - Prices are stored per base unit; documents display the purchase/issue unit and the converted base quantity.
+- **Consequences**: Phase 4 needs `units` and `item_unit_conversions` tables. Seed only the fixed kg/g and L/mL rows. Sack/box/carton factors must be entered by the owner or an administrator per item; the system must never invent them (CON-07).
+
+---
+
 ## Open Decisions Log (OD-01 to OD-13)
 
 > These require owner confirmation before the relevant phase begins. Developers must NOT invent business policy.
@@ -80,8 +107,8 @@
 | OD-01 Business timezone | ✅ **Africa/Addis_Ababa (UTC+3)** | Phase 1 |
 | OD-02 Single entity vs multi-tenant | ✅ **One business entity with multiple outlets** | Phase 2 |
 | OD-03 Test user role/outlet assignments | ✅ **Full/all-access for initial 3 test users** | Phase 2 |
-| OD-04 Inventory costing method | **Open** — weighted average assumed pending confirmation | Phase 4 |
-| OD-05 Unit conversion rules | **Open** | Phase 4 |
+| OD-04 Inventory costing method | ✅ **FIFO** (owner decision 2026-11-18, ADR-009) | Phase 4 |
+| OD-05 Unit conversion rules | ✅ **Base units + item-specific factors** (ADR-010) | Phase 4 |
 | OD-06 Approval thresholds and SoD | ✅ **Approval workflows required (yes)** | Phase 4 |
 | OD-07 Taxes, service charges, discounts | **Open** | Phase 6 |
 | OD-08 Receipt format, numbering, language, currency | ✅ **ETB (Ethiopian Birr)** — numbering/format TBC | Phase 6 |

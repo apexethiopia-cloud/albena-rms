@@ -61,8 +61,14 @@ The `service_role` key is used only in server-side Supabase Edge Functions and i
 - Both files are copied into `dist/` by Vite and read by Cloudflare Pages automatically.
 
 ### Deployment URL
-- **Production**: `https://albena-rms.pages.dev` (or custom domain — TBC)
+- **Production**: `https://albena-rms.pages.dev` (verified live 2026-11-18)
 - **Preview**: Auto-generated per branch/PR
+
+### Supabase project
+- **Project ref**: `naxhjpmaovnuplfjdgdu`
+- **URL**: `https://naxhjpmaovnuplfjdgdu.supabase.co`
+- **Browser key**: publishable key in `.env.local` / Cloudflare Pages env vars (never the service-role key)
+- **Schema**: applied from `supabase/migrations/` — see `supabase/README.md`
 
 ---
 

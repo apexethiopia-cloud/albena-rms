@@ -40,7 +40,7 @@ flowchart LR
 
 ## Phase 1 — Foundation (10%)
 **SRS Reference**: Section 11, Phase 1
-**Status**: 🔜 **NEXT** (pending owner answers to critical OD-01, OD-02, OD-11, OD-13)
+**Status**: ✅ **COMPLETE** (2026-11-18)
 
 **Scope**:
 - Initialize Vite + React 18 + TypeScript + Tailwind CSS project
@@ -59,7 +59,7 @@ flowchart LR
 
 ## Phase 2 — Backend & Identity (10%)
 **SRS Reference**: Section 11, Phase 2
-**Status**: ⏳ Planned
+**Status**: 🟡 **IN PROGRESS** (migrations written; pending apply to Supabase)
 
 **Scope**:
 - Supabase project initialization and schema migration setup
@@ -115,7 +115,7 @@ flowchart LR
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 
-**Blocked by**: OD-04 (costing method), OD-05 (units), OD-06 (approval thresholds)
+**Decisions**: OD-04 FIFO (ADR-009) and OD-05 unit model (ADR-010) both confirmed 2026-11-18.
 
 ---
 
@@ -134,7 +134,7 @@ flowchart LR
 
 **Requirements addressed**: REC-01..07, PROD-01..04, COST-01..03
 
-**Blocked by**: OD-04 (costing method), OD-05 (units)
+**Decisions**: consumes FIFO layer costs (ADR-009) in base units (ADR-010).
 
 ---
 
@@ -204,12 +204,12 @@ flowchart LR
 | Phase | Weight | Status | Credit |
 |:---|:---:|:---:|:---:|
 | Phase 0 | 5% | ✅ Complete | 5.0% |
-| Phase 1 | 10% | 🔜 Next | 0% |
-| Phase 2 | 10% | ⏳ Planned | 0% |
+| Phase 1 | 10% | ✅ Complete | 10.0% |
+| Phase 2 | 10% | 🟡 In Progress | 0% |
 | Phase 3 | 10% | ⏳ Planned | 0% |
 | Phase 4 | 20% | ⏳ Planned | 0% |
 | Phase 5 | 10% | ⏳ Planned | 0% |
 | Phase 6 | 15% | ⏳ Planned | 0% |
 | Phase 7 | 10% | ⏳ Planned | 0% |
 | Phase 8 | 10% | ⏳ Planned | 0% |
-| **Total** | **100%** | | **5.0%** |
+| **Total** | **100%** | | **15.0%** |
