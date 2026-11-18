@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 5 build complete — awaiting migration 0009 and final UAT |
 | **Overall Completion** | **35.0%** (Phases 0–3 complete; Phase 4 and Phase 5 credit releases at final UAT) |
 | **Last Updated** | 2026-11-18 23:59 UTC+3 |
-| **Latest Git Commit** | `fedf5aa` (last pushed; Phase 5 slice follows) |
+| **Latest Git Commit** | `5b39343` (Phase 5 build) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -190,7 +190,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `src/lib/errors.ts` | **Created** — shared Postgres error mapping | 2026-11-18 |
 | `src/pages/Settings.tsx` | **Created** — settings page with outlet panel | 2026-11-18 |
 | `src/pages/Purchasing.tsx` | **Created** — purchasing page with supplier panel | 2026-11-18 |
-| `src/pages/Inventory.tsx` | **Created** — inventory page with item panel | 2026-11-18 |
+| `src/pages/Inventory.tsx` | **Updated** — stock, reorder, issue, count, adjustment, waste and master-data panels; Production moved to `/kitchen` | 2026-11-18 |
 | `src/pages/Login.tsx` | Created | 2026-11-18 |
 | `src/lib/supabase.ts` | Created | 2026-11-18 |
 | `supabase/migrations/20261118000100_foundation.sql` | Created — applied by owner | 2026-11-18 |
@@ -238,6 +238,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `npm run test` | 24 suites, 206 tests (routing, auth, offline banner, formatting, roles, master-data, stock/GRN/SIV, PR/PO, GRN↔PO, counts/adjustments/waste, reorder alerts, recipes/costing and production) | **Pass** |
 | `npm run build` | Production bundle | **Pass** — 715.36 kB JS (170.07 kB gzip), 23.59 kB CSS (chunk-size warning only) |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback; `assets/index-BSJnI50i.js` (670,647 bytes) contains the reorder, count, adjustment and waste panel markers |
+| Live deployment (Phase 5) | `https://albena-rms.pages.dev` root and served bundle | **Pass** — 200; `assets/index-BKF57faz.js` (715,354 bytes) contains the `/kitchen` route, New recipe/New production actions, food cost, `recipe_version_costs`, `create_recipe` and `post_production_order` |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
 | Supabase anon denial | `audit_logs` | **Pass** — `42501`, deny by design |

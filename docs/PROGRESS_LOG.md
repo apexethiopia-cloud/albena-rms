@@ -521,6 +521,7 @@
 - `npm run lint` — pass (zero warnings)
 - `npm run test` — 206/206 pass across 24 suites
 - `npm run build` — pass (715.36 kB JS / 170.07 kB gzip, 23.59 kB CSS; chunk-size warning only)
+- Commit `5b39343` pushed to `main`; Cloudflare deployed the slice (`assets/index-BKF57faz.js`, 715,354 bytes) and the served bundle contains the `/kitchen` route plus the recipe, costing and production markers.
 
 ### Outstanding
 - Owner applies migration 0009; agent verifies the five tables, costing view and seven RPC gates through PostgREST.
