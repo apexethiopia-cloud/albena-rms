@@ -77,16 +77,16 @@
 
 | ID | Status | Phase Needed By |
 |:---|:---:|:---:|
-| OD-01 Business timezone | **Open** | Phase 1 |
-| OD-02 Single entity vs multi-tenant | **Open** | Phase 2 |
-| OD-03 Test user role/outlet assignments | **Open** | Phase 2 |
-| OD-04 Inventory costing method | **Open** | Phase 4 |
+| OD-01 Business timezone | ✅ **Africa/Addis_Ababa (UTC+3)** | Phase 1 |
+| OD-02 Single entity vs multi-tenant | ✅ **One business entity with multiple outlets** | Phase 2 |
+| OD-03 Test user role/outlet assignments | ✅ **Full/all-access for initial 3 test users** | Phase 2 |
+| OD-04 Inventory costing method | **Open** — weighted average assumed pending confirmation | Phase 4 |
 | OD-05 Unit conversion rules | **Open** | Phase 4 |
-| OD-06 Approval thresholds and SoD | **Open** | Phase 4 |
+| OD-06 Approval thresholds and SoD | ✅ **Approval workflows required (yes)** | Phase 4 |
 | OD-07 Taxes, service charges, discounts | **Open** | Phase 6 |
-| OD-08 Receipt format, numbering, language, currency | **Open** | Phase 6 |
+| OD-08 Receipt format, numbering, language, currency | ✅ **ETB (Ethiopian Birr)** — numbering/format TBC | Phase 6 |
 | OD-09 Reservation capacity and table assignment rules | **Open** | Phase 6 |
 | OD-10 Guest profile retention and privacy rules | **Open** | Phase 6 |
-| OD-11 Currency and decimal precision | **Open** | Phase 1 |
+| OD-11 Currency and decimal precision | ✅ **ETB — 2 decimal places assumed** | Phase 1 |
 | OD-12 Hotel features scope | **Open** | Phase 6 |
-| OD-13 Free-tier eligibility and backup/restore expectations | **Open** | Phase 1 |
+| OD-13 Free-tier eligibility and backup/restore expectations | ✅ **Confirmed — Supabase + Cloudflare Pages free tier, no card required** | Phase 1 |
