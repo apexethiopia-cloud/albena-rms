@@ -1,26 +1,9 @@
-import { Boxes, ClipboardList, MapPin, Package, Users } from 'lucide-react'
+import { Boxes, ClipboardList } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { OutletsPanel } from '@/features/outlets/OutletsPanel'
+import { UsersPanel } from '@/features/users/UsersPanel'
 
 const PLANNED = [
-  {
-    icon: Users,
-    title: 'Users, roles and outlet scopes',
-    detail:
-      'List staff profiles, disable or reactivate accounts, assign roles and grant outlet access. Accounts themselves are created by an administrator in Supabase Auth — the browser holds only the publishable key, so it cannot create users.',
-  },
-  {
-    icon: MapPin,
-    title: 'Stock locations',
-    detail:
-      'Main store, kitchen store, bar store and coffee store. These become the locations in the stock ledger.',
-  },
-  {
-    icon: Package,
-    title: 'Item unit conversions',
-    detail:
-      'Per-item factors for box, carton and sack, which have no universal size (ADR-010). Items can be created now; these factors must be entered before such a purchase unit can be received.',
-  },
   {
     icon: ClipboardList,
     title: 'Audit trail',
@@ -40,11 +23,13 @@ export function Settings() {
     <>
       <PageHeader
         title="Settings"
-        description="Outlets, master data and system configuration. Access is enforced in PostgreSQL, not by this page."
+        description="Outlets, users, roles and system configuration. Access is enforced in PostgreSQL, not by this page."
       />
 
       <div className="space-y-6">
         <OutletsPanel />
+
+        <UsersPanel />
 
         <section aria-labelledby="planned-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 id="planned-heading" className="text-base font-semibold text-slate-900">

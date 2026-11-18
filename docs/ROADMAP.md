@@ -82,7 +82,7 @@ flowchart LR
 
 ## Phase 3 — Master Data (10%)
 **SRS Reference**: Section 11, Phase 3
-**Status**: 🟡 **IN PROGRESS** — master data UI delivered for outlets, suppliers, items, stock locations, unit conversions and categories; user administration pending.
+**Status**: ✅ **COMPLETE** — master-data CRUD, unit conversions, categories and user/role/outlet administration delivered and tested.
 
 **Scope**:
 - ✅ Outlet management UI: list, create, edit, deactivate/reactivate (no deletes)
@@ -91,7 +91,7 @@ flowchart LR
 - ✅ Stock-location management UI: list, create, edit, deactivate/reactivate (no deletes)
 - ✅ Item unit-conversion editor (box / carton / sack factors, created + edit factor, per item)
 - ✅ Category management UI: list, create, edit, deactivate/reactivate (no deletes), mounted on `/inventory`
-- User management UI (assign roles, outlet scopes, disable/reactivate)
+- ✅ User management UI: list profiles, disable/reactivate, assign roles, grant/revoke outlet access (admin only)
 
 **Exit Condition**: Master data CRUD and access scopes pass tests.
 
@@ -100,6 +100,7 @@ flowchart LR
 - Settings page at `/settings` with the outlet panel (admin-only writes, matching the policy).
 - Purchasing page at `/purchasing` with the supplier panel (admin / GM / purchasing officer).
 - Inventory page at `/inventory` with the item panel, the category panel and the stock-location panel, each gated by its own RLS-backed write policy; the stock ledger section states plainly that no balances or movements exist yet.
+- Settings page at `/settings` also hosts the user administration panel: account status through `admin_set_user_status()`, role assignment through `admin_assign_role()`, and per-outlet access through `user_outlet_scopes` (admin-only writes, enforced by RLS and the RPC checks).
 - Shared Postgres error mapping (`src/lib/errors.ts`), including a clear message when a table is missing because a migration has not been applied.
 - FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles for outlets, suppliers, items, categories and locations; item tests cover base-unit creation and purchase-unit factor recording.
 
@@ -218,11 +219,11 @@ flowchart LR
 |:---|:---:|:---:|:---:|
 | Phase 0 | 5% | ✅ Complete | 5.0% |
 | Phase 1 | 10% | ✅ Complete | 10.0% |
-| Phase 2 | 10% | 🟡 In Progress | 0% |
-| Phase 3 | 10% | ⏳ Planned | 0% |
+| Phase 2 | 10% | ✅ Complete | 10.0% |
+| Phase 3 | 10% | ✅ Complete | 10.0% |
 | Phase 4 | 20% | ⏳ Planned | 0% |
 | Phase 5 | 10% | ⏳ Planned | 0% |
 | Phase 6 | 15% | ⏳ Planned | 0% |
 | Phase 7 | 10% | ⏳ Planned | 0% |
 | Phase 8 | 10% | ⏳ Planned | 0% |
-| **Total** | **100%** | | **15.0%** |
+| **Total** | **100%** | | **35.0%** |

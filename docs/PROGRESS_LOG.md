@@ -277,3 +277,29 @@
 ### Outstanding
 - Same as previous session, plus the authenticated end-to-end check.
 
+---
+
+## Session 12: 2026-11-18 — User Administration Delivered; Phase 3 Complete
+
+- **Phase**: Phase 3 ✅ complete → Phase 4 next | **Completion**: **35.0%** (Phases 0–3 complete)
+- **Date**: 2026-11-18 17:05 UTC+3
+- **Model**: DeepSeek V4.1 Flash (OpenCode)
+
+### Actions Completed
+1. **Users feature built**: `listUsers` (profiles + role chips), `listRoles`, `setUserStatus` (`admin_set_user_status` RPC), `assignUserRole` (`admin_assign_role` RPC), and outlet scope list/grant/revoke against `user_outlet_scopes`.
+2. **User panel on `/settings`**: account list with status and roles, disable/reactivate, role assignment with client-side duplicate guard, and a per-user outlet-access editor that saves each change immediately.
+3. **Settings page cleaned up**: the stale "not implemented" cards for users, stock locations and unit conversions were removed; only the audit-trail and Phase 4 postings cards remain.
+4. **Tests**: `Users.test.tsx` (9 panel tests) and `userValidation.test.ts` (6 validation tests); Settings tests updated for the additional panel and shared mocks.
+5. **Docs**: Phase 3 marked complete at 35.0% overall; USR-01 and USR-02 marked Implemented.
+
+### Verification
+- `npm run typecheck` — pass
+- `npm run lint` — pass (zero warnings)
+- `npm run test` — 109/109 pass across 16 suites
+- `npm run build` — pass (493 kB JS / 133 kB gzip, 19 kB CSS)
+
+### Outstanding
+- Phase 4: stock ledger, GRN / SIV, FIFO, counts, adjustments.
+- RLS negative-test SQL script (AC-02 evidence).
+
+

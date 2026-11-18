@@ -57,8 +57,8 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| USR-01 | Create, edit, disable, reactivate users | 3 | `user_profiles` | Supabase Auth (create) + `admin_set_user_status()` | — | **In Progress** — account creation is dashboard/script only; admin UI pending |
-| USR-02 | Assign roles and permissions | 3 | `user_roles` | `admin_assign_role()` RPC | AC-02 | **In Progress** — RPC done, UI pending |
+| USR-01 | Create, edit, disable, reactivate users | 3 | `user_profiles` | Supabase Auth (create) + `admin_set_user_status()` | - | **Implemented** - accounts are created in Supabase Auth (dashboard/script, since the browser holds only the publishable key); disable/reactivate and role/outlet management are in the `/settings` user panel |
+| USR-02 | Assign roles and permissions | 3 | `user_roles` | `admin_assign_role()` RPC | AC-02 | **Implemented** - role assignment and per-outlet access managed from the `/settings` user panel; RLS and RPC `is_admin()` checks are the boundary |
 | USR-03 | Password reset via auth provider | 2 | — | Supabase Auth reset flow | — | Not Started |
 | USR-04 | Record user metadata; no raw passwords | 2 | `user_profiles` | `handle_new_user()` trigger, `full_name` | — | **Implemented** |
 | USR-05 | Audit user/role changes | 2 | `audit_logs` | Triggers on `user_profiles`, `user_roles` | AC-13 | **Implemented** |

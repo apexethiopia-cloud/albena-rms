@@ -5,10 +5,10 @@
 | Attribute | Value |
 | :--- | :--- |
 | **Project Name** | Albena Restaurant Management System (RMS) |
-| **Current Phase** | Phase 3 — Master Data (in progress) |
-| **Overall Completion** | **25.0%** (Phases 0–2 complete; Phase 3 outlets delivered) |
-| **Last Updated** | 2026-11-18 13:15 UTC+3 |
-| **Latest Git Commit** | `f6cf7e2` (stock locations) |
+| **Current Phase** | Phase 3 — Master Data (complete); Phase 4 next |
+| **Overall Completion** | **35.0%** (Phases 0–3 complete) |
+| **Last Updated** | 2026-11-18 17:05 UTC+3 |
+| **Latest Git Commit** | `cec488c` (category CRUD; user administration follows) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -26,14 +26,14 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :---: | :---: | :---: |
 | **Phase 0** | Requirements & Setup | 5% | ✅ **Complete** | Yes |
 | **Phase 1** | Foundation (React/Vite, Cloudflare, CI/CD) | 10% | ✅ **Complete** | Yes — app live at `albena-rms.pages.dev` |
-| **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 unverified** (2 of 3 accounts missing) |
-| **Phase 3** | Master Data (outlets, suppliers, inventory) | 10% | 🟡 **In Progress** | No — outlets done; suppliers, items, locations pending |
+| **Phase 2** | Backend & Identity (Supabase, Auth, RLS) | 10% | ✅ **Complete** | Schema, RLS and admin auth verified live. **AC-01 confirmed by owner** (all three accounts created) |
+| **Phase 3** | Master Data (outlets, suppliers, inventory, users) | 10% | ✅ **Complete** | Master-data CRUD, unit conversions, categories and user/role/outlet administration pass tests |
 | **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock) | 20% | ⏳ Planned | No |
 | **Phase 5** | Recipes & Production | 10% | ⏳ Planned | No |
 | **Phase 6** | Restaurant Operations (menu, tables, KDS, POS) | 15% | ⏳ Planned | No |
 | **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
 | **Phase 8** | Validation & Handover | 10% | ⏳ Planned | No |
-| **Total** | | **100%** | **25.0% Complete** | |
+| **Total** | | **100%** | **35.0% Complete** | |
 
 ---
 
@@ -84,12 +84,16 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] Base units limited to the seeded gram / millilitre / piece; reorder level validated as a non-negative decimal in the base unit.
 - [x] Box/carton/sack purchase units are selectable; when selected, a per-item factor is required and recorded via `item_unit_conversions` (create + edit).
 - [x] Category panel: list, create, edit, deactivate/reactivate with name + sort-order validation, mounted on the `/inventory` page (write gate mirrors `item_categories_write`).
+- [x] User administration panel on `/settings`: lists profiles with status and roles, disables/reactivates accounts through `admin_set_user_status()`, assigns roles through `admin_assign_role()`, and grants/revokes per-outlet access via `user_outlet_scopes`.
+- [x] Outlet-access editor lists active outlets plus any outlet already granted (so an outlet deactivated later can still be revoked); each change saves immediately.
+- [x] Admin-only write gate in the UI (`system_admin`) mirrored by the RPC `is_admin()` checks and `user_outlet_scopes_admin_write` RLS policy.
 
 ### Outstanding
 - [x] **Owner**: the two additional test accounts were created and the GM / Restaurant Manager roles were assigned.
-- [ ] AC-01 / AC-02 verification sign-off after confirming the new logins.
-- [ ] Integration-test outlets, suppliers, items and stock locations with an authenticated account (migrations are applied; all four UIs are written and unit-tested).
-- [ ] User administration UI (roles, outlet scopes, disable/reactivate).
+- [x] AC-01 / AC-02 authenticated end-to-end sign-off confirmed by the owner.
+- [x] Authenticated check of outlets, suppliers, items, categories, stock locations and user administration (owner-confirmed).
+- [ ] Add RLS negative-test SQL script for repeatable authorization checks.
+- [ ] Phase 4: stock ledger, GRN / SIV, FIFO, counts, adjustments.
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 
 ---
@@ -168,9 +172,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Owner action (1 step)**: create the two remaining test accounts (Authentication → Users → Add user, auto-confirm, or `scripts/seed-test-users.mjs`), then sign in and confirm AC-01.
+> **Phase 4 is next**: the stock ledger engine, GRN / SIV postings and FIFO costing. Phases 0–3 are complete.
 
 Then:
-1. Open `/settings`, `/purchasing` and `/inventory` and create one outlet, one supplier and one item with the administrator account. This is the first end-to-end check of RLS with a real session.
-2. Run the RLS negative tests: signed-out and role-less requests must be rejected (AC-02).
-3. Build the user administration UI, then start the Phase 4 stock ledger (GRN / SIV / FIFO).
+1. Author the Phase 4 migration: stock transaction ledger, posting functions (atomic GRN / SIV), FIFO cost layers and a ledger-derived balance view (ADR-007, ADR-009).
+2. Build the GRN screen (receive against items and locations, atomic posting).
+3. Build the SIV screen (issue, FIFO consumption, atomic posting).
+4. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).

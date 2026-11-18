@@ -12,6 +12,16 @@ const api = vi.hoisted(() => ({
 
 vi.mock('@/features/outlets/api', () => api)
 
+vi.mock('@/features/users/api', () => ({
+  listUsers: vi.fn().mockResolvedValue([]),
+  listRoles: vi.fn().mockResolvedValue([]),
+  listOutletScopes: vi.fn().mockResolvedValue([]),
+  setUserStatus: vi.fn(),
+  assignUserRole: vi.fn(),
+  grantOutletScope: vi.fn(),
+  revokeOutletScope: vi.fn(),
+}))
+
 const OUTLET = {
   id: 'o1',
   code: 'MAIN',
@@ -69,8 +79,8 @@ describe('Settings — outlets', () => {
     renderSettings()
 
     expect(await screen.findByText(/could not load outlets/i)).toBeInTheDocument()
-    expect(screen.getByText('You do not have permission.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+    expect(screen.getAllByText('You do not have permission.').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /try again/i }).length).toBeGreaterThan(0)
   })
 
   it('creates an outlet after client-side validation', async () => {
@@ -146,7 +156,7 @@ describe('Settings — outlets', () => {
     expect(screen.queryByRole('button', { name: /new outlet/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /edit/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /deactivate/i })).toBeNull()
-    expect(screen.getByText(/read-only/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/read-only/i).length).toBeGreaterThan(0)
   })
 
   it('hides write controls from a General Manager, because the policy allows admin only', async () => {
