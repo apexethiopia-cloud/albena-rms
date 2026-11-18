@@ -32,10 +32,13 @@ export function ProtectedRoute() {
         <AlertTriangle className="mx-auto h-6 w-6 text-amber-500" aria-hidden="true" />
         <h1 className="mt-3 text-base font-semibold text-slate-900">Backend not configured</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Add <code className="rounded bg-slate-100 px-1">VITE_SUPABASE_URL</code> and{' '}
-          <code className="rounded bg-slate-100 px-1">VITE_SUPABASE_ANON_KEY</code> to{' '}
-          <code className="rounded bg-slate-100 px-1">.env.local</code>, then restart the dev
-          server.
+          Set <code className="rounded bg-slate-100 px-1">VITE_SUPABASE_URL</code> and{' '}
+          <code className="rounded bg-slate-100 px-1">VITE_SUPABASE_ANON_KEY</code>.
+        </p>
+        <p className="mt-2 text-sm text-slate-600">
+          Local: put them in <code className="rounded bg-slate-100 px-1">.env.local</code> and restart
+          the dev server. Deployed: add them to the Cloudflare Pages environment variables and
+          trigger a new build — Vite inlines these values at build time.
         </p>
       </FullPage>
     )

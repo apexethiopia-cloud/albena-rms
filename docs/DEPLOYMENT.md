@@ -46,7 +46,7 @@ The `service_role` key is used only in server-side Supabase Edge Functions and i
 
 ## 3. Cloudflare Pages Deployment
 
-### Setup Steps (to be completed in Phase 1)
+### Setup Steps
 1. Connect GitHub repository `apexethiopia-cloud/albena-rms` to Cloudflare Pages.
 2. Set build command: `npm run build`
 3. Set output directory: `dist`
@@ -54,6 +54,21 @@ The `service_role` key is used only in server-side Supabase Edge Functions and i
 5. Add the Supabase environment variables from Section 2 in the Cloudflare Pages dashboard.
 6. Verify HTTPS is enabled by default (Cloudflare provides TLS automatically).
 7. Confirm free plan limits: build minutes, bandwidth, concurrent builds.
+
+### Troubleshooting: the deployed site shows "Backend not configured"
+
+Vite inlines `VITE_*` variables **at build time**. Changing them in the dashboard does nothing
+until a new build runs.
+
+1. Cloudflare Dashboard → Workers & Pages → `albena-rms` → Settings → Environment variables.
+2. Add for **both Production and Preview**:
+   - `VITE_SUPABASE_URL` = `https://naxhjpmaovnuplfjdgdu.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY` = the publishable key
+   - `VITE_APP_ENV` = `production`, `VITE_APP_NAME` = `Albena RMS`, `VITE_APP_TIMEZONE` = `Africa/Addis_Ababa`
+3. Deployments → the latest deployment → **Retry deployment** (or push any commit).
+4. Verify: the new bundle should contain the project ref. Open DevTools → Network → the
+   `index-*.js` file and search for `naxhjpmaovnuplfjdgdu`. If it is absent, the build did not
+   receive the variables.
 
 ### SPA routing and headers
 - `public/_redirects` contains `/*  /index.html  200` so deep links such as `/inventory` resolve to the SPA.
