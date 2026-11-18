@@ -8,7 +8,7 @@
 | **Current Phase** | Phase 3 — Master Data (in progress) |
 | **Overall Completion** | **25.0%** (Phases 0–2 complete; Phase 3 outlets delivered) |
 | **Last Updated** | 2026-11-18 13:15 UTC+3 |
-| **Latest Git Commit** | `b5c5686` (item master + supplier master + outlet management) |
+| **Latest Git Commit** | `f6cf7e2` (stock locations) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -87,9 +87,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [ ] **Owner**: create the two remaining test accounts and verify AC-01 / AC-02.
 - [ ] Integration-test outlets, suppliers and items with an authenticated account (migrations are applied; all three UIs are written and unit-tested).
 - [ ] Item unit-conversion editor for box / carton / sack factors.
-- [ ] Stock-location screen.
+- [ ] Category CRUD UI, user administration UI (roles, outlet scopes, disable/reactivate).
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
-- [ ] User administration UI (roles, outlet scopes, disable/reactivate).
 
 ---
 
@@ -153,8 +152,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 10 suites, 69 tests (routing, auth, offline banner, formatting, roles, outlet/supplier/item validation, and all three panels) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 480 kB JS (132 kB gzip), 19 kB CSS |
+| `npm run test` | 12 suites, 79 tests (routing, auth, offline banner, formatting, roles, outlet/supplier/item/location validation, and all four panels) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 491 kB JS (133 kB gzip), 19 kB CSS |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback |
 | Supabase auth endpoint | `/auth/v1/health` | **Pass** — GoTrue v2.198.0 |
 | Supabase anon reads | `roles`, `user_profiles`, `outlets`, `user_roles` | **Pass** — `200 []` (RLS filtering, tables exist) |
