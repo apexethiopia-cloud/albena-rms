@@ -212,7 +212,7 @@
   - Guards, confirmed by the owner: an account may never be left with zero roles; at least one **active** `system_admin` must remain in the system; self-revocation of `system_admin` is allowed only when another active admin exists. Revoke attempts are serialized with a transaction advisory lock so concurrent admins cannot bypass the guards.
   - The audit trigger now records the `user_id` as `entity_id` for join tables that have no `id` column, so role changes satisfy the AC-13 record-reference requirement.
   - After changing their own roles, an admin's in-browser role cache is refreshed through `AuthContext.refreshUser()`. Enforcement never relies on that cache: every RPC/RLS check reads PostgreSQL live.
-- **Consequences**: A new migration, `20261119001500_admin_role_revocation.sql`, must be applied by the owner. Users only need a page refresh if the optional auth refresh is unavailable. Direct PostgREST deletes of `user_roles` now fail with a permission error, which is intentional.
+- **Consequences**: Migration `20261119001500_admin_role_revocation.sql` was applied on 2026-11-19 and live-verified. Users only need a page refresh if the optional auth refresh is unavailable. Direct PostgREST deletes of `user_roles` now fail with a permission error, which is intentional.
 
 ---
 

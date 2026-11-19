@@ -434,9 +434,9 @@
 
 | Req ID | Enhancement | Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---|:---|:---|:---:|
-| USR-02, SEC-ROLE-01, SEC-ROLE-04 | Admin can revoke one assigned role while keeping the others; all role writes go through guarded RPCs | `20261119001500_admin_role_revocation.sql` | `src/features/users/api.ts`, `src/features/users/UsersPanel.tsx`, `src/features/users/validation.ts` | `Users.test.tsx`, `userValidation.test.ts` | **Implemented** — pending owner application of 0015 and authenticated smoke test |
-| ADR-018 | Never leave an account role-less; keep at least one active `system_admin`; allow self-revocation only if another active admin remains | `20261119001500_admin_role_revocation.sql` | `admin_revoke_role()` with transaction advisory lock | DB guard smoke test (0015) | **Designed** — application confirms each rule |
-| ADR-018 | Audit role revocations with a usable record reference; refresh the browser role cache after a self-change | `20261119001500_admin_role_revocation.sql` | `write_audit_log()`, `AuthProvider.tsx`, `auth-context.ts` | `Users.test.tsx` (self-refresh) | **Implemented** — audit row check at smoke test |
+| USR-02, SEC-ROLE-01, SEC-ROLE-04 | Admin can revoke one assigned role while keeping the others; all role writes go through guarded RPCs | `20261119001500_admin_role_revocation.sql` | `src/features/users/api.ts`, `src/features/users/UsersPanel.tsx`, `src/features/users/validation.ts` | `Users.test.tsx`, `userValidation.test.ts` | **Verified** — 0015 applied; 34/34 live checks passed 2026-11-19 |
+| ADR-018 | Never leave an account role-less; keep at least one active `system_admin`; allow self-revocation only if another active admin remains | `20261119001500_admin_role_revocation.sql` | `admin_revoke_role()` with transaction advisory lock | DB guard smoke test (0015) | **Verified** — live guards rejected the last-role and last-active-admin attempts |
+| ADR-018 | Audit role revocations with a usable record reference; refresh the browser role cache after a self-change | `20261119001500_admin_role_revocation.sql` | `write_audit_log()`, `AuthProvider.tsx`, `auth-context.ts` | `Users.test.tsx` (self-refresh) | **Verified** — revoke audit row captured actor and target `entity_id` |
 
 ---
 

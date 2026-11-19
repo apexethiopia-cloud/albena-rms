@@ -717,7 +717,9 @@
 - Full suite - **310/310 tests across 31 suites** Pass (14 Users tests, 9 user-validation tests)
 - `npm run build` - Pass; `assets/index-BkOSluHQ.js` (882.93 kB, 200.69 kB gzip), `assets/index-CTclTxuV.css` (26.79 kB). Bundle contains `admin_revoke_role` and the revoke-confirmation UI.
 
+### Verification (live)
+- Migration `20261119001500_admin_role_revocation.sql` applied by the owner on 2026-11-19.
+- Authenticated smoke test using the GM test account: **34/34 checks passed** — anon/non-admin RPC denial, direct `user_roles` DELETE denied, partial revoke keeping other roles, revoke audit row with actor and `entity_id`, last-role guard, reversible last-admin guard, live `PR-20261119-0001`, generated `LOC-00001`, and draft PR update/delete. All temporary role/document/location changes were restored or deleted.
+
 ### Outstanding
-- **Owner**: apply `supabase/migrations/20261119001500_admin_role_revocation.sql`.
-- **Owner/agent**: include revocation checks in the authenticated smoke test — non-admin/anon denial, direct-delete denial, partial revoke, last-role/last-admin guards, self-revoke and the audit row reference.
-- Earlier outstanding items from Session 26 remain open.
+- Earlier outstanding items from Session 26 remain open: final three-user UAT and the RLS negative-test SQL script.
