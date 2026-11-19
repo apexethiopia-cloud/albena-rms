@@ -108,3 +108,16 @@
 | Full local suite | `npm test -- --run` | **302/302 across 31 suites** |
 
 Live allocation, trigger-generated codes and draft-gate enforcement still require an authenticated smoke test; the anonymous probe confirms only object existence and privilege boundaries.
+
+---
+
+## 8. 2026-11-19 Role Revocation Coverage
+
+| Area | Suites / key cases | Result |
+|:---|:---|:---|
+| Revoke flow UI | `Users.test.tsx` — revoke one role while keeping others, cancel confirmation, block removing the account's only role, surface DB rejection, refresh auth state after self-revoke, hide revoke controls from non-admins | Pass |
+| Client validation | `userValidation.test.ts` — require an assigned role, block the final role, allow one of several roles | Pass |
+| Full local suite | `npm test -- --run` | **310/310 across 31 suites** |
+| Typecheck / lint / build | `npm run typecheck`, `npm run lint`, `npm run build` | Pass; bundle `index-BkOSluHQ.js` contains `admin_revoke_role` and the revoke-confirmation UI |
+
+Migration `20261119001500_admin_role_revocation.sql` still needs to be applied by the owner. Live verification must confirm: non-admin/anon calls to `admin_revoke_role` are denied; direct DELETE on `user_roles` is denied; a cashier+manager user loses only `cashier`; the last-role and last-active-admin guards reject; a self-revoke succeeds only with another active admin; and an `audit_logs` row records the revoke with the target `user_id` as `entity_id`.

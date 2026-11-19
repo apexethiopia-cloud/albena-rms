@@ -58,7 +58,7 @@ matching OD-03 ("full/all-access for the initial three test users").
 | :--- | :--- | :--- |
 | `roles` | Role catalogue; role code is the permission unit | read: active users · write: admin |
 | `user_profiles` | Business profile per auth user, active/disabled status | read: self + management · update: self (name only) or admin |
-| `user_roles` | Role assignments | read: self + management · write: admin |
+| `user_roles` | Role assignments | read: self + management · writes only through `admin_assign_role()` / `admin_revoke_role()` |
 | `outlets` | Single entity, multiple outlets (OD-02) | read: active users · write: admin |
 | `user_outlet_scopes` | Outlet access per user | read: self + admin · write: admin |
 | `audit_logs` | Append-only audit trail | read: admin/GM/auditor · no write policy |
@@ -85,4 +85,5 @@ explicit factor per item — the system never invents one (CON-07).
 - A signed-in user with no `user_profiles` row sees nothing: `is_active_user()` returns false.
 - Disabling an account takes effect on the next request; historical records keep the attribution
   (SEC-ROLE-05).
-- `audit_logs` is written only by triggers. `authenticated` has no INSERT/UPDATE/DELETE grant.
+- `audit_logs` is written only by triggers. `authenticated` has no INSERT/UPDATE/DELETE grant. For join tables without an `id`, the trigger records the `user_id` as the entity reference.
+- Role revocation (`admin_revoke_role`) keeps at least one role on the account and at least one active `system_admin` in the system; self-revocation follows the same rule. Direct table writes are revoked to prevent bypass (ADR-018).

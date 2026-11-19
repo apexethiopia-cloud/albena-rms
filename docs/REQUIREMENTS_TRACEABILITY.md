@@ -31,7 +31,7 @@
 | SEC-ROLE-01 | Permissions enforced server/DB side | 2 | RLS policies | `supabase/migrations/20261118000100_foundation.sql` (applied); anon denied `audit_logs` | AC-02 | **Implemented** — AC-02 negative test still to be recorded |
 | SEC-ROLE-02 | Individual accounts; no shared logins | 2 | `user_profiles` | Supabase Auth + `src/features/auth/**` | AC-01 | **Implemented** — three individual accounts exist |
 | SEC-ROLE-03 | Users only access permitted records/outlets | 2 | RLS outlet filter | `user_outlet_scopes` + RLS | AC-02 | **Implemented** — admin granted all 5 outlets |
-| SEC-ROLE-04 | Role/permission changes audit logged | 2 | `audit_logs` | `write_audit_log()` on `user_roles` | AC-13 | **Implemented** |
+| SEC-ROLE-04 | Role/permission changes audit logged | 2 | `audit_logs` | `write_audit_log()` on `user_roles`; `entity_id` falls back to `user_id` for join tables | AC-13 | **Implemented** — includes revoke events (ADR-018) |
 | SEC-ROLE-05 | Disable/reactivate without deleting history | 3 | `user_profiles.status` | `admin_set_user_status()` + `UsersPanel` | - | **Implemented** |
 | SEC-ROLE-06 | No plaintext passwords in app tables | 2 | - | Supabase Auth handles credentials | - | **Implemented** |
 
@@ -58,10 +58,10 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | USR-01 | Create, edit, disable, reactivate users | 3 | `user_profiles` | Supabase Auth (create) + `admin_set_user_status()` | - | **Implemented** - accounts are created in Supabase Auth (dashboard/script, since the browser holds only the publishable key); disable/reactivate and role/outlet management are in the `/settings` user panel |
-| USR-02 | Assign roles and permissions | 3 | `user_roles` | `admin_assign_role()` RPC | AC-02 | **Implemented** - role assignment and per-outlet access managed from the `/settings` user panel; RLS and RPC `is_admin()` checks are the boundary |
+| USR-02 | Assign and revoke roles and permissions | 3 | `user_roles` | `admin_assign_role()` and `admin_revoke_role()` RPCs | AC-02 | **Implemented** - role assignment/revocation and per-outlet access managed from the `/settings` user panel; RLS and RPC `is_admin()` checks are the boundary; last-role/last-admin guards in ADR-018 |
 | USR-03 | Password reset via auth provider | 2 | — | Supabase Auth reset flow | — | Not Started |
 | USR-04 | Record user metadata; no raw passwords | 2 | `user_profiles` | `handle_new_user()` trigger, `full_name` | — | **Implemented** |
-| USR-05 | Audit user/role changes | 2 | `audit_logs` | Triggers on `user_profiles`, `user_roles` | AC-13 | **Implemented** |
+| USR-05 | Audit user/role changes | 2 | `audit_logs` | Triggers on `user_profiles`, `user_roles` | AC-13 | **Implemented** — revokes are audited with actor, timestamp, user reference and before/after row |
 
 ---
 
@@ -427,6 +427,16 @@
 | PR-02, PO-02, GRN-02, SIV-02, CNT-02, ADJ-02, WST-02, PROD-02 | Role-gated edit/delete for draft or unposted documents; posted/final records stay immutable | `20261119001400_draft_crud.sql` | `update_*`/`delete_*` RPC wrappers and Edit/Delete actions in the procurement, stock and production panels | `Procurement.test.tsx`, `Receiving.test.tsx`, `Stock.test.tsx`, `InventoryControl.test.tsx`, `Kitchen.test.tsx` | **Implemented** — pending owner application of 0014 |
 | REC-02, ADR-012 | Recipe header metadata editable via existing `update_recipe()`; versions and content stay immutable | — (0014 grants only) | `src/features/recipes/RecipesPanel.tsx`, `src/features/recipes/api.ts` | `Kitchen.test.tsx`, `recipesValidation.test.ts` | **Implemented** — no published/archived version edits |
 | ADR-017 | Black and gold brand theme with light surfaces and unchanged semantic colours | — | `tailwind.config.js`, `src/index.css`, `index.html`, `public/favicon.svg`, `src/components/layout/AppShell.tsx` | Visual check; no colour-class assertions | **Implemented** |
+
+---
+
+## Section 12 — 2026-11-19 Role Revocation Enhancement
+
+| Req ID | Enhancement | Migration | Implementation File(s) | Test Case | Status |
+|:---|:---|:---|:---|:---|:---:|
+| USR-02, SEC-ROLE-01, SEC-ROLE-04 | Admin can revoke one assigned role while keeping the others; all role writes go through guarded RPCs | `20261119001500_admin_role_revocation.sql` | `src/features/users/api.ts`, `src/features/users/UsersPanel.tsx`, `src/features/users/validation.ts` | `Users.test.tsx`, `userValidation.test.ts` | **Implemented** — pending owner application of 0015 and authenticated smoke test |
+| ADR-018 | Never leave an account role-less; keep at least one active `system_admin`; allow self-revocation only if another active admin remains | `20261119001500_admin_role_revocation.sql` | `admin_revoke_role()` with transaction advisory lock | DB guard smoke test (0015) | **Designed** — application confirms each rule |
+| ADR-018 | Audit role revocations with a usable record reference; refresh the browser role cache after a self-change | `20261119001500_admin_role_revocation.sql` | `write_audit_log()`, `AuthProvider.tsx`, `auth-context.ts` | `Users.test.tsx` (self-refresh) | **Implemented** — audit row check at smoke test |
 
 ---
 

@@ -30,6 +30,29 @@ export function validateRoleSelection(
   return { valid: true, error: null }
 }
 
+/**
+ * Client-side guard for the revoke control. The database applies the same
+ * last-role rule and additionally protects the last active system admin.
+ */
+export function validateRoleRevocation(
+  roleCode: string,
+  assigned: readonly string[],
+): RoleSelection {
+  if (!roleCode) {
+    return { valid: false, error: 'Choose a role to revoke.' }
+  }
+
+  if (!assigned.includes(roleCode)) {
+    return { valid: false, error: 'That role is not assigned to this account.' }
+  }
+
+  if (assigned.length <= 1) {
+    return { valid: false, error: 'An account must keep at least one role.' }
+  }
+
+  return { valid: true, error: null }
+}
+
 export function describeUserDbError(error: DbErrorLike): string {
   return mapDbError(error, 'user accounts')
 }

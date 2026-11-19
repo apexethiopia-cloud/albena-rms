@@ -20,15 +20,16 @@ import {
   listRoles,
   listUsers,
   revokeOutletScope,
+  revokeUserRole,
   setUserStatus,
   type OutletScope,
   type Role,
   type UserRow,
 } from './api'
-import { validateRoleSelection } from './validation'
+import { validateRoleRevocation, validateRoleSelection } from './validation'
 
 export function UsersPanel() {
-  const { state } = useAuth()
+  const { state, refreshUser } = useAuth()
   const user = state.status === 'signed-in' ? state.user : null
   // Status and role changes go through admin RPCs that check `is_admin()`. The database is the boundary (ADR-003).
   const canManage = user ? hasRole(user.roles, 'system_admin') : false
@@ -41,6 +42,7 @@ export function UsersPanel() {
   const [reloadToken, setReloadToken] = useState(0)
 
   const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({})
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -144,6 +146,38 @@ export function UsersPanel() {
     }
   }
 
+  const revokeRole = async (row: UserRow, roleCode: string) => {
+    const assigned = row.roles.map((assignedRole) => assignedRole.code)
+    const result = validateRoleRevocation(roleCode, assigned)
+
+    if (!result.valid) {
+      setActionError(result.error)
+      setConfirmRevoke(null)
+      return
+    }
+
+    setPendingId(row.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await revokeUserRole(row.id, roleCode)
+      const roleName = roles.find((role) => role.code === roleCode)?.name ?? roleCode
+      setNotice(`${roleName} revoked from ${row.full_name}.`)
+      setConfirmRevoke(null)
+
+      // The database is authoritative, but the signed-in user's role cache is
+      // loaded only on session events. Refresh it after a self-change.
+      if (row.id === user?.id) await refreshUser?.()
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+      setConfirmRevoke(null)
+    } finally {
+      setPendingId(null)
+    }
+  }
+
   const openScopes = async (row: UserRow) => {
     if (scopeUserId === row.id) {
       setScopeUserId(null)
@@ -194,7 +228,7 @@ export function UsersPanel() {
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-600">
               Account creation happens in Supabase Auth (dashboard or the owner script). This page
-              manages account status, role assignments and per-outlet access.
+              manages account status, role assignment and revocation, and per-outlet access.
             </p>
           </div>
 
@@ -301,6 +335,16 @@ export function UsersPanel() {
                 {users.map((row) => {
                   const busy = pendingId === row.id
                   const isScoped = scopeUserId === row.id
+                  const activeRevokeKey = confirmRevoke?.startsWith(`${row.id}:`)
+                    ? confirmRevoke
+                    : null
+                  const activeRevokeCode = activeRevokeKey
+                    ? activeRevokeKey.slice(row.id.length + 1)
+                    : null
+                  const activeRevokeName = activeRevokeCode
+                    ? (roles.find((role) => role.code === activeRevokeCode)?.name ??
+                      activeRevokeCode)
+                    : null
 
                   return (
                     <tr key={row.id} className={cn(row.status === 'disabled' && 'bg-slate-50/60')}>
@@ -326,7 +370,7 @@ export function UsersPanel() {
                         {row.roles.length === 0 ? (
                           <span className="text-xs text-slate-500">No roles</span>
                         ) : (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap items-center gap-1">
                             {row.roles.map((role) => (
                               <span
                                 key={role.code}
@@ -335,8 +379,42 @@ export function UsersPanel() {
                               >
                                 <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                                 {role.name}
+                                {canManage && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmRevoke(`${row.id}:${role.code}`)}
+                                    disabled={busy}
+                                    aria-label={`Revoke ${role.name} from ${row.full_name}`}
+                                    title={`Revoke ${role.name}`}
+                                    className="ml-0.5 rounded-full px-1 font-bold text-brand-600 transition hover:bg-brand-100 disabled:opacity-50"
+                                  >
+                                    ×
+                                  </button>
+                                )}
                               </span>
                             ))}
+                            {canManage && activeRevokeCode && activeRevokeName && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                                Revoke {activeRevokeName}?
+                                <button
+                                  type="button"
+                                  onClick={() => void revokeRole(row, activeRevokeCode)}
+                                  disabled={busy}
+                                  aria-label={`Confirm revoke ${activeRevokeName} from ${row.full_name}`}
+                                  className="rounded px-1 font-semibold underline disabled:opacity-50"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmRevoke(null)}
+                                  aria-label={`Cancel revoke ${activeRevokeName} from ${row.full_name}`}
+                                  className="rounded px-1 font-medium underline"
+                                >
+                                  Cancel
+                                </button>
+                              </span>
+                            )}
                           </div>
                         )}
                       </td>

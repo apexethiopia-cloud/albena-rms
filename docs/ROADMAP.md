@@ -101,6 +101,8 @@ flowchart LR
 - Purchasing page at `/purchasing` with the supplier panel (admin / GM / purchasing officer).
 - Inventory page at `/inventory` with the item panel, the category panel and the stock-location panel, each gated by its own RLS-backed write policy; the stock ledger section states plainly that no balances or movements exist yet.
 - Settings page at `/settings` also hosts the user administration panel: account status through `admin_set_user_status()`, role assignment through `admin_assign_role()`, and per-outlet access through `user_outlet_scopes` (admin-only writes, enforced by RLS and the RPC checks).
+
+  **Enhancement (2026-11-19)**: role revocation is now available through `admin_revoke_role()`; direct `user_roles` writes are disabled, and the last-role/last-active-admin guards are documented in ADR-018.
 - Shared Postgres error mapping (`src/lib/errors.ts`), including a clear message when a table is missing because a migration has not been applied.
 - FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles for outlets, suppliers, items, categories and locations; item tests cover base-unit creation and purchase-unit factor recording.
 

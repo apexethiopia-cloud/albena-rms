@@ -203,6 +203,19 @@
 
 ---
 
+## ADR-018: Admin-Controlled Role Revocation
+- **Date**: 2026-11-19 | **Status**: Accepted
+- **Context**: User Management could assign roles through `admin_assign_role()` but had no way to remove one. The owner asked that an admin be able to revoke a single assigned role while leaving the user's other roles intact, e.g. remove `cashier` but keep `restaurant_manager`. Business roles are database state in `user_roles`; there are no role claims in the Supabase JWT.
+- **Decision**:
+  - Add `admin_revoke_role(p_user_id uuid, p_role_code text)` as an admin-only `SECURITY DEFINER` RPC. It is the sole application write path for role removal.
+  - Revoke direct `INSERT`, `UPDATE` and `DELETE` on `user_roles` from `anon` and `authenticated`, and drop the old broad `user_roles_admin_write` RLS policy. `user_roles_select` is retained. Assignment remains through `admin_assign_role()`; the service-role seed script is unaffected.
+  - Guards, confirmed by the owner: an account may never be left with zero roles; at least one **active** `system_admin` must remain in the system; self-revocation of `system_admin` is allowed only when another active admin exists. Revoke attempts are serialized with a transaction advisory lock so concurrent admins cannot bypass the guards.
+  - The audit trigger now records the `user_id` as `entity_id` for join tables that have no `id` column, so role changes satisfy the AC-13 record-reference requirement.
+  - After changing their own roles, an admin's in-browser role cache is refreshed through `AuthContext.refreshUser()`. Enforcement never relies on that cache: every RPC/RLS check reads PostgreSQL live.
+- **Consequences**: A new migration, `20261119001500_admin_role_revocation.sql`, must be applied by the owner. Users only need a page refresh if the optional auth refresh is unavailable. Direct PostgREST deletes of `user_roles` now fail with a permission error, which is intentional.
+
+---
+
 ## Open Decisions Log (OD-01 to OD-13)
 
 > These require owner confirmation before the relevant phase begins. Developers must NOT invent business policy.

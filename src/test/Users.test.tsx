@@ -10,6 +10,7 @@ const usersApi = vi.hoisted(() => ({
   listOutletScopes: vi.fn(),
   setUserStatus: vi.fn(),
   assignUserRole: vi.fn(),
+  revokeUserRole: vi.fn(),
   grantOutletScope: vi.fn(),
   revokeOutletScope: vi.fn(),
 }))
@@ -50,11 +51,25 @@ const WAITER = {
   roles: [{ code: 'waiter', name: 'Waiter' }],
 }
 
+const MULTI_ROLE_ADMIN = {
+  id: 'u-multi',
+  full_name: 'Chala Cashier-Manager',
+  status: 'active' as const,
+  created_at: '2026-11-18T08:00:00.000Z',
+  updated_at: '2026-11-18T08:00:00.000Z',
+  roles: [
+    { code: 'cashier', name: 'Cashier' },
+    { code: 'restaurant_manager', name: 'Restaurant Manager' },
+    { code: 'system_admin', name: 'System Administrator' },
+  ],
+}
+
 const ROLES = [
   { id: 'r1', code: 'system_admin', name: 'System Administrator', description: null },
   { id: 'r2', code: 'general_manager', name: 'General Manager', description: null },
   { id: 'r3', code: 'restaurant_manager', name: 'Restaurant Manager', description: null },
   { id: 'r4', code: 'waiter', name: 'Waiter', description: null },
+  { id: 'r5', code: 'cashier', name: 'Cashier', description: null },
 ]
 
 const OUTLETS = [
@@ -76,12 +91,12 @@ const OUTLETS = [
   },
 ]
 
-function authValue(roles: string[]): AuthContextValue {
+function authValue(roles: string[], userId = 'u1'): AuthContextValue {
   return {
     state: {
       status: 'signed-in',
       user: {
-        id: 'u1',
+        id: userId,
         email: 'admin@example.com',
         fullName: 'Test Admin',
         status: 'active',
@@ -90,12 +105,13 @@ function authValue(roles: string[]): AuthContextValue {
     },
     signIn: async () => ({ error: null }),
     signOut: async () => {},
+    refreshUser: vi.fn(async () => {}),
   }
 }
 
-function renderSettings(roles: string[] = ['system_admin']) {
+function renderSettings(roles: string[] = ['system_admin'], userId = 'u1') {
   return render(
-    <AuthContext.Provider value={authValue(roles)}>
+    <AuthContext.Provider value={authValue(roles, userId)}>
       <Settings />
     </AuthContext.Provider>,
   )
@@ -106,13 +122,14 @@ beforeEach(() => {
   outletsApi.listOutlets.mockResolvedValue(OUTLETS)
   outletsApi.createOutlet.mockResolvedValue(undefined)
   outletsApi.updateOutlet.mockResolvedValue(undefined)
-  usersApi.listUsers.mockResolvedValue([ADMIN, GM, WAITER])
+  usersApi.listUsers.mockResolvedValue([ADMIN, GM, WAITER, MULTI_ROLE_ADMIN])
   usersApi.listRoles.mockResolvedValue(ROLES)
   usersApi.listOutletScopes.mockResolvedValue([
     { outlet_id: 'o-main', code: 'MAIN', name: 'Main Restaurant', is_active: true },
   ])
   usersApi.setUserStatus.mockResolvedValue(undefined)
   usersApi.assignUserRole.mockResolvedValue(undefined)
+  usersApi.revokeUserRole.mockResolvedValue(undefined)
   usersApi.grantOutletScope.mockResolvedValue(undefined)
   usersApi.revokeOutletScope.mockResolvedValue(undefined)
 })
@@ -124,7 +141,7 @@ describe('Settings — users', () => {
     expect(await screen.findByText('Girma Manager')).toBeInTheDocument()
     expect(screen.getByText('Woineshet Waiter')).toBeInTheDocument()
     expect(screen.getAllByText('General Manager').length).toBeGreaterThan(0)
-    expect(screen.getByText(/3 accounts · 2 active/i)).toBeInTheDocument()
+    expect(screen.getByText(/4 accounts · 3 active/i)).toBeInTheDocument()
   })
 
   it('shows an error with a retry action when loading fails', async () => {
@@ -194,6 +211,118 @@ describe('Settings — users', () => {
     expect(usersApi.assignUserRole).not.toHaveBeenCalled()
   })
 
+  it('revokes one role while keeping the others', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+
+    await screen.findByText('Chala Cashier-Manager')
+    await user.click(
+      screen.getByRole('button', { name: 'Revoke Cashier from Chala Cashier-Manager' }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Confirm revoke Cashier from Chala Cashier-Manager',
+      }),
+    )
+
+    await waitFor(() => {
+      expect(usersApi.revokeUserRole).toHaveBeenCalledWith('u-multi', 'cashier')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /Cashier revoked from Chala Cashier-Manager/i,
+    )
+  })
+
+  it('cancels a pending role revoke without calling the database', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+
+    await screen.findByText('Chala Cashier-Manager')
+    await user.click(
+      screen.getByRole('button', { name: 'Revoke Cashier from Chala Cashier-Manager' }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Cancel revoke Cashier from Chala Cashier-Manager',
+      }),
+    )
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'Confirm revoke Cashier from Chala Cashier-Manager',
+      }),
+    ).toBeNull()
+    expect(usersApi.revokeUserRole).not.toHaveBeenCalled()
+  })
+
+  it('blocks revoking the only role from an account in the UI', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+
+    await screen.findByText('Ana Admin')
+    await user.click(
+      screen.getByRole('button', { name: 'Revoke System Administrator from Ana Admin' }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Confirm revoke System Administrator from Ana Admin',
+      }),
+    )
+
+    expect(await screen.findByText('An account must keep at least one role.')).toBeInTheDocument()
+    expect(usersApi.revokeUserRole).not.toHaveBeenCalled()
+  })
+
+  it('shows a database rejection such as the last-admin guard', async () => {
+    usersApi.revokeUserRole.mockRejectedValue(
+      new Error('At least one active System Administrator must remain.'),
+    )
+    const user = userEvent.setup()
+    renderSettings()
+
+    await screen.findByText('Chala Cashier-Manager')
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Revoke System Administrator from Chala Cashier-Manager',
+      }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Confirm revoke System Administrator from Chala Cashier-Manager',
+      }),
+    )
+
+    expect(
+      await screen.findByText('At least one active System Administrator must remain.'),
+    ).toBeInTheDocument()
+  })
+
+  it('refreshes auth state after revoking one of the signed-in users own roles', async () => {
+    const refreshUser = vi.fn(async () => {})
+    const value = {
+      ...authValue(['system_admin', 'cashier'], 'u-multi'),
+      refreshUser,
+    }
+    const user = userEvent.setup()
+    render(
+      <AuthContext.Provider value={value}>
+        <Settings />
+      </AuthContext.Provider>,
+    )
+
+    await screen.findByText('Chala Cashier-Manager')
+    await user.click(
+      screen.getByRole('button', { name: 'Revoke Cashier from Chala Cashier-Manager' }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Confirm revoke Cashier from Chala Cashier-Manager',
+      }),
+    )
+
+    await waitFor(() => expect(refreshUser).toHaveBeenCalled())
+  })
+
   it('grants and revokes outlet access', async () => {
     const user = userEvent.setup()
     renderSettings()
@@ -248,6 +377,7 @@ describe('Settings — users', () => {
     expect(screen.queryByRole('button', { name: /manage outlet access/i })).toBeNull()
     expect(screen.queryByLabelText(/^role for /i)).toBeNull()
     expect(screen.queryByRole('button', { name: /deactivate|reactivate/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /revoke (cashier|system administrator)/i })).toBeNull()
     expect(screen.getAllByText(/read-only/i).length).toBeGreaterThan(0)
   })
 })

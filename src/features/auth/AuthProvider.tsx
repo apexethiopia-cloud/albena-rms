@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import {
@@ -44,6 +44,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() =>
     supabase ? { status: 'loading' } : { status: 'unconfigured' },
   )
+
+  // Role changes are read live from PostgreSQL for enforcement, but the React
+  // cache is only loaded on session events. Admins call this after changing
+  // their own roles so the UI reflects the database immediately.
+  const refreshUser = useCallback(async () => {
+    if (!supabase) return
+
+    const { data } = await supabase.auth.getSession()
+    const sessionUser = data.session?.user
+    if (!sessionUser) {
+      setState({ status: 'signed-out' })
+      return
+    }
+
+    try {
+      const user = await loadUser(sessionUser.id, sessionUser.email ?? '')
+      if (!user) {
+        setState({ status: 'signed-out' })
+      } else if (user.status === 'disabled') {
+        setState({ status: 'disabled', email: user.email })
+      } else {
+        setState({ status: 'signed-in', user })
+      }
+    } catch {
+      setState({ status: 'signed-out' })
+    }
+  }, [])
 
   useEffect(() => {
     if (!supabase) return
@@ -107,8 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (supabase) await supabase.auth.signOut()
     }
 
-    return { state, signIn, signOut }
-  }, [state])
+    return { state, signIn, signOut, refreshUser }
+  }, [state, refreshUser])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

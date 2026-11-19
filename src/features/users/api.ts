@@ -107,6 +107,15 @@ export async function assignUserRole(userId: string, roleCode: string): Promise<
   if (error) throw new Error(describeUserDbError(error))
 }
 
+export async function revokeUserRole(userId: string, roleCode: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('admin_revoke_role', {
+    p_user_id: userId,
+    p_role_code: roleCode,
+  })
+
+  if (error) throw new Error(describeUserDbError(error))
+}
+
 export async function listOutletScopes(userId: string): Promise<OutletScope[]> {
   const { data, error } = await requireSupabase()
     .from('user_outlet_scopes')

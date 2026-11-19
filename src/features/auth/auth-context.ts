@@ -21,6 +21,8 @@ export type AuthContextValue = {
   state: AuthState
   signIn: (email: string, password: string) => Promise<SignInResult>
   signOut: () => Promise<void>
+  /** Reload roles/status from the database after an admin changes this account. */
+  refreshUser?: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

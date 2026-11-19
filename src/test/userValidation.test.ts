@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { describeUserDbError, validateRoleSelection } from '@/features/users/validation'
+import {
+  describeUserDbError,
+  validateRoleRevocation,
+  validateRoleSelection,
+} from '@/features/users/validation'
 
 const AVAILABLE = ['system_admin', 'general_manager', 'waiter']
 const ASSIGNED = ['waiter']
@@ -28,6 +32,31 @@ describe('User role validation', () => {
 
   it('accepts a new role from the catalogue', () => {
     expect(validateRoleSelection('general_manager', AVAILABLE, ASSIGNED)).toEqual({
+      valid: true,
+      error: null,
+    })
+  })
+
+  it('requires an assigned role to revoke', () => {
+    expect(validateRoleRevocation('', ['cashier'])).toEqual({
+      valid: false,
+      error: 'Choose a role to revoke.',
+    })
+    expect(validateRoleRevocation('chef', ['cashier'])).toEqual({
+      valid: false,
+      error: 'That role is not assigned to this account.',
+    })
+  })
+
+  it('blocks revoking the only remaining role', () => {
+    expect(validateRoleRevocation('waiter', ['waiter'])).toEqual({
+      valid: false,
+      error: 'An account must keep at least one role.',
+    })
+  })
+
+  it('allows revoking one of several assigned roles', () => {
+    expect(validateRoleRevocation('cashier', ['cashier', 'restaurant_manager'])).toEqual({
       valid: true,
       error: null,
     })

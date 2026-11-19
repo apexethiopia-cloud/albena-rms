@@ -699,5 +699,25 @@
 - OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
 
 
+## Session 27: 2026-11-19 - Admin Role Revocation
 
+- **Phase**: Phase 2 identity enhancement | **Completion**: no phase percentage change (Phase 2 release at final UAT)
+- **Date**: 2026-11-19 15:00 UTC+3
+- **Model**: Big Pickle (OpenCode)
 
+### Actions Completed
+1. **Owner decisions captured** — block removing an account's last role; keep at least one active `system_admin`; allow self-revocation only when another active admin remains; disable direct `user_roles` writes so all changes go through guarded RPCs.
+2. **Migration 0015 authored** — `20261119001500_admin_role_revocation.sql` adds `admin_revoke_role(uuid, text)` (admin-only, `SECURITY DEFINER`, advisory-locked), revokes direct INSERT/UPDATE/DELETE on `user_roles` from anon/authenticated, drops the broad `user_roles_admin_write` RLS policy, hardens the existing admin RPC anon grants, and makes the audit trigger record `user_id` as `entity_id` for join tables. **Awaiting owner application.**
+3. **UI/API wired** — `revokeUserRole()` added to the users API; `validateRoleRevocation()` added; each role chip in `/settings` now has an inline Revoke → Confirm/Cancel action. After changing their own roles, the admin's role cache is refreshed through the new optional `AuthContext.refreshUser()`.
+4. **Records updated** — ADR-018, traceability Section 12 and the testing/progress notes added.
+
+### Verification
+- `npm run typecheck` - Pass
+- `npm run lint` - Pass (zero warnings)
+- Full suite - **310/310 tests across 31 suites** Pass (14 Users tests, 9 user-validation tests)
+- `npm run build` - Pass; `assets/index-BkOSluHQ.js` (882.93 kB, 200.69 kB gzip), `assets/index-CTclTxuV.css` (26.79 kB). Bundle contains `admin_revoke_role` and the revoke-confirmation UI.
+
+### Outstanding
+- **Owner**: apply `supabase/migrations/20261119001500_admin_role_revocation.sql`.
+- **Owner/agent**: include revocation checks in the authenticated smoke test — non-admin/anon denial, direct-delete denial, partial revoke, last-role/last-admin guards, self-revoke and the audit row reference.
+- Earlier outstanding items from Session 26 remain open.
