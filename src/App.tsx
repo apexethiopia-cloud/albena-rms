@@ -3,7 +3,6 @@ import { AppShell } from '@/components/layout/AppShell'
 import { NetworkStatusBanner } from '@/components/NetworkStatusBanner'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
-import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
 import { Inventory } from '@/pages/Inventory'
 import { Kitchen } from '@/pages/Kitchen'
@@ -11,6 +10,7 @@ import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
 import { Operations } from '@/pages/Operations'
 import { Purchasing } from '@/pages/Purchasing'
+import { Reports } from '@/pages/Reports'
 import { Settings } from '@/pages/Settings'
 
 export function AppRoutes() {
@@ -30,23 +30,7 @@ export function AppRoutes() {
 
           <Route path="operations" element={<Operations />} />
 
-          <Route
-            path="reports"
-            element={
-              <ComingSoon
-                title="Reports"
-                phase="Phase 7"
-                description="Operational, cost and management reporting."
-                planned={[
-                  'Sales by day, outlet, category, item and waiter',
-                  'Stock on hand, movement and FIFO valuation',
-                  'Recipe cost, food cost % and profitability',
-                  'Waste trends and theoretical vs actual consumption',
-                  'Management dashboard: open tables, kitchen queue, low stock',
-                ]}
-              />
-            }
-          />
+          <Route path="reports" element={<Reports />} />
 
           <Route path="settings" element={<Settings />} />
 
