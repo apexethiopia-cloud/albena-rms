@@ -121,3 +121,17 @@ Live allocation, trigger-generated codes and draft-gate enforcement still requir
 | Typecheck / lint / build | `npm run typecheck`, `npm run lint`, `npm run build` | Pass; bundle `index-BkOSluHQ.js` contains `admin_revoke_role` and the revoke-confirmation UI |
 
 Migration `20261119001500_admin_role_revocation.sql` was applied on 2026-11-19. Live smoke test **passed 34/34 checks**: anon/non-admin and direct-table DELETE denied; `cashier` revoked while `restaurant_manager` was kept; last-role and last-active-admin guards rejected; last-admin test restored both admins; revoke audit row recorded actor, `entity_id` and the removed assignment. Also verified live `PR-20261119-0001`, generated `LOC-00001`, and draft PR update/delete with cleanup.
+
+---
+
+## 9. 2026-11-19 Obsidian & Metallic Gold Theme Coverage
+
+| Area | Check | Result |
+|:---|:---|:---|
+| Build | `npm run typecheck`, `npm run lint`, `npm run build` | Pass; `index-T1LUiUPu.js`, `index-CS1gqe4B.css` |
+| Full local suite | `npm test -- --run` | **310/310 across 31 suites** |
+| Compiled CSS | Obsidian canvas `#09090B`, charcoal surface `#16161B`, champagne text `#F3E5AB`, gold border/focus/ring-offset tokens, dark native controls, static metallic gradients, print override | Present |
+| Brand assets | `index.html` `theme-color=#09090B`, favicon obsidian tile with gold frame and champagne glyphs | Pass |
+| Class migration | 138 plain `bg-white` surfaces → `bg-surface`; 82 solid-fill labels → `text-obsidian`; offline banner retains `bg-white/15`, `hover:bg-white/25` and `text-white`; no `bg-slate-900` fills remain | Pass |
+
+No test asserts class names, so these are build/static checks only. Manual visual QA is still required for: dark surfaces across all panels, semantic status badges, form inputs and native selects, focus rings, scrollbars, the offline banner, and the receipt/report print preview.

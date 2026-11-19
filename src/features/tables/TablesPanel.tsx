@@ -254,7 +254,7 @@ export function TablesPanel() {
 
   return (
     <section aria-labelledby="tables-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -302,7 +302,7 @@ export function TablesPanel() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New table
@@ -334,7 +334,7 @@ export function TablesPanel() {
       {mode !== 'closed' && (
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <h3 className="text-sm font-semibold text-slate-900">
@@ -427,7 +427,7 @@ export function TablesPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               {mode === 'edit' ? 'Save changes' : 'Save table'}
@@ -443,7 +443,7 @@ export function TablesPanel() {
         </form>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         {loadError ? (
           <div className="flex items-start gap-2 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-4 w-4" aria-hidden="true" />

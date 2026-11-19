@@ -28,7 +28,7 @@ export function NetworkStatusBanner() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-0 top-0 z-50 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-red-600 px-4 py-2 text-sm text-white shadow-lg"
+      className="fixed inset-x-0 top-0 z-50 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-red-600 px-4 py-2 text-sm text-obsidian shadow-lg"
     >
       <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
       <span className="font-semibold">You are offline.</span>

@@ -21,7 +21,7 @@ export function ReportSection({
   return (
     <section
       aria-labelledby={id}
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

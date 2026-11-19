@@ -6,7 +6,7 @@ import { useAuth } from './auth-context'
 function FullPage({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-surface p-6 text-center shadow-sm">
         {children}
       </div>
     </div>
@@ -55,7 +55,7 @@ export function ProtectedRoute() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-obsidian hover:bg-brand-700"
         >
           Sign out
         </button>

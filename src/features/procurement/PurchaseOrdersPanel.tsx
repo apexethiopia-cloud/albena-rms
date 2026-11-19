@@ -393,7 +393,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
 
   return (
     <section aria-labelledby="purchase-orders-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -423,7 +423,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New PO
@@ -468,7 +468,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
           onSubmit={handleSubmit}
           noValidate
           aria-labelledby="po-form-heading"
-          className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-brand-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -601,7 +601,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700 disabled:opacity-60"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                 {editing ? 'Save changes' : 'Save draft'}
@@ -635,7 +635,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
               type="button"
               onClick={remove}
               disabled={pendingId !== null}
-              className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-rose-700 disabled:opacity-60"
             >
               Delete order
             </button>
@@ -650,7 +650,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         {loading && (
           <p className="flex items-center gap-2 text-sm text-slate-600">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -665,7 +665,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
             <button
               type="button"
               onClick={reload}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-white px-2 py-1 text-xs font-medium text-red-800 ring-1 ring-red-200 transition hover:bg-red-100"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-surface px-2 py-1 text-xs font-medium text-red-800 ring-1 ring-red-200 transition hover:bg-red-100"
             >
               <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
               Try again
@@ -733,7 +733,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
                                 )
                               }
                               disabled={pendingId !== null}
-                              className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                              className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-obsidian transition hover:bg-emerald-700 disabled:opacity-60"
                             >
                               Approve
                             </button>
@@ -769,7 +769,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
                                 )
                               }
                               disabled={pendingId !== null}
-                              className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+                              className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian transition hover:bg-brand-700 disabled:opacity-60"
                             >
                               Mark ordered
                             </button>
@@ -781,7 +781,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
                                 runAction(order, closePurchaseOrder, `PO ${order.po_number} closed.`)
                               }
                               disabled={pendingId !== null}
-                              className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                              className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-obsidian transition hover:bg-emerald-700 disabled:opacity-60"
                             >
                               Close
                             </button>

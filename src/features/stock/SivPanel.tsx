@@ -317,7 +317,7 @@ export function SivPanel() {
 
   return (
     <section aria-labelledby="siv-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 id="siv-heading" className="flex items-center gap-2 text-base font-semibold text-slate-900">
@@ -346,7 +346,7 @@ export function SivPanel() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New SIV
@@ -391,7 +391,7 @@ export function SivPanel() {
           onSubmit={handleSubmit}
           noValidate
           aria-labelledby="siv-form-heading"
-          className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-brand-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -460,7 +460,7 @@ export function SivPanel() {
                 onChange={(event) => setField('sourceLocationId')(event.target.value)}
                 aria-invalid={Boolean(fieldErrors.sourceLocationId)}
                 className={cn(
-                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500',
+                  'mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500',
                   fieldErrors.sourceLocationId ? 'border-red-400' : 'border-slate-300',
                 )}
               >
@@ -486,7 +486,7 @@ export function SivPanel() {
                 onChange={(event) => setField('destinationLocationId')(event.target.value)}
                 aria-invalid={Boolean(fieldErrors.destinationLocationId)}
                 className={cn(
-                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500',
+                  'mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500',
                   fieldErrors.destinationLocationId ? 'border-red-400' : 'border-slate-300',
                 )}
               >
@@ -574,7 +574,7 @@ export function SivPanel() {
                             aria-label={`Item for SIV line ${index + 1}`}
                             value={line.itemId}
                             onChange={(event) => selectItem(index, event.target.value)}
-                            className="w-full min-w-[10rem] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
+                            className="w-full min-w-[10rem] rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
                           >
                             <option value="">Select item…</option>
                             {activeItems.map((candidate) => (
@@ -609,7 +609,7 @@ export function SivPanel() {
                             aria-label={`Unit for SIV line ${index + 1}`}
                             value={line.unitId}
                             onChange={(event) => setLine(index, { unitId: event.target.value })}
-                            className="w-28 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
+                            className="w-28 rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
                           >
                             <option value="">Select…</option>
                             {availableUnits.map((unit) => (
@@ -674,7 +674,7 @@ export function SivPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Save draft
@@ -683,7 +683,7 @@ export function SivPanel() {
         </form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
         <div className="border-b border-slate-200 px-5 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {documents.length} document{documents.length === 1 ? '' : 's'} ·{' '}
@@ -771,7 +771,7 @@ export function SivPanel() {
                                 type="button"
                                 onClick={() => void remove(document)}
                                 disabled={busy}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-red-700 disabled:opacity-60"
                               >
                                 {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
                                 Confirm delete
@@ -816,7 +816,7 @@ export function SivPanel() {
                                 type="button"
                                 onClick={() => void post(document)}
                                 disabled={busy}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-amber-700 disabled:opacity-60"
                               >
                                 {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
                                 Confirm post

@@ -248,7 +248,7 @@ export function ItemsPanel() {
 
   return (
     <section aria-labelledby="items-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 id="items-heading" className="text-base font-semibold text-slate-900">
@@ -264,7 +264,7 @@ export function ItemsPanel() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               New item
@@ -308,7 +308,7 @@ export function ItemsPanel() {
           onSubmit={handleSubmit}
           noValidate
           aria-labelledby="item-form-heading"
-          className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-brand-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between gap-3">
             <h3 id="item-form-heading" className="text-sm font-semibold text-slate-900">
@@ -388,7 +388,7 @@ export function ItemsPanel() {
                 id="item-category"
                 value={form.categoryId}
                 onChange={(event) => setField('categoryId')(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500"
               >
                 <option value="">Uncategorised</option>
                 {categories.map((category) => (
@@ -409,7 +409,7 @@ export function ItemsPanel() {
                 onChange={(event) => setField('baseUnitId')(event.target.value)}
                 aria-invalid={Boolean(fieldErrors.baseUnitId)}
                 className={cn(
-                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500',
+                  'mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500',
                   fieldErrors.baseUnitId ? 'border-red-400' : 'border-slate-300',
                 )}
               >
@@ -441,7 +441,7 @@ export function ItemsPanel() {
                 }}
                 aria-invalid={Boolean(fieldErrors.purchaseUnit)}
                 aria-describedby={fieldErrors.purchaseUnit ? 'item-purchase-unit-error' : undefined}
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500"
               >
                 <option value="">Same as base unit</option>
                 {purchaseUnits.map((unit) => (
@@ -472,7 +472,7 @@ export function ItemsPanel() {
                     onChange={(event) => setFactor(event.target.value)}
                     aria-invalid={Boolean(fieldErrors.purchaseUnit)}
                     aria-describedby={fieldErrors.purchaseUnit ? 'item-purchase-unit-error' : undefined}
-                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 sm:max-w-56"
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500 sm:max-w-56"
                   />
                   <p className="mt-1 text-xs text-slate-500">
                     How many base units (g / ml / piece) one {selectedPurchaseUnit?.name} contains
@@ -519,7 +519,7 @@ export function ItemsPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               {mode.kind === 'create' ? 'Create item' : 'Save changes'}
@@ -535,7 +535,7 @@ export function ItemsPanel() {
         </form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {items.length} item{items.length === 1 ? '' : 's'} · {activeCount} active

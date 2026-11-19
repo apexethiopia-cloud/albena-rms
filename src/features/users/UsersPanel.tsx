@@ -219,7 +219,7 @@ export function UsersPanel() {
 
   return (
     <section aria-labelledby="users-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 id="users-heading" className="flex items-center gap-2 text-base font-semibold text-slate-900">
@@ -274,7 +274,7 @@ export function UsersPanel() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
         <div className="border-b border-slate-200 px-5 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {users.length} account{users.length === 1 ? '' : 's'} ·{' '}
@@ -430,7 +430,7 @@ export function UsersPanel() {
                                   [row.id]: event.target.value,
                                 }))
                               }
-                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm focus:border-brand-500"
+                              className="rounded-lg border border-slate-300 bg-surface px-2 py-1 text-xs shadow-sm focus:border-brand-500"
                             >
                               <option value="">Select role…</option>
                               {roles.map((role) => (
@@ -488,7 +488,7 @@ export function UsersPanel() {
       </div>
 
       {canManage && selectedUser && (
-        <div className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-brand-200 bg-surface p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">

@@ -392,7 +392,7 @@ export function RecipesPanel() {
               aria-label={`Ingredient for ${labelPrefix} line ${index + 1}`}
               value={line.itemId}
               onChange={(event) => onLine(index, { itemId: event.target.value, unitId: '' })}
-              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+              className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
             >
               <option value="">Choose an ingredient</option>
               {activeItems.map((option) => (
@@ -420,7 +420,7 @@ export function RecipesPanel() {
               aria-label={`Unit for ${labelPrefix} line ${index + 1}`}
               value={line.unitId}
               onChange={(event) => onLine(index, { unitId: event.target.value })}
-              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+              className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
             >
               <option value="">Choose a unit</option>
               {unitOptions.map((unit) => (
@@ -447,7 +447,7 @@ export function RecipesPanel() {
 
   return (
     <section aria-labelledby="recipes-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -478,7 +478,7 @@ export function RecipesPanel() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New recipe
@@ -510,7 +510,7 @@ export function RecipesPanel() {
       {mode === 'create' && (
         <form
           onSubmit={handleCreate}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <h3 className="text-sm font-semibold text-slate-900">New recipe</h3>
@@ -623,7 +623,7 @@ export function RecipesPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Save draft
@@ -642,7 +642,7 @@ export function RecipesPanel() {
       {mode === 'edit' && editingRecipe && (
         <form
           onSubmit={handleEdit}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -715,7 +715,7 @@ export function RecipesPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Save changes
@@ -734,7 +734,7 @@ export function RecipesPanel() {
       {mode === 'version' && versionRecipe && (
         <form
           onSubmit={handleVersion}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -835,7 +835,7 @@ export function RecipesPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Save draft version
@@ -852,7 +852,7 @@ export function RecipesPanel() {
       )}
 
       {loading && recipes.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-8 text-sm text-slate-500 shadow-sm">
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-surface px-5 py-8 text-sm text-slate-500 shadow-sm">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading recipes…
         </div>
@@ -867,13 +867,13 @@ export function RecipesPanel() {
           <button
             type="button"
             onClick={reload}
-            className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="mt-3 rounded-lg border border-slate-300 bg-surface px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Try again
           </button>
         </div>
       ) : recipes.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-surface px-5 py-8 text-center shadow-sm">
           <p className="text-sm font-medium text-slate-900">No recipes yet</p>
           <p className="mx-auto mt-1 max-w-xl text-sm text-slate-600">
             Create a recipe to record ingredients, yield and selling price. Costing uses the
@@ -883,7 +883,7 @@ export function RecipesPanel() {
       ) : (
         <div className="space-y-4">
           {recipes.map((recipe) => (
-            <div key={recipe.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div key={recipe.id} className="rounded-xl border border-slate-200 bg-surface shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{recipe.name}</p>

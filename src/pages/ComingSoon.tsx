@@ -16,7 +16,7 @@ export function ComingSoon({
     <>
       <PageHeader title={title} description={description} />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-6 shadow-sm">
         <div className="flex items-center gap-2 text-brand-700">
           <Construction className="h-5 w-5" aria-hidden="true" />
           <span className="text-sm font-semibold">Scheduled for {phase}</span>

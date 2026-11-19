@@ -37,7 +37,7 @@ export function Purchasing() {
 
         <section
           aria-labelledby="purchasing-planned-heading"
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <h2 id="purchasing-planned-heading" className="text-base font-semibold text-slate-900">
             Not implemented yet

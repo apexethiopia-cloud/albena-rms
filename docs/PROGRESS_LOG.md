@@ -723,3 +723,30 @@
 
 ### Outstanding
 - Earlier outstanding items from Session 26 remain open: final three-user UAT and the RLS negative-test SQL script.
+
+---
+
+## Session 28: 2026-11-19 - Obsidian & Metallic Gold Theme
+
+- **Phase**: Presentation layer | **Completion**: ADR-019 accepted; global theme implemented
+- **Date**: 2026-11-19 17:30 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner decisions captured** - replace the light theme globally (no toggle), adapt semantic colours for dark contrast, and use subtle static metallic shimmer rather than animation.
+2. **Token remap** - `tailwind.config.js` now defines `obsidian #09090B`, `surface #16161B`, `champagne #F3E5AB`, a metallic `brand` ramp, remapped `slate` (obsidian/charcoal/gold borders/champagne text) and dark-adapted `emerald`, `red`, `amber`, `rose`, `sky` and `indigo` ramps. Added `metallic` gradient and gold shadow tokens.
+3. **Global CSS** - `src/index.css` sets dark `color-scheme`, obsidian canvas, champagne text, gold focus ring with obsidian offset, gold default 1px borders, dark native controls/scrollbars, static shimmer on card and CTA surfaces, and a print override that forces white paper and black ink.
+4. **Component codemod** - plain `bg-white` became `bg-surface` across 35 files; the offline banner keeps its white alpha layers. `text-white` on solid brand/semantic fills became `text-obsidian`; three former `bg-slate-900` buttons became gold CTAs and the mobile scrim became `bg-black/50`.
+5. **Brand assets** - `index.html` `theme-color` is `#09090B`; the favicon is an obsidian tile with a gold frame and champagne glyphs.
+6. **Records updated** - ADR-017 marked superseded, ADR-019 added, traceability and testing notes updated.
+
+### Verification
+- `npm run typecheck` - Pass
+- `npm run lint` - Pass (zero warnings)
+- Full suite - **310/310 tests across 31 suites** Pass
+- `npm run build` - Pass; `assets/index-T1LUiUPu.js` (883.45 kB, 200.72 kB gzip), `assets/index-CS1gqe4B.css` (27.57 kB). Chunk-size warning only.
+- Compiled CSS checked: obsidian canvas, charcoal surfaces, champagne text, gold border/focus/ring-offset tokens, dark native controls and the print override are present.
+
+### Outstanding
+- Manual visual QA of dark surfaces, semantic badges, form inputs/selects, focus rings, scrollbars, the offline banner and print preview.
+- Earlier outstanding items remain open: final three-user UAT and the RLS negative-test SQL script.

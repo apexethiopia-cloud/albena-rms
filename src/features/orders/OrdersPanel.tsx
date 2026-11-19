@@ -522,7 +522,7 @@ export function OrdersPanel() {
 
   return (
     <section aria-labelledby="orders-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -587,7 +587,7 @@ export function OrdersPanel() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New order
@@ -623,7 +623,7 @@ export function OrdersPanel() {
       {mode !== 'closed' && (
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <h3 className="text-sm font-semibold text-slate-900">
@@ -801,7 +801,7 @@ export function OrdersPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               {mode === 'edit' ? 'Save changes' : 'Open order'}
@@ -817,7 +817,7 @@ export function OrdersPanel() {
         </form>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         {loadError ? (
           <div className="flex items-start gap-2 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-4 w-4" aria-hidden="true" />
@@ -942,7 +942,7 @@ export function OrdersPanel() {
                         type="button"
                         onClick={() => runStatus(order, 'sent_to_kitchen')}
                         disabled={busyId === order.id}
-                        className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-brand-700 disabled:opacity-50"
                       >
                         {busyId === order.id && (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -955,7 +955,7 @@ export function OrdersPanel() {
                         type="button"
                         onClick={() => runStatus(order, 'served')}
                         disabled={busyId === order.id}
-                        className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                        className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-brand-700 disabled:opacity-50"
                       >
                         Mark served
                       </button>
@@ -969,7 +969,7 @@ export function OrdersPanel() {
                           setNotice(null)
                         }}
                         disabled={busyId === order.id}
-                        className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                        className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-emerald-700 disabled:opacity-50"
                       >
                         Close &amp; print receipt
                       </button>
@@ -1129,7 +1129,7 @@ export function OrdersPanel() {
                           type="button"
                           onClick={() => runSplit(order)}
                           disabled={busyId === order.id}
-                          className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                          className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-brand-700 disabled:opacity-50"
                         >
                           Split selected
                         </button>
@@ -1170,7 +1170,7 @@ export function OrdersPanel() {
                         type="button"
                         onClick={() => runMerge(order)}
                         disabled={busyId === order.id || !mergeTargetId}
-                        className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                        className="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-brand-700 disabled:opacity-50"
                       >
                         Merge orders
                       </button>
@@ -1203,7 +1203,7 @@ export function OrdersPanel() {
                           type="button"
                           onClick={() => confirmCancel(order)}
                           disabled={busyId === order.id}
-                          className="rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                          className="rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-red-700 disabled:opacity-50"
                         >
                           Confirm cancel
                         </button>
@@ -1236,7 +1236,7 @@ export function OrdersPanel() {
                           type="button"
                           onClick={() => confirmClose(order)}
                           disabled={busyId === order.id}
-                          className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-emerald-700 disabled:opacity-50"
                         >
                           {busyId === order.id && (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -1246,7 +1246,7 @@ export function OrdersPanel() {
                         <button
                           type="button"
                           onClick={() => setCloseId(null)}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-white"
+                          className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-surface"
                         >
                           Keep order open
                         </button>
@@ -1261,7 +1261,7 @@ export function OrdersPanel() {
       </div>
 
       {receipt && receiptOrder && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
           <ReceiptView
             receipt={receipt}
             order={receiptOrder}

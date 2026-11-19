@@ -193,7 +193,7 @@
 ---
 
 ## ADR-017: Black and Gold Brand Theme (Gold-Forward Light UI)
-- **Date**: 2026-11-19 | **Status**: Accepted
+- **Date**: 2026-11-19 | **Status**: Superseded by ADR-019
 - **Context**: The prototype used a green `brand` palette across 208 utility-class usages. The owner selected a Black and Gold brand with a gold-forward but light canvas.
 - **Decision**:
   - Keep the existing `brand-50…900` token keys and remap them: pale gold surfaces (`50/100/200`), deep gold focus and accents (`500/700/800/900`), near-black primary (`600`). This re-themes all existing `brand-*` usages without touching feature components.
@@ -213,6 +213,20 @@
   - The audit trigger now records the `user_id` as `entity_id` for join tables that have no `id` column, so role changes satisfy the AC-13 record-reference requirement.
   - After changing their own roles, an admin's in-browser role cache is refreshed through `AuthContext.refreshUser()`. Enforcement never relies on that cache: every RPC/RLS check reads PostgreSQL live.
 - **Consequences**: Migration `20261119001500_admin_role_revocation.sql` was applied on 2026-11-19 and live-verified. Users only need a page refresh if the optional auth refresh is unavailable. Direct PostgREST deletes of `user_roles` now fail with a permission error, which is intentional.
+
+---
+
+## ADR-019: Obsidian & Metallic Gold Theme
+- **Date**: 2026-11-19 | **Status**: Accepted
+- **Context**: ADR-017 delivered a light canvas with black primary buttons and gold accents. The owner selected a darker, premium direction: deep obsidian `#09090B`, matte charcoal cards `#16161B`, 1px gold metallic borders, champagne text `#F3E5AB` and golden shimmer highlights. Confirmations: replace the light theme globally (no toggle), adapt semantic colours for dark contrast, and keep shimmer subtle and static (no animation).
+- **Decision**:
+  - Keep the `brand-50…900` keys and remap them to a metallic gold ramp: tinted gold surfaces `50/100`, gold border `200`, focus ring `500`, gold CTA fills `600/700`, champagne text `900`. Existing brand utilities therefore continue to work.
+  - Override the heavily used `slate` scale so `50/100` become obsidian/charcoal, `200/300` become muted/bright metallic gold borders, `400–600` become warm muted body text and `700–900` become champagne headings and values. Remap `emerald`, `red`, `amber`, `rose`, `sky` and `indigo` so `50/100` are dark-tinted status surfaces, `200/300` are borders, `500/600/700` are bright fills/text and `800/900` are high-contrast text.
+  - Add `obsidian`, `surface` and `champagne` colour tokens plus `metallic` gradient tokens. Replace plain `bg-white` surfaces with `bg-surface` across the UI; keep the two translucent `bg-white/15` and `bg-white/25` layers on the red offline banner.
+  - Fill buttons now use dark ink: `text-white` became `text-obsidian` wherever a solid `bg-brand-*`, `bg-emerald-*`, `bg-red-*`, `bg-amber-*` or `bg-rose-*` background is present. The three former `bg-slate-900` buttons became gold CTAs, and the mobile scrim uses `bg-black/50` so remapping `slate-900` cannot turn it into a gold wash.
+  - `src/index.css` sets `color-scheme: dark`, obsidian body/canvas, champagne body text, a gold focus ring with an explicit obsidian ring offset, gold default 1px borders, dark native controls/scrollbars, and static metallic gradients layered over card and CTA surfaces. Print media forces a white, black-ink canvas so receipts and reports stay printable.
+  - `index.html` `theme-color` and `public/favicon.svg` use `#09090B`, a gold frame and champagne glyphs.
+- **Consequences**: The change is global and requires no theme provider, persistence or `dark:` variants. Because no test asserts class names, visual QA must be performed manually across forms, semantic badges, focus rings, native selects, scrollbars, the offline banner and the print preview. ADR-017's light canvas is no longer available.
 
 ---
 

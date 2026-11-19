@@ -1,7 +1,7 @@
 # Albena RMS — Requirements Traceability Matrix
 
 **Authoritative Source**: `docs/SRS_v3.0.md` (approved 2026-11-17)
-**Last Updated**: 2026-11-19 — added Section 11 (POS, automatic numbering, draft CRUD, brand theme)
+**Last Updated**: 2026-11-19 — added Section 11 (POS, automatic numbering, draft CRUD, brand theme), Section 12 (role revocation) and Section 13 (Obsidian & Metallic Gold theme)
 
 > A requirement is NOT complete merely because code exists. Each row must have implementation evidence, a migration reference, a test case reference and a verified status before it can be marked Accepted.
 
@@ -437,6 +437,15 @@
 | USR-02, SEC-ROLE-01, SEC-ROLE-04 | Admin can revoke one assigned role while keeping the others; all role writes go through guarded RPCs | `20261119001500_admin_role_revocation.sql` | `src/features/users/api.ts`, `src/features/users/UsersPanel.tsx`, `src/features/users/validation.ts` | `Users.test.tsx`, `userValidation.test.ts` | **Verified** — 0015 applied; 34/34 live checks passed 2026-11-19 |
 | ADR-018 | Never leave an account role-less; keep at least one active `system_admin`; allow self-revocation only if another active admin remains | `20261119001500_admin_role_revocation.sql` | `admin_revoke_role()` with transaction advisory lock | DB guard smoke test (0015) | **Verified** — live guards rejected the last-role and last-active-admin attempts |
 | ADR-018 | Audit role revocations with a usable record reference; refresh the browser role cache after a self-change | `20261119001500_admin_role_revocation.sql` | `write_audit_log()`, `AuthProvider.tsx`, `auth-context.ts` | `Users.test.tsx` (self-refresh) | **Verified** — revoke audit row captured actor and target `entity_id` |
+
+---
+
+## Section 13 — 2026-11-19 Obsidian & Metallic Gold Theme
+
+| Req ID | Enhancement | Migration | Implementation File(s) | Test Case | Status |
+|:---|:---|:---|:---|:---|:---:|
+| ADR-019 | Obsidian `#09090B` canvas, matte charcoal `#16161B` cards, 1px metallic gold borders, champagne `#F3E5AB` text and static golden shimmer, applied globally | — | `tailwind.config.js`, `src/index.css`, `src/**/*.tsx` (35 files), `index.html`, `public/favicon.svg` | Static CSS/build checks; manual visual QA pending | **Implemented** — typecheck/lint/310 tests/build pass |
+| ADR-019 | Dark-adapted semantic colours and dark ink on solid button fills; printable white receipts | — | `tailwind.config.js`, `src/index.css` | Static CSS check; print preview manual QA pending | **Implemented** |
 
 ---
 

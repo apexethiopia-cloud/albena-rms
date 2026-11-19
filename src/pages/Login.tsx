@@ -22,7 +22,7 @@ export function Login() {
   if (state.status === 'unconfigured') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-surface p-6 text-center shadow-sm">
           <AlertTriangle className="mx-auto h-6 w-6 text-amber-500" aria-hidden="true" />
           <h1 className="mt-3 text-base font-semibold text-slate-900">Backend not configured</h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -51,7 +51,7 @@ export function Login() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-obsidian">
             A
           </div>
           <div>
@@ -60,7 +60,7 @@ export function Login() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-surface p-6 shadow-sm">
           <h1 className="text-lg font-semibold text-slate-900">Sign in</h1>
           <p className="mt-1 text-sm text-slate-600">
             Use your individual staff account. Shared accounts are not permitted.
@@ -109,7 +109,7 @@ export function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

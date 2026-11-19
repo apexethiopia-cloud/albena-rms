@@ -45,7 +45,7 @@ export function LowStockPanel() {
 
   return (
     <section aria-labelledby="reorder-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -93,7 +93,7 @@ export function LowStockPanel() {
       </div>
 
       {loading && rows.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-8 text-sm text-slate-500 shadow-sm">
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-surface px-5 py-8 text-sm text-slate-500 shadow-sm">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading reorder status…
         </div>
@@ -108,13 +108,13 @@ export function LowStockPanel() {
           <button
             type="button"
             onClick={reload}
-            className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="mt-3 rounded-lg border border-slate-300 bg-surface px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Try again
           </button>
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-surface px-5 py-8 text-center shadow-sm">
           <p className="text-sm font-medium text-slate-900">No reorder levels are configured</p>
           <p className="mx-auto mt-1 max-w-xl text-sm text-slate-600">
             Set a reorder level in base units on an item to include it in low-stock alerts.
@@ -130,7 +130,7 @@ export function LowStockPanel() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <caption className="sr-only">Items at or below their configured reorder level</caption>

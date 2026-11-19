@@ -313,7 +313,7 @@ export function ProductionPanel() {
 
   return (
     <section aria-labelledby="production-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -344,7 +344,7 @@ export function ProductionPanel() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New production
@@ -376,7 +376,7 @@ export function ProductionPanel() {
       {formOpen && (
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <h3 className="text-sm font-semibold text-slate-900">
@@ -417,7 +417,7 @@ export function ProductionPanel() {
                 aria-label="Location"
                 value={form.locationId}
                 onChange={(event) => setField('locationId')(event.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
               >
                 <option value="">Choose a location</option>
                 {activeLocations.map((location) => (
@@ -456,7 +456,7 @@ export function ProductionPanel() {
                     outputUnitId: '',
                   }))
                 }
-                className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
               >
                 <option value="">Choose the output item</option>
                 {activeItems.map((item) => (
@@ -487,7 +487,7 @@ export function ProductionPanel() {
                   aria-label="Output unit"
                   value={form.outputUnitId}
                   onChange={(event) => setField('outputUnitId')(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                  className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
                 >
                   <option value="">Unit</option>
                   {unitOptionsFor(form.outputItemId).map((unit) => (
@@ -547,7 +547,7 @@ export function ProductionPanel() {
                       onChange={(event) =>
                         setInput(index, { itemId: event.target.value, unitId: '' })
                       }
-                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                      className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
                     >
                       <option value="">Choose an input</option>
                       {activeItems.map((item) => (
@@ -575,7 +575,7 @@ export function ProductionPanel() {
                       aria-label={`Unit for input ${index + 1}`}
                       value={line.unitId}
                       onChange={(event) => setInput(index, { unitId: event.target.value })}
-                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                      className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
                     >
                       <option value="">Choose a unit</option>
                       {unitOptionsFor(line.itemId).map((unit) => (
@@ -620,7 +620,7 @@ export function ProductionPanel() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               {editingOrderId ? 'Save changes' : 'Save draft'}
@@ -637,7 +637,7 @@ export function ProductionPanel() {
       )}
 
       {loading && orders.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-8 text-sm text-slate-500 shadow-sm">
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-surface px-5 py-8 text-sm text-slate-500 shadow-sm">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading production orders…
         </div>
@@ -652,13 +652,13 @@ export function ProductionPanel() {
           <button
             type="button"
             onClick={reload}
-            className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="mt-3 rounded-lg border border-slate-300 bg-surface px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Try again
           </button>
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-surface px-5 py-8 text-center shadow-sm">
           <p className="text-sm font-medium text-slate-900">No production orders yet</p>
           <p className="mx-auto mt-1 max-w-xl text-sm text-slate-600">
             Record the inputs and output of a production run. Stock only moves when the draft is
@@ -666,7 +666,7 @@ export function ProductionPanel() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <caption className="sr-only">Production history and posting state</caption>
@@ -736,7 +736,7 @@ export function ProductionPanel() {
                                 type="button"
                                 onClick={() => void handlePost(order)}
                                 disabled={postingId === order.id}
-                                className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                                className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
                               >
                                 {postingId === order.id && (
                                   <Loader2
@@ -760,7 +760,7 @@ export function ProductionPanel() {
                                 type="button"
                                 onClick={() => void handleDelete(order)}
                                 disabled={deletingId === order.id}
-                                className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                                className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
                               >
                                 {deletingId === order.id && (
                                   <Loader2

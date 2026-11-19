@@ -130,7 +130,7 @@ export function KitchenDisplayPanel() {
 
   return (
     <section aria-labelledby="kds-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -181,7 +181,7 @@ export function KitchenDisplayPanel() {
       </div>
 
       {loadError ? (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-white p-5 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-surface p-5 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4" aria-hidden="true" />
           <div>
             <p>{loadError}</p>
@@ -195,7 +195,7 @@ export function KitchenDisplayPanel() {
           </div>
         </div>
       ) : loading && orders.length === 0 ? (
-        <p className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+        <p className="flex items-center gap-2 rounded-xl border border-slate-200 bg-surface p-5 text-sm text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading kitchen tickets…
         </p>
@@ -205,7 +205,7 @@ export function KitchenDisplayPanel() {
             <div
               key={column.status}
               aria-label={`${column.title} tickets`}
-              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-xl border border-slate-200 bg-surface p-4 shadow-sm"
             >
               <div className="flex items-baseline justify-between">
                 <h3 className="text-sm font-semibold text-slate-900">{column.title}</h3>
@@ -264,8 +264,8 @@ export function KitchenDisplayPanel() {
                             className={cn(
                               'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium disabled:opacity-50',
                               action.status === 'served'
-                                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                : 'bg-brand-600 text-white hover:bg-brand-700',
+                                ? 'bg-emerald-600 text-obsidian hover:bg-emerald-700'
+                                : 'bg-brand-600 text-obsidian hover:bg-brand-700',
                             )}
                           >
                             {busyId === order.id && (

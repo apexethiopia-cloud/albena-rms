@@ -363,7 +363,7 @@ function AdjustmentSection({ kind }: SectionProps) {
 
   return (
     <section aria-labelledby={`${kind}-heading`} className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -401,7 +401,7 @@ function AdjustmentSection({ kind }: SectionProps) {
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 {isWaste ? 'New waste record' : 'New adjustment'}
@@ -447,7 +447,7 @@ function AdjustmentSection({ kind }: SectionProps) {
           onSubmit={handleSubmit}
           noValidate
           aria-labelledby={`${kind}-form-heading`}
-          className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-brand-200 bg-surface p-5 shadow-sm"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -521,7 +521,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                 onChange={(event) => setField('locationId')(event.target.value)}
                 aria-invalid={Boolean(fieldErrors.locationId)}
                 className={cn(
-                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500',
+                  'mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500',
                   fieldErrors.locationId ? 'border-red-400' : 'border-slate-300',
                 )}
               >
@@ -547,7 +547,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                 onChange={(event) => setField('reason')(event.target.value)}
                 aria-invalid={Boolean(fieldErrors.reason)}
                 className={cn(
-                  'mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500',
+                  'mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm shadow-sm focus:border-brand-500',
                   fieldErrors.reason ? 'border-red-400' : 'border-slate-300',
                 )}
               >
@@ -646,7 +646,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                             aria-label={`Item for ${noun} line ${index + 1}`}
                             value={line.itemId}
                             onChange={(event) => selectItem(index, event.target.value)}
-                            className="w-full min-w-[10rem] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
+                            className="w-full min-w-[10rem] rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
                           >
                             <option value="">Select item…</option>
                             {activeItems.map((candidate) => (
@@ -671,7 +671,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                                   direction: event.target.value as 'in' | 'out',
                                 })
                               }
-                              className="w-28 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
+                              className="w-28 rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
                             >
                               <option value="out">Decrease</option>
                               <option value="in">Increase</option>
@@ -703,7 +703,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                             aria-label={`Unit for ${noun} line ${index + 1}`}
                             value={line.unitId}
                             onChange={(event) => setLine(index, { unitId: event.target.value })}
-                            className="w-28 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
+                            className="w-28 rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm shadow-sm focus:border-brand-500"
                           >
                             <option value="">Select…</option>
                             {availableUnits.map((unit) => (
@@ -793,7 +793,7 @@ function AdjustmentSection({ kind }: SectionProps) {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-obsidian transition hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Save draft
@@ -802,7 +802,7 @@ function AdjustmentSection({ kind }: SectionProps) {
         </form>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
         <div className="border-b border-slate-200 px-5 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {documents.length} document{documents.length === 1 ? '' : 's'} ·{' '}
@@ -896,7 +896,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                                 type="button"
                                 onClick={() => void remove(document)}
                                 disabled={busy}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-red-700 disabled:opacity-60"
                               >
                                 {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
                                 Confirm delete
@@ -978,7 +978,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                                   )
                                 }
                                 disabled={busy}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-amber-700 disabled:opacity-60"
                               >
                                 {busy && (
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -1040,7 +1040,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                             )
                           }
                           disabled={busy}
-                          className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                          className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-emerald-700 disabled:opacity-60"
                         >
                           Approve
                         </button>
@@ -1059,7 +1059,7 @@ function AdjustmentSection({ kind }: SectionProps) {
                             )
                           }
                           disabled={busy}
-                          className="rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                          className="rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-red-700 disabled:opacity-60"
                         >
                           Reject
                         </button>

@@ -105,7 +105,7 @@ export function Reports() {
 
       <section
         aria-label="Report filters"
-        className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="mb-6 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
       >
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs font-medium text-slate-600">
@@ -147,7 +147,7 @@ export function Reports() {
           <button
             type="button"
             onClick={applyFilters}
-            className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-obsidian transition hover:bg-brand-700"
           >
             <Filter className="h-4 w-4" aria-hidden="true" />
             Apply filters
@@ -188,7 +188,7 @@ export function Reports() {
       </section>
 
       {loadError ? (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-white p-5 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-surface p-5 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4" aria-hidden="true" />
           <div>
             <p>{loadError}</p>
@@ -202,7 +202,7 @@ export function Reports() {
           </div>
         </div>
       ) : loading && !bundle ? (
-        <p className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+        <p className="flex items-center gap-2 rounded-xl border border-slate-200 bg-surface p-5 text-sm text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading reports…
         </p>
@@ -228,7 +228,7 @@ export function Reports() {
           <ReservationsReportPanel rows={bundle.reservations} />
         </div>
       ) : (
-        <p className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+        <p className="rounded-xl border border-slate-200 bg-surface p-5 text-sm text-slate-500">
           No report data.
         </p>
       )}

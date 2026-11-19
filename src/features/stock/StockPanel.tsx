@@ -68,7 +68,7 @@ export function StockPanel() {
 
   return (
     <section aria-labelledby="stock-heading" className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 id="stock-heading" className="flex items-center gap-2 text-base font-semibold text-slate-900">
@@ -101,7 +101,7 @@ export function StockPanel() {
       </div>
 
       {loading && balances.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-10 text-sm text-slate-500 shadow-sm">
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-surface px-5 py-10 text-sm text-slate-500 shadow-sm">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading stock balances…
         </div>
@@ -116,13 +116,13 @@ export function StockPanel() {
           <button
             type="button"
             onClick={reload}
-            className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="mt-3 rounded-lg border border-slate-300 bg-surface px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Try again
           </button>
         </div>
       ) : balances.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-surface px-5 py-8 text-center shadow-sm">
           <p className="text-sm font-medium text-slate-900">No stock has been posted yet</p>
           <p className="mx-auto mt-1 max-w-xl text-sm text-slate-600">
             Post a goods receiving note on the Purchasing page to create the first FIFO layer. A
@@ -130,7 +130,7 @@ export function StockPanel() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <caption className="sr-only">Stock balances derived from the ledger</caption>
@@ -168,7 +168,7 @@ export function StockPanel() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
         <div className="border-b border-slate-200 px-5 py-3">
           <h3 className="text-sm font-semibold text-slate-900">Recent stock movements</h3>
           <p className="mt-1 text-xs text-slate-600">

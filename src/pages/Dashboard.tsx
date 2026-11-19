@@ -37,7 +37,7 @@ function DashboardCard({
   tone?: 'default' | 'warning'
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
       <div className="flex items-center gap-2 text-slate-500">
         <Icon
           className={tone === 'warning' ? 'h-4 w-4 text-amber-600' : 'h-4 w-4 text-brand-600'}
@@ -106,7 +106,7 @@ export function Dashboard() {
         description="Today at a glance: sales, kitchen load, tables, stock, food cost and reservations (RPT-08). Business date and daily boundaries use Africa/Addis_Ababa (OD-01)."
       />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-surface px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           {user && (
             <span className="flex items-center gap-2 text-sm text-slate-700">
@@ -153,7 +153,7 @@ export function Dashboard() {
       </div>
 
       {loadError ? (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-white p-5 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-surface p-5 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4" aria-hidden="true" />
           <div>
             <p>{loadError}</p>
@@ -167,7 +167,7 @@ export function Dashboard() {
           </div>
         </div>
       ) : loading && !snapshot ? (
-        <p className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+        <p className="flex items-center gap-2 rounded-xl border border-slate-200 bg-surface p-5 text-sm text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading today&apos;s numbers…
         </p>
@@ -227,7 +227,7 @@ export function Dashboard() {
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <ReceiptText className="h-4 w-4 text-brand-600" aria-hidden="true" />
                 Top-selling items today
@@ -258,7 +258,7 @@ export function Dashboard() {
               )}
             </section>
 
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <CalendarCheck className="h-4 w-4 text-brand-600" aria-hidden="true" />
                 Reservations today

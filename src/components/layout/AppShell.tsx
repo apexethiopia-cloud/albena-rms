@@ -39,7 +39,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700 text-base font-bold text-white">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700 text-base font-bold text-obsidian">
           A
         </div>
         <div className="leading-tight">
@@ -85,7 +85,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white md:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-surface md:flex">
         <SidebarContent />
       </aside>
 
@@ -94,17 +94,17 @@ export function AppShell() {
           <button
             type="button"
             aria-label="Close navigation"
-            className="absolute inset-0 bg-slate-900/50"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col bg-white shadow-xl">
+          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col bg-surface shadow-xl">
             <SidebarContent onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
 
       <div className="md:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/85 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-surface/85 px-4 backdrop-blur sm:px-6">
           <button
             type="button"
             className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"

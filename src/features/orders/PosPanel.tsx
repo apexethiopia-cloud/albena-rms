@@ -226,7 +226,7 @@ export function PosPanel() {
     <section aria-labelledby="quick-pos-heading" className="space-y-4">
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="space-y-4 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -321,7 +321,7 @@ export function PosPanel() {
                   className={cn(
                     'rounded-full border px-3 py-1 text-xs font-medium transition',
                     category === name
-                      ? 'border-brand-600 bg-brand-600 text-white'
+                      ? 'border-brand-600 bg-brand-600 text-obsidian'
                       : 'border-slate-200 text-slate-600 hover:border-brand-200 hover:bg-brand-50',
                   )}
                 >
@@ -339,14 +339,14 @@ export function PosPanel() {
                     type="button"
                     aria-label={`Add ${item.name} to cart`}
                     onClick={() => addToCart(item)}
-                    className="relative flex min-h-24 flex-col justify-between rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-brand-200 hover:bg-brand-50"
+                    className="relative flex min-h-24 flex-col justify-between rounded-lg border border-slate-200 bg-surface p-3 text-left transition hover:border-brand-200 hover:bg-brand-50"
                   >
                     <span
                       aria-label={`${item.name} quantity in cart`}
                       className={cn(
                         'absolute right-2 top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold',
                         quantity > 0
-                          ? 'bg-brand-600 text-white'
+                          ? 'bg-brand-600 text-obsidian'
                           : 'bg-slate-100 text-slate-500',
                       )}
                     >
@@ -374,7 +374,7 @@ export function PosPanel() {
                   aria-label="POS outlet"
                   value={outletId}
                   onChange={(event) => changeOutlet(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                  className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
                 >
                   <option value="">Choose an outlet</option>
                   {activeOutlets.map((outlet) => (
@@ -394,7 +394,7 @@ export function PosPanel() {
                   aria-label="POS table (optional)"
                   value={tableId}
                   onChange={(event) => setTableId(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                  className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
                 >
                   <option value="">Takeaway / no table</option>
                   {availableTables.map((table) => (
@@ -414,7 +414,7 @@ export function PosPanel() {
                   aria-label="POS notes"
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                  className="w-full rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm"
                 />
                 {fieldErrors.notes && (
                   <span className="mt-1 block text-red-600">{fieldErrors.notes}</span>
@@ -517,7 +517,7 @@ export function PosPanel() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-obsidian hover:bg-brand-700 disabled:opacity-60"
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             Open POS order
