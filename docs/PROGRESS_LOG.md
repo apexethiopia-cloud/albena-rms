@@ -693,7 +693,7 @@
 - `npm run build` - Pass; `assets/index-BQ3KHbbN.js` (880.80 kB, 200.11 kB gzip), `assets/index-BLPnoNOd.css` (26.62 kB). Chunk-size warning only. Bundle contains `Quick POS`, `Number assigned automatically when saved`, the new `update_*`/`delete_*` RPC names and the new create signatures.
 
 ### Outstanding
-- **Agent**: commit and push all changes to `main`; confirm the Cloudflare bundle hash after deployment.
+- **Agent**: commit and push all changes to `main`; confirm the Cloudflare bundle hash after deployment. **Done** — `a1a7d88` pushed to `origin/main`; Cloudflare Pages rebuilt and now serves `index-CZO1pqO4.js` / `index-BLPnoNOd.css` with `theme-color=#111111`, and the live JS contains `Quick POS`, automatic-numbering notes, the new create signatures and the new draft `update_*`/`delete_*` RPCs. The JS filename differs from the local build hash because Cloudflare's build environment emits a slightly different bundle, but all feature markers match.
 - **Owner/agent**: authenticated smoke test of actual number/code allocation and draft edit/delete gates (requires one test-user email/password, or an owner live check in the app).
 - **Owner/agent**: final UAT for AC-06, AC-07, AC-08, AC-10, AC-11, AC-12, AC-14 and AC-15.
 - OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
