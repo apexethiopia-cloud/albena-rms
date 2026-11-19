@@ -87,3 +87,11 @@ explicit factor per item — the system never invents one (CON-07).
   (SEC-ROLE-05).
 - `audit_logs` is written only by triggers. `authenticated` has no INSERT/UPDATE/DELETE grant. For join tables without an `id`, the trigger records the `user_id` as the entity reference.
 - Role revocation (`admin_revoke_role`) keeps at least one role on the account and at least one active `system_admin` in the system; self-revocation follows the same rule. Direct table writes are revoked to prevent bypass (ADR-018).
+
+## 5. AC-02 negative test
+
+Run `supabase/tests/ac02_rls_negative_test.sql` in the Supabase SQL editor (as the project owner).
+It is read-only in effect: everything runs inside a transaction that is rolled back at the end.
+It checks anon/authenticated denials, RPC privilege boundaries and role-gated writes, and it
+reports the currently missing outlet-scope RLS predicates as an explicit AC-02 gap. No keys,
+passwords or personal data are stored in the file. See `docs/TESTING.md` section 10.

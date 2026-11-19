@@ -28,9 +28,9 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| SEC-ROLE-01 | Permissions enforced server/DB side | 2 | RLS policies | `supabase/migrations/20261118000100_foundation.sql` (applied); anon denied `audit_logs` | AC-02 | **Implemented** — AC-02 negative test still to be recorded |
+| SEC-ROLE-01 | Permissions enforced server/DB side | 2 | RLS policies | `supabase/migrations/20261118000100_foundation.sql` (applied); anon denied `audit_logs` | AC-02 | **Implemented for role checks** — `supabase/tests/ac02_rls_negative_test.sql` prepared; owner run pending |
 | SEC-ROLE-02 | Individual accounts; no shared logins | 2 | `user_profiles` | Supabase Auth + `src/features/auth/**` | AC-01 | **Implemented** — three individual accounts exist |
-| SEC-ROLE-03 | Users only access permitted records/outlets | 2 | RLS outlet filter | `user_outlet_scopes` + RLS | AC-02 | **Implemented** — admin granted all 5 outlets |
+| SEC-ROLE-03 | Users only access permitted records/outlets | 2 | `user_outlet_scopes` (no RLS filter policy yet) | `user_outlet_scopes` table only | AC-02 | **Partial — GAP** — all 5 outlets are granted but no policy uses the scopes to filter rows; see Section 10 of `TESTING.md` |
 | SEC-ROLE-04 | Role/permission changes audit logged | 2 | `audit_logs` | `write_audit_log()` on `user_roles`; `entity_id` falls back to `user_id` for join tables | AC-13 | **Implemented** — includes revoke events (ADR-018) |
 | SEC-ROLE-05 | Disable/reactivate without deleting history | 3 | `user_profiles.status` | `admin_set_user_status()` + `UsersPanel` | - | **Implemented** |
 | SEC-ROLE-06 | No plaintext passwords in app tables | 2 | - | Supabase Auth handles credentials | - | **Implemented** |
@@ -71,8 +71,8 @@
 |:---|:---|:---:|:---|:---|:---|:---:|
 | OUT-01 | Multiple outlets supported | 3 | `outlets` | `src/features/outlets/**`, `/settings` | `Settings.test.tsx` | **Implemented** — 5 outlets seeded; CRUD covered by tests |
 | OUT-02 | Outlet-specific orders/reports | 3,7 | `orders.outlet_id`, report views | `/reports` outlet filter; `sales_daily`, `sales_lines`, `theoretical_consumption`, `kitchen_performance`, `reservation_daily` | `Reports.test.tsx`; AC-12 | **Built** — outlet filter applied to sales, cost, kitchen and reservation reports; inventory/purchasing/waste stay company-wide until stock locations map to outlets; migration 0012 applied and verified |
-| OUT-03 | Users scoped to one or more outlets | 3 | `user_outlet_scopes` | RLS outlet filter | AC-02 | **Implemented** — scopes granted; UI pending |
-| OUT-04 | Prevent cross-outlet access by default | 2 | RLS policies | RLS row filter | AC-02 | **Implemented** — anon reads filtered; AC-02 negative test pending |
+| OUT-03 | Users scoped to one or more outlets | 3 | `user_outlet_scopes` | Scope table only; no RLS predicate | AC-02 | **Partial** — scopes are granted, but row filtering is not implemented; UI pending |
+| OUT-04 | Prevent cross-outlet access by default | 2 | RLS policies | No outlet predicate on `orders`, `order_lines`, `reservations`, `restaurant_tables` or `receipts` | AC-02 | **Not Implemented — GAP** — anon reads are filtered, but a signed-in user can read every outlet's rows; AC-02 negative test exposes this |
 
 ---
 
@@ -396,7 +396,7 @@
 | Req ID | Description | Phase | Status |
 |:---|:---|:---:|:---:|
 | AC-01 | 3 users sign in concurrently from different locations | 2 | Not Started |
-| AC-02 | Role/outlet permissions enforced by DB; unauthorized fails | 2 | Not Started |
+| AC-02 | Role/outlet permissions enforced by DB; unauthorized fails | 2 | **Partial — role denials enforced; outlet-scope RLS gap found 2026-11-19**; `supabase/tests/ac02_rls_negative_test.sql` prepared, owner run pending |
 | AC-03 | PR submit→approve/reject→PO workflow per permissions | 4 | **Verified** 2026-11-18 (owner live run) — PR submitted and approved with approver/time/comment, PO created from it and moved draft → approved → ordered → closed; purchasing officer could not approve a PO |
 | AC-04 | GRN posted once; updates correct location and valuation | 4 | **Verified** 2026-11-18 (owner live run) — GRN 2,000 g posted once to the chosen location, balance 2,000 g / ETB 240.00 |
 | AC-05 | SIV/transfer atomic; traceable stock movements | 4 | **Verified** 2026-11-18 (owner live run) — SIV 500 g left 1,500 g / ETB 180.00 (FIFO), over-issue rejected, movements traceable |

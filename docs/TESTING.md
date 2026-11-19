@@ -34,7 +34,7 @@
 | AC ID | Test Description | Preconditions | Steps | Expected Result | Phase | Status | Date Tested | Tester |
 |:---|:---|:---|:---|:---|:---:|:---:|:---:|:---:|
 | AC-01 | 3 users sign in concurrently from different locations | 3 test accounts created | Each user signs in from a separate device/location simultaneously | All three are authenticated and see authorized workspace | 2 | Not Started | — | — |
-| AC-02 | Role/outlet permissions enforced by DB | RLS policies active | Attempt cross-role and cross-outlet access | Unauthorized attempts return 403/denied; no data leaked | 2 | Not Started | — | — |
+| AC-02 | Role/outlet permissions enforced by DB | RLS policies active | Run `supabase/tests/ac02_rls_negative_test.sql`; attempt cross-role and cross-outlet access | Unauthorized attempts denied; no data leaked | 2 | Script prepared — owner run pending; known outlet-scope gap | — | — |
 | AC-03 | PR → Approve/Reject → PO workflow | Purchasing Officer + Manager accounts | Submit PR, approve, convert to PO | PO created from approved PR; rejection cancels PR | 4 | Not Started | — | — |
 | AC-04 | GRN posted once; updates stock and valuation | Active PO, Storekeeper account | Post GRN; attempt re-post | Stock increases correctly; second post rejected | 4 | Not Started | — | — |
 | AC-05 | SIV atomic; traceable movements | Stock available in source location | Post SIV; verify source reduced, dest increased | Both balances correct; stock_transactions records created | 4 | Not Started | — | — |
@@ -135,3 +135,19 @@ Migration `20261119001500_admin_role_revocation.sql` was applied on 2026-11-19. 
 | Class migration | 138 plain `bg-white` surfaces → `bg-surface`; 82 solid-fill labels → `text-obsidian`; offline banner retains `bg-white/15`, `hover:bg-white/25` and `text-white`; no `bg-slate-900` fills remain | Pass |
 
 No test asserts class names, so these are build/static checks only. Manual visual QA is still required for: dark surfaces across all panels, semantic status badges, form inputs and native selects, focus rings, scrollbars, the offline banner, and the receipt/report print preview.
+
+---
+
+## 10. AC-02 RLS Negative-Test Script
+
+`supabase/tests/ac02_rls_negative_test.sql` is a repeatable, non-destructive SQL-editor check. It runs inside a transaction and `ROLLBACK`s at the end. It asserts:
+
+- RLS is enabled on all 43 business tables.
+- `anon` sees zero business rows and cannot call any privileged, workflow, numbering or internal RPC.
+- `authenticated` with no JWT subject sees zero business rows.
+- A discovered active non-admin user cannot call admin RPCs or internal helpers, cannot write to append-only/RPC-only tables, cannot bypass role-gated RLS on menu/layout/settings tables, cannot read other users' outlet scopes or the audit log, and cannot see other users' outlet-scope rows.
+- **AC-02 GAP (expected FAIL):** no `public.can_access_outlet()` helper exists and none of `restaurant_tables`, `reservations`, `orders`, `order_lines` or `receipts` has an outlet/scope predicate. All current `SELECT` policies use only `public.is_active_user()`.
+
+The role/privilege denials are backed by the migrations (grants revoked, SELECT-only grants, role-gated policies). The outlet gap is real: `user_outlet_scopes` exists and is seeded, but no policy or helper uses it for row filtering, so a signed-in user can currently read outlet-linked rows for every outlet. `docs/REQUIREMENTS_TRACEABILITY.md` previously described this filtering as implemented; that claim is corrected in the acceptance table above and in the traceability table.
+
+**AC-02 cannot be marked complete until the gap is closed in a migration and this script reports zero failures.** The script does not require credentials, service-role keys or environment variables, and it must never be extended with real user data.

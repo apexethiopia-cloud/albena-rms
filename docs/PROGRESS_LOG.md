@@ -751,3 +751,25 @@
 ### Outstanding
 - Manual visual QA of dark surfaces, semantic badges, form inputs/selects, focus rings, scrollbars, the offline banner and print preview.
 - Earlier outstanding items remain open: final three-user UAT and the RLS negative-test SQL script.
+
+---
+
+## Session 29: 2026-11-19 - AC-02 RLS Negative-Test Script
+
+- **Phase**: Phase 2 authorization evidence | **Completion**: script prepared; owner run pending
+- **Date**: 2026-11-19 18:00 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Security inventory** - enumerated all 43 RLS-enabled tables, every policy, grant/revoke, RPC signature and helper function across the 15 migrations.
+2. **Script authored** - `supabase/tests/ac02_rls_negative_test.sql` asserts RLS coverage, anon row invisibility and RPC denial, no-subject authenticated row invisibility, non-admin RPC/table denials, audit-log and outlet-scope privacy, and reports the missing outlet predicates. Runs inside a `BEGIN`/`ROLLBACK` transaction with no credentials or persistent changes.
+3. **Gap documented** - no `can_access_outlet()` helper and no outlet predicate on `restaurant_tables`, `reservations`, `orders`, `order_lines` or `receipts`; all current SELECT policies use only `is_active_user()`. Traceability rows that claimed outlet RLS was implemented were corrected.
+4. **Records updated** - `docs/TESTING.md` section 10 and AC-02 row, `docs/REQUIREMENTS_TRACEABILITY.md` SEC-ROLE-01/03, OUT-03/04 and AC-02, and `supabase/README.md`.
+
+### Verification
+- Script reviewed against every migration for exact object names and signatures; no local PostgreSQL client is available, so the script has **not yet been executed** against the live project.
+
+### Outstanding
+- **Owner**: run `supabase/tests/ac02_rls_negative_test.sql` in the Supabase SQL editor and paste the notice output into `docs/TESTING.md`.
+- **Agent/owner decision**: add a migration with `can_access_outlet()` and outlet predicates on the five outlet-linked tables so AC-02 can pass. OD-03 gives all three test users every outlet, so current test behaviour should not change.
+- Manual theme visual QA and final three-user UAT remain open.
