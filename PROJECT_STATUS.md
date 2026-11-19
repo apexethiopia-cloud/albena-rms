@@ -5,10 +5,10 @@
 | Attribute | Value |
 | :--- | :--- |
 | **Project Name** | Albena Restaurant Management System (RMS) |
-| **Current Phase** | Phase 6 verified live — starting Phase 7 (Reporting & Dashboard) |
-| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phases 4–6 credit releases at final UAT) |
-| **Last Updated** | 2026-11-19 01:00 UTC+3 |
-| **Latest Git Commit** | `3a10ad6` (Phase 5/6 verification + receipt footer hotfix 0011) |
+| **Current Phase** | Phase 7 built — migration 0012 awaiting owner application and live verification |
+| **Overall Completion** | **35.0%** (Phases 0–3 complete; Phases 4–7 credit releases at final UAT) |
+| **Last Updated** | 2026-11-19 09:00 UTC+3 |
+| **Latest Git Commit** | `63115ba` (Phase 7 reporting views, reports page and dashboard) |
 | **Active Branch** | `main` |
 | **Public Repository** | `https://github.com/apexethiopia-cloud/albena-rms.git` |
 | **Live application** | `https://albena-rms.pages.dev` |
@@ -31,9 +31,9 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | **Phase 4** | Inventory & Purchasing (PR, PO, GRN, SIV, stock, counts, adjustments, waste, reorder alerts) | 20% | ✅ **Build complete** | Deferred — all workflows built, migration 0008 applied and structure-verified; AC-06/AC-07 live runs moved to final UAT by the owner (2026-11-18) |
 | **Phase 5** | Recipes & Production (versioned recipes, FIFO costing, production posting) | 10% | ✅ **Build complete** | Deferred — recipes, costing and production built and unit-tested; migration 0009 applied and structure-verified; AC-07/AC-08 live runs moved to final UAT |
 | **Phase 6** | Restaurant Operations (menu, tables, reservations, orders, KDS, receipts) | 15% | ✅ **Build complete** | Deferred — all workflows built and unit-tested; migrations 0010/0011 applied and structure-verified; AC-10/AC-11/AC-14/AC-15 live runs moved to final UAT |
-| **Phase 7** | Reporting & Dashboard | 10% | ⏳ Planned | No |
+| **Phase 7** | Reporting & Dashboard (sales, inventory, purchasing, cost, waste, kitchen, reservations, dashboard) | 10% | 🚧 **Build complete** | Deferred — views, UI and tests built; migration 0012 awaits owner application and live verification; AC-12 reconciliation deferred to final UAT |
 | **Phase 8** | Validation & Handover | 10% | ⏳ Planned | No |
-| **Total** | | **100%** | **35.0% credited** (build complete through Phase 6) | |
+| **Total** | | **100%** | **35.0% credited** (build complete through Phase 7) | |
 
 ---
 
@@ -170,13 +170,27 @@ Completion percentage calculated from SRS Phase exit conditions only.
 - [x] **Verified live through PostgREST** (2026-11-18): all ten Phase 6 objects resolve (`business_settings`, `menu_categories`, `menu_items`, `restaurant_tables`, `reservations`, `orders`, `order_lines`, `receipts`, `reservation_slot_load`, `document_sequences`); anon receives `42501`, not `404`. All 24 Phase 6 RPCs resolve: workflow RPCs return their role-gate error, the eight role helpers return `false`, `business_today()` returns `2026-11-18`, and `next_document_number()` rejects an unknown outlet with a foreign-key `409` instead of `PGRST202`.
 - [x] **Gap found during verification**: the applied 0010 predates the receipt-footer snapshot, so `receipts.receipt_footer` did not exist. Hotfix `20261118001100_receipt_footer_and_function_privileges.sql` added the column, recreated `close_order()` with the footer, and revoked anonymous EXECUTE from ungated helpers (`occupy_table`, `free_table_if_idle`, `next_document_number`, `insert_recipe_version_lines`, `post_stock_in`, `post_stock_out`) plus every Phase 5/6 RPC. **Applied by the owner 2026-11-19; re-probe passed**: the footer column resolves with `42501` (no `42703`) and all helper/RPC calls return `401 permission denied`.
 
+### Completed (Phase 7 — reporting and dashboard)
+- [x] Migration `20261118001200_reporting.sql` authored: eleven `security_invoker` views (`sales_daily`, `sales_lines`, `inventory_report`, `purchase_request_report`, `purchase_order_report`, `grn_report`, `waste_report`, `theoretical_consumption`, `consumption_variance`, `kitchen_performance`, `reservation_daily`), grants to `authenticated` only, anon/PUBLIC revoked, and view comments. **Awaiting owner application.**
+- [x] Business dates use `Africa/Addis_Ababa` (OD-01); revenue comes from immutable receipts and inventory from the derived ledger (ADR-007/008).
+- [x] No slow-moving/dead-stock threshold is invented: `inventory_report` exposes `days_since_last_movement` and the UI lets the user choose the cut-off. The delayed-order threshold (default 20 minutes) is a UI filter, not a business rule (CON-07).
+- [x] COST-01..03: theoretical consumption uses sold portions x the current published recipe version x the current weighted-average remaining FIFO layer cost; the assumptions are printed in the UI. Consumption variance compares that with outbound ledger cost, including SIV, production inputs and waste.
+- [x] `/reports` replaced the placeholder with date and outlet filters (RPT-09) and six sections: sales (daily/monthly/outlet/category/item/waiter, plus an AC-12 reconciliation of sold lines to receipt net sales), inventory (on hand, FIFO value, reorder and idle days), purchasing (PR/PO/GRN with ordered vs posted received value), cost and waste, kitchen timing (KDS-04), and reservation summaries (RPT-07; no guest history per OD-10).
+- [x] `/dashboard` replaced the old setup checklist with today's sales, kitchen queue and delayed tickets, occupied tables, low stock, inventory value, food cost %, waste %, reservations and top-selling items (RPT-08).
+- [x] Barrel helper `src/features/reports/api.ts` loads all views with paged queries and typed numbers; `validation.ts` provides business-date, date-range and aggregation helpers.
+- [x] Tests: `reportsValidation.test.ts` (9), `Reports.test.tsx` (5), plus updated `App.test.tsx` assertions for the real dashboard and reports routes. Full suite 266/266 across 30 suites.
+- [x] Committed as `63115ba` and pushed to `main`; Cloudflare deployment follows the push.
+
 ### Outstanding
 - [x] **Owner**: migrations 0009 and 0010 applied (2026-11-18, 0010 after 0009).
 - [x] **Agent**: Phase 5/6 tables, views and RPC role gates verified through PostgREST; anon denied with `42501`, no `404`/`PGRST202`.
 - [x] **Owner**: apply `supabase/migrations/20261118001100_receipt_footer_and_function_privileges.sql` so receipts store the footer and ungated helpers are no longer anonymous-executable. **Applied 2026-11-19; re-probe passed.**
 - [ ] **Owner/agent**: AC-06 count reconciliation, AC-07 production posting, AC-08 costing, AC-10 KDS flow, AC-11 order/table workflow, AC-14 concurrency and AC-15 reservations **deferred to final UAT** by the owner (2026-11-18).
-- [ ] KDS-04 prep-time reporting and RES-03 guest history are Phase 7 report work; COST-01..03 also remain in Phase 7.
-- [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock and recipe costing cannot be enforced (open issue).
+- [ ] **Owner**: apply `supabase/migrations/20261118001200_reporting.sql` after 0011, then reload PostgREST schema cache.
+- [ ] **Agent**: probe the eleven Phase 7 views through PostgREST (objects resolve, anon `42501`, no `404`/`42703`) once 0012 is applied.
+- [ ] **Owner/agent**: AC-12 live reconciliation — sold lines must equal receipt net sales for the same filtered range; check food-cost and waste figures against the test data.
+- [x] KDS-04 prep-time reporting and COST-01..03 are built in the Phase 7 kitchen/cost panels; RES-03 guest history remains dropped per OD-10.
+- [ ] Stock locations are not yet linked to outlets, so outlet scoping of stock, waste and recipe costing cannot be enforced (open issue); inventory, purchasing and waste reports are labelled company-wide.
 - [ ] Add RLS negative-test SQL script for repeatable authorization checks.
 
 ---
@@ -188,6 +202,7 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | 🔴 HIGH | **Resolved** | Migrations 0006 and 0007 applied 2026-11-18 and checked through PostgREST | AC-03 and GRN-04 demonstration | Objects and RPCs confirmed; anon denied. Only the live signed-in workflow runs remain |
 | 🔴 HIGH | **Resolved** | Migrations 0009 and 0010 applied 2026-11-18 and structure-verified through PostgREST | Phase 5/6 live panels | All 16 objects and 33 RPCs resolve; anon denied. Final UAT covers the signed-in workflows |
 | 🔴 HIGH | **Resolved** | Hotfix `20261118001100_receipt_footer_and_function_privileges.sql` applied 2026-11-19 | Receipts (RCT-01..05) and anonymous privilege hardening | `receipts.receipt_footer` now resolves; anon is denied on `occupy_table`, `free_table_if_idle`, `next_document_number`, `insert_recipe_version_lines`, `post_stock_in`, `post_stock_out` and all Phase 5/6 RPCs |
+| 🔴 HIGH | **Pending** | Migration `20261118001200_reporting.sql` not yet applied | `/reports` and `/dashboard` live data | Owner applies after 0011; agent probes the eleven views and anon denial. UI shows a retryable error until then |
 | 🟡 MEDIUM | **Risk** | **Supabase project pausing** after inactivity (free plan) | Demos | Warm-up request before every demo |
 | 🟡 MEDIUM | **Risk** | **No automated backups** on the free plan | Phase 4+ | Manual export before milestones; restore test in Phase 8 |
 | 🟡 MEDIUM | **Risk** | **AI quota** visible only in the provider UI | Ongoing | Micro-milestones; 25% warn / 15% stop policy |
@@ -259,6 +274,13 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | `src/pages/Settings.tsx` | **Updated** — business settings panel added | 2026-11-18 |
 | `src/test/menuValidation.test.ts`, `src/test/tablesReservationsValidation.test.ts`, `src/test/ordersValidation.test.ts` | **Created** — Phase 6 validation tests | 2026-11-18 |
 | `src/test/Operations.test.tsx`, `src/test/Settings.test.tsx` | **Updated** — Phase 6 panels, order/KDS flow and business settings | 2026-11-18 |
+| `supabase/migrations/20261118001200_reporting.sql` | **Created** — eleven report views, grants and comments — **not yet applied** | 2026-11-19 |
+| `src/features/reports/**` | **Created** — typed loaders, validation, shared UI and six report panels | 2026-11-19 |
+| `src/pages/Reports.tsx` | **Created** — `/reports` with shared date/outlet filters and all report sections | 2026-11-19 |
+| `src/pages/Dashboard.tsx` | **Replaced** — setup checklist with the RPT-08 operational dashboard | 2026-11-19 |
+| `src/test/reportsValidation.test.ts`, `src/test/Reports.test.tsx` | **Created** — Phase 7 helper and page tests | 2026-11-19 |
+| `src/test/App.test.tsx` | **Updated** — dashboard and real reports route assertions | 2026-11-19 |
+| `src/App.tsx`, `src/components/layout/AppShell.tsx` | **Updated** — reports route and Phase 7 footer | 2026-11-19 |
 | `supabase/README.md` | Created — apply + seeding guide | 2026-11-18 |
 | `scripts/seed-test-users.mjs` | Created — local admin script | 2026-11-18 |
 | `.github/workflows/ci.yml` | Created | 2026-11-18 |
@@ -280,8 +302,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | :--- | :--- | :--- |
 | `npm run typecheck` | App + Vite config, strict TS | **Pass** |
 | `npm run lint` | ESLint, zero warnings | **Pass** |
-| `npm run test` | 28 suites, 252 tests (routing, auth, offline banner, formatting, roles, master data, stock/GRN/SIV, PR/PO, GRN↔PO, counts/adjustments/waste, reorder alerts, recipes/costing, production, menus, tables, reservations, orders, KDS and business settings) | **Pass** |
-| `npm run build` | Production bundle | **Pass** — 811.08 kB JS (186.65 kB gzip), 24.76 kB CSS (chunk-size warning only) |
+| `npm run test` | 30 suites, 266 tests (routing, auth, offline banner, formatting, roles, master data, stock/GRN/SIV, PR/PO, GRN↔PO, counts/adjustments/waste, reorder alerts, recipes/costing, production, menus, tables, reservations, orders, KDS, business settings, report helpers and report/dashboard UI) | **Pass** |
+| `npm run build` | Production bundle | **Pass** — 850.64 kB JS (195.52 kB gzip), 25.05 kB CSS (chunk-size warning only) |
 | Live deployment | `https://albena-rms.pages.dev` root + `/inventory` | **Pass** — 200 through SPA fallback; `assets/index-BSJnI50i.js` (670,647 bytes) contains the reorder, count, adjustment and waste panel markers |
 | Live deployment (Phase 5) | `https://albena-rms.pages.dev` root and served bundle | **Pass** — 200; `assets/index-BKF57faz.js` (715,354 bytes) contains the `/kitchen` route, New recipe/New production actions, food cost, `recipe_version_costs`, `create_recipe` and `post_production_order` |
 | Live deployment (Phase 6) | `https://albena-rms.pages.dev` root and served bundle | **Pass** — 200; `assets/index-fqmOEPuP.js` (811,382 bytes) contains New order, Kitchen display, Close & print receipt, Business & receipts, `receipt_number`, `split_order`, `merge_orders` and `receipt_footer` |
@@ -296,6 +318,8 @@ Completion percentage calculated from SRS Phase exit conditions only.
 | Migration 0008 RPC gates | Eight inventory-control RPCs called as anon with named arguments | **Pass** — each returns its role-gate message, not 404 |
 | Phase 5 unit tests | `recipesValidation.test.ts` (16) and `Kitchen.test.tsx` (8) | **Pass** — recipe/version/production payloads, publish, costing display, confirm-post and role gates |
 | Phase 6 unit tests | `ordersValidation.test.ts` (10), `Operations.test.tsx` (11) and `Settings.test.tsx` (12) | **Pass** — order payloads, concurrency/rule errors, role gates, send/close/receipt flow, KDS realtime refetch and business settings |
+| Phase 7 unit tests | `reportsValidation.test.ts` (9) and `Reports.test.tsx` (5) | **Pass** — Addis business dates, one-year range guard, aggregation, idle/delay filters, all six sections, AC-12 reconciliation, filter errors and retryable load errors |
+| Migration 0012 | Authored, **not yet applied** | **Pending** — no local Postgres; owner must apply after 0011 before agent PostgREST verification |
 | Migration 0009 | Applied 2026-11-18 | **Pass** — six objects and nine RPCs resolve; anon denied with `42501` |
 | Migration 0010 | Applied 2026-11-18 after 0009 | **Pass with gap** — ten objects and 24 RPCs resolve; anon denied. `receipts.receipt_footer` missing because the applied copy predates the footer snapshot |
 | Phase 5/6 REST probes | 16 objects and 33 RPCs called as anon with named arguments | **Pass** — no `404`/`PGRST202`; helpers return `false`, workflow RPCs return their role-gate error, unknown outlet rejected with `409` |
@@ -309,8 +333,10 @@ Completion percentage calculated from SRS Phase exit conditions only.
 
 ## 7. Recommended Next Task
 
-> **Phase 6 is verified live.** Migrations 0009/0010/0011 are applied and structure-verified, including the receipt footer and anonymous privilege hardening. Menus, tables, reservations, orders, kitchen display, receipts and business settings are built, unit-tested and deployed. Final UAT covers AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
+> **Phase 7 is built and unit-tested.** Migration `20261118001200_reporting.sql` is authored but **not yet applied**, so `/reports` and `/dashboard` will show a retryable error until the owner applies it. AC-12 live reconciliation is deferred to final UAT with AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
 
 Then:
-1. Start Phase 7 — Reporting & Dashboard (sales, inventory, purchasing, cost, waste, KDS timing, reservations and the management dashboard), including KDS-04 and the COST report set.
-2. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).
+1. Owner applies migration `20261118001200_reporting.sql` after 0011; agent probes all eleven views through PostgREST (anon `42501`, no `404`/`42703`).
+2. Owner verifies AC-12: sold lines equal receipt net sales for the same filtered range, and the dashboard's sales/food-cost/waste figures match the test data.
+3. Add the RLS negative-test SQL script for repeatable authorization checks (AC-02).
+4. Decide OD-06 thresholds/separation of duties and the stock-location to outlet mapping; both currently limit report scoping.

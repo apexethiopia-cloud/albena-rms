@@ -233,20 +233,22 @@ flowchart LR
 
 ## Phase 7 — Reporting (10%)
 **SRS Reference**: Section 11, Phase 7
-**Status**: ⏳ Planned
+**Status**: 🚧 Build complete — migration `20261118001200_reporting.sql` awaits owner application
 
 **Scope**:
-- Sales reports (daily, monthly, outlet, category, waiter)
-- Inventory reports (stock on hand, movement, valuation, slow-moving)
-- Purchasing reports (PR, PO, GRN)
-- Cost reports (recipe cost, food cost %, profitability)
-- Waste reports and trends
-- KDS / kitchen timing reports
-- Reservation reports and guest history
-- Management dashboard (KPIs: open tables, kitchen queue, low-stock, top items, food cost %, waste %)
-- All reports respect outlet scope and show applied filters
+- Sales reports (daily, monthly, outlet, category, item, waiter) from immutable receipts, with a sold-lines vs receipt-net-sales reconciliation
+- Inventory reports (stock on hand, FIFO valuation, reorder status, days since last movement; the slow/dead threshold is chosen in the UI, not invented)
+- Purchasing reports (PR, PO, GRN with ordered vs posted received value)
+- Cost reports (theoretical consumption and variance using the current published recipe and current FIFO average cost)
+- Waste reports and trends from posted waste lines
+- KDS / kitchen timing reports (delayed-ticket threshold is a UI filter, default 20 minutes)
+- Reservation summaries (guest history dropped per OD-10)
+- Management dashboard (KPIs: today's sales, kitchen queue, open tables, low stock, inventory value, top items, food cost %, waste %, reservations)
+- Shared date and outlet filters on `/reports`; inventory, purchasing and waste are labelled company-wide until stock locations are mapped to outlets
 
-**Exit Condition**: Report totals reconcile to test data (AC-12).
+**Delivered**: eleven `security_invoker` views in migration 0012 (anon denied, `authenticated` select only), typed report loaders, `/reports` with six sections, rebuilt `/dashboard`, and 14 new/updated tests. Build committed as `63115ba`.
+
+**Exit Condition**: Report totals reconcile to test data (AC-12) — pending live verification after migration 0012 is applied.
 
 **Requirements addressed**: RPT-01..09, COST-01..03, SUP-03, CNT-04, WST-04, KDS-04
 
@@ -282,6 +284,6 @@ flowchart LR
 | Phase 4 | 20% | ✅ Build complete — final UAT deferred | 0% (releases at final UAT) |
 | Phase 5 | 10% | 🚧 Build complete — final UAT deferred | 0% (releases at final UAT) |
 | Phase 6 | 15% | ✅ Build complete — final UAT deferred | 0% (releases at final UAT) |
-| Phase 7 | 10% | ⏳ Planned | 0% |
+| Phase 7 | 10% | 🚧 Build complete — migration pending, AC-12 deferred | 0% (releases at final UAT) |
 | Phase 8 | 10% | ⏳ Planned | 0% |
 | **Total** | **100%** | | **35.0%** |

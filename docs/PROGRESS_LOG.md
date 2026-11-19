@@ -620,4 +620,31 @@
 
 
 
+## Session 24: 2026-11-19 - Phase 7 Reporting and Dashboard Built
+
+- **Phase**: Phase 7 build complete, migration 0012 awaiting owner application | **Completion**: **35.0%** credited (Phases 4-7 release at final UAT)
+- **Date**: 2026-11-19 09:00 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Migration 0012 authored** - `20261118001200_reporting.sql` creates eleven `security_invoker` views (`sales_daily`, `sales_lines`, `inventory_report`, `purchase_request_report`, `purchase_order_report`, `grn_report`, `waste_report`, `theoretical_consumption`, `consumption_variance`, `kitchen_performance`, `reservation_daily`), revokes anon/PUBLIC access and grants select to `authenticated`. Business dates use `Africa/Addis_Ababa` (OD-01); revenue comes from immutable receipts (ADR-008) and inventory from the derived ledger (ADR-007).
+2. **Reports page built** - `/reports` replaces the placeholder with shared From/To/Outlet filters (RPT-09) and Sales, Inventory, Purchasing, Cost and Waste, Kitchen Performance and Reservations sections. Sales includes the AC-12 reconciliation of sold lines against receipt net sales. No thresholds were invented: idle days and delayed minutes are caller-supplied UI filters.
+3. **Dashboard rebuilt** - `/dashboard` replaces the setup checklist with RPT-08 KPIs: today's sales, kitchen queue and delayed tickets, occupied tables, low stock, inventory value, food cost %, waste %, reservations and top items.
+4. **Code and tests** - typed loaders with paged queries, validation helpers, nine report-helper tests, five Reports page tests and updated App shell tests. Added the routes to `App.tsx` and navigation/footer entries in `AppShell.tsx`.
+5. **Committed** - `63115ba` (Phase 7 reporting views, reports page and dashboard), pushed to `main`; Cloudflare deployment follows the push.
+
+### Verification
+- `npm run typecheck`, `npm run lint`, `npm run build` - all Pass; production bundle 850.64 kB JS (195.52 kB gzip), 25.05 kB CSS (chunk-size warning only)
+- Full suite - 266/266 tests across 30 suites Pass
+- Focused rerun after the AC-12 reconciliation tweak - 11/11 Pass (`Reports.test.tsx`, `App.test.tsx`)
+- Migration 0012 - authored only; no local PostgreSQL available, so it awaits owner application and PostgREST verification
+
+### Outstanding
+- **Owner**: apply `supabase/migrations/20261118001200_reporting.sql` after 0011, then reload the PostgREST schema cache.
+- **Agent**: probe all eleven views through PostgREST (objects resolve, anon `42501`, no `404`/`42703`).
+- **Owner/agent**: AC-12 live reconciliation and dashboard figures, deferred to final UAT with AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
+- OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
+
+
+
 
