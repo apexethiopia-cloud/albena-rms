@@ -637,12 +637,35 @@
 - `npm run typecheck`, `npm run lint`, `npm run build` - all Pass; production bundle 850.64 kB JS (195.52 kB gzip), 25.05 kB CSS (chunk-size warning only)
 - Full suite - 266/266 tests across 30 suites Pass
 - Focused rerun after the AC-12 reconciliation tweak - 11/11 Pass (`Reports.test.tsx`, `App.test.tsx`)
-- Migration 0012 - authored only; no local PostgreSQL available, so it awaits owner application and PostgREST verification
+- Migration 0012 - authored only; no local PostgreSQL available, so it awaits owner application and PostgREST verification (owner applied it and the probe passed in Session 25)
 
 ### Outstanding
 - **Owner**: apply `supabase/migrations/20261118001200_reporting.sql` after 0011, then reload the PostgREST schema cache.
 - **Agent**: probe all eleven views through PostgREST (objects resolve, anon `42501`, no `404`/`42703`).
 - **Owner/agent**: AC-12 live reconciliation and dashboard figures, deferred to final UAT with AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
+- OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
+
+
+
+## Session 25: 2026-11-19 - Migration 0012 Applied and Phase 7 Views Verified
+
+- **Phase**: Phase 7 build and structure verification complete | **Completion**: **35.0%** credited (Phases 4-7 release at final UAT)
+- **Date**: 2026-11-19 10:00 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner applied migration 0012** - `20261118001200_reporting.sql` ran successfully on the live Supabase project after 0011.
+2. **PostgREST probe** - all eleven report views resolve: `sales_daily`, `sales_lines`, `inventory_report`, `purchase_request_report`, `purchase_order_report`, `grn_report`, `waste_report`, `theoretical_consumption`, `consumption_variance`, `kitchen_performance` and `reservation_daily`. Every anonymous GET returns HTTP 401 with `42501 permission denied for view <name>` (confirmed for all eleven with raw curl responses). No `404`, `42703` or `PGRST205` occurred, so the schema cache is reloaded and the view columns match the client queries.
+3. **Live deployment confirmed** - `https://albena-rms.pages.dev` serves `assets/index-WjdPuA_q.js` (850,971 bytes), which contains the Phase 7 markers `AC-12 reconciliation`, `sales-reconciliation`, `Kitchen performance`, `inventory_report`, `sales_daily` and `reservation_daily`.
+4. **Records updated** - `PROJECT_STATUS.md`, `ROADMAP.md` and `REQUIREMENTS_TRACEABILITY.md` now show migration 0012 applied and verified; AC-12 remains deferred to final UAT.
+
+### Verification
+- PostgREST view probes - 11/11 expected anon denials (`42501`), no missing objects or columns
+- Live bundle marker check - Phase 7 UI present in the deployed JavaScript
+- Application tests - unchanged since Session 24 (266/266 across 30 suites Pass)
+
+### Outstanding
+- **Owner/agent**: AC-12 live reconciliation and dashboard figures at final UAT, together with AC-06, AC-07, AC-08, AC-10, AC-11, AC-14 and AC-15.
 - OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
 
 

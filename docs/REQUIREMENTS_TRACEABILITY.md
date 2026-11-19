@@ -70,7 +70,7 @@
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
 | OUT-01 | Multiple outlets supported | 3 | `outlets` | `src/features/outlets/**`, `/settings` | `Settings.test.tsx` | **Implemented** — 5 outlets seeded; CRUD covered by tests |
-| OUT-02 | Outlet-specific orders/reports | 3,7 | `orders.outlet_id`, report views | `/reports` outlet filter; `sales_daily`, `sales_lines`, `theoretical_consumption`, `kitchen_performance`, `reservation_daily` | `Reports.test.tsx`; AC-12 | **Built** — outlet filter applied to sales, cost, kitchen and reservation reports; inventory/purchasing/waste stay company-wide until stock locations map to outlets; migration 0012 pending |
+| OUT-02 | Outlet-specific orders/reports | 3,7 | `orders.outlet_id`, report views | `/reports` outlet filter; `sales_daily`, `sales_lines`, `theoretical_consumption`, `kitchen_performance`, `reservation_daily` | `Reports.test.tsx`; AC-12 | **Built** — outlet filter applied to sales, cost, kitchen and reservation reports; inventory/purchasing/waste stay company-wide until stock locations map to outlets; migration 0012 applied and verified |
 | OUT-03 | Users scoped to one or more outlets | 3 | `user_outlet_scopes` | RLS outlet filter | AC-02 | **Implemented** — scopes granted; UI pending |
 | OUT-04 | Prevent cross-outlet access by default | 2 | RLS policies | RLS row filter | AC-02 | **Implemented** — anon reads filtered; AC-02 negative test pending |
 
@@ -82,7 +82,7 @@
 |:---|:---|:---:|:---|:---|:---|:---:|
 | SUP-01 | Supplier master data fields | 3 | `suppliers` | `20261118000300_master_data.sql`, `src/features/suppliers/**` | — | **In Progress** — UI written; migration not applied |
 | SUP-02 | CRUD and deactivate suppliers | 3 | `suppliers` | `SuppliersPanel.tsx` (create, edit, deactivate) | `Suppliers.test.tsx` | **In Progress** — UI written; migration not applied |
-| SUP-03 | Supplier history and performance reports | 7 | `purchase_order_report`, `grn_report` (migration 0012) | `/reports` Purchasing section (PO and GRN by supplier) | `Reports.test.tsx`; AC-12 | **Built** — ordered vs posted received value per PO/GRN; migration 0012 pending |
+| SUP-03 | Supplier history and performance reports | 7 | `purchase_order_report`, `grn_report` (migration 0012) | `/reports` Purchasing section (PO and GRN by supplier) | `Reports.test.tsx`; AC-12 | **Built** — ordered vs posted received value per PO/GRN; migration 0012 applied and verified |
 
 ---
 
@@ -174,7 +174,7 @@
 | WST-01 | Waste record fields | 4 | `inventory_adjustments` with `kind = 'waste'` + lines (migration 0008) | `WastePanel` in `AdjustmentPanel.tsx`, `/inventory` | `stockValidation.test.ts`, `InventoryControl.test.tsx` | **Implemented** — item, quantity, location, date, user and reason recorded; FIFO cost written on posting; live UAT deferred |
 | WST-02 | Waste types supported | 4 | `inventory_adjustments` reason check | Waste reason selector | `stockValidation.test.ts` | **Implemented** — kitchen waste, burnt food, returned food, expired, spoilage; waste lines can only decrease stock |
 | WST-03 | Post approved waste as inventory decrease | 4 | `post_inventory_adjustment()` | Waste post action | `InventoryControl.test.tsx` | **Implemented** — posts `waste` transactions after approval, consuming FIFO layers |
-| WST-04 | Waste cost and trend reports | 7 | `waste_report` view (migration 0012) over posted `inventory_adjustment_lines` | `/reports` Cost and waste section (cost by reason) | `Reports.test.tsx`; AC-12 | **Built** — posted waste lines with reason and cost; migration 0012 pending |
+| WST-04 | Waste cost and trend reports | 7 | `waste_report` view (migration 0012) over posted `inventory_adjustment_lines` | `/reports` Cost and waste section (cost by reason) | `Reports.test.tsx`; AC-12 | **Built** — posted waste lines with reason and cost; migration 0012 applied and verified |
 
 ---
 
@@ -197,9 +197,9 @@
 | REC-02 | Create/edit with version history | 5 | `recipe_versions`, `create_recipe_version()`, `publish_recipe_version()` | Recipe version UI | `Kitchen.test.tsx` | **Implemented** — drafts are append-only; publishing archives the previous version |
 | REC-03 | Calculate cost, selling price, GP, food cost % | 5 | View `recipe_version_costs` | Recipe costing table | `Kitchen.test.tsx` | **Implemented** — current FIFO weighted-average ingredient cost per version |
 | REC-04 | Food Cost % = Cost ÷ Price × 100 | 5 | View `recipe_version_costs` | Costing view | `recipesValidation.test.ts` | **Implemented** — cost per portion ÷ selling price × 100 |
-| REC-05 | Use recipes for costing, engineering, theoretical consumption | 5,7 | `recipe_version_costs` (0009), `theoretical_consumption` (0012) | `/kitchen` costing table; `/reports` Cost and waste section | `Kitchen.test.tsx`, `Reports.test.tsx` | **Built** — theoretical consumption multiplies sold portions by the current published recipe version and current FIFO cost; migration 0012 pending |
+| REC-05 | Use recipes for costing, engineering, theoretical consumption | 5,7 | `recipe_version_costs` (0009), `theoretical_consumption` (0012) | `/kitchen` costing table; `/reports` Cost and waste section | `Kitchen.test.tsx`, `Reports.test.tsx` | **Built** — theoretical consumption multiplies sold portions by the current published recipe version and current FIFO cost; migration 0012 applied and verified |
 | REC-06 | Recipes do NOT auto-deduct stock | 5 | — | Recipe RPCs never write stock | `Kitchen.test.tsx` | **Implemented** — only `post_production_order()` moves stock |
-| REC-07 | Theoretical consumption uses recipe versions + sales | 7 | `theoretical_consumption`, `consumption_variance` (migration 0012) | `/reports` Cost and waste section | `Reports.test.tsx`; COST-01 | **Built** — assumptions shown in the UI; migration 0012 pending |
+| REC-07 | Theoretical consumption uses recipe versions + sales | 7 | `theoretical_consumption`, `consumption_variance` (migration 0012) | `/reports` Cost and waste section | `Reports.test.tsx`; COST-01 | **Built** — assumptions shown in the UI; migration 0012 applied and verified |
 
 ---
 
@@ -290,9 +290,9 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| COST-01 | Theoretical vs actual consumption comparison | 7 | `theoretical_consumption`, `consumption_variance` (migration 0012) | `/reports` Cost and waste section | `Reports.test.tsx` | **Built** — issued ledger quantity minus theoretical quantity; migration 0012 pending |
-| COST-02 | Food-cost, inventory, waste, dept-consumption variance | 7 | `inventory_report`, `waste_report`, `consumption_variance` (0012) | `/reports` and `/dashboard` | `Reports.test.tsx` | **Built** — food cost % = theoretical cost / net sales; waste % and inventory value shown; migration 0012 pending |
-| COST-03 | Report identifies period, outlet, recipe version, assumptions | 7 | View comments on 0012; recipe version selected in SQL | Report footnotes and filter summary | `Reports.test.tsx` | **Built** — range/outlet shown, current published recipe and current FIFO average cost documented as assumptions; migration 0012 pending |
+| COST-01 | Theoretical vs actual consumption comparison | 7 | `theoretical_consumption`, `consumption_variance` (migration 0012) | `/reports` Cost and waste section | `Reports.test.tsx` | **Built** — issued ledger quantity minus theoretical quantity; migration 0012 applied and verified |
+| COST-02 | Food-cost, inventory, waste, dept-consumption variance | 7 | `inventory_report`, `waste_report`, `consumption_variance` (0012) | `/reports` and `/dashboard` | `Reports.test.tsx` | **Built** — food cost % = theoretical cost / net sales; waste % and inventory value shown; migration 0012 applied and verified |
+| COST-03 | Report identifies period, outlet, recipe version, assumptions | 7 | View comments on 0012; recipe version selected in SQL | Report footnotes and filter summary | `Reports.test.tsx` | **Built** — range/outlet shown, current published recipe and current FIFO average cost documented as assumptions; migration 0012 applied and verified |
 
 ---
 
@@ -300,15 +300,15 @@
 
 | Req ID | Description Summary | Phase | DB Migration | Implementation File(s) | Test Case | Status |
 |:---|:---|:---:|:---|:---|:---|:---:|
-| RPT-01 | Sales reports | 7 | `sales_daily`, `sales_lines` (0012) | `/reports` Sales section | `Reports.test.tsx`, AC-12 | **Built** — daily/monthly/outlet/category/item/waiter plus sold-lines vs receipt-net reconciliation; migration 0012 pending |
-| RPT-02 | Inventory reports | 7 | `inventory_report` (0012) over `stock_balances` | `/reports` Inventory section | `Reports.test.tsx`, AC-12 | **Built** — on hand, FIFO value, reorder flag, caller-chosen idle days; migration 0012 pending |
-| RPT-03 | Purchasing reports | 7 | `purchase_request_report`, `purchase_order_report`, `grn_report` (0012) | `/reports` Purchasing section | `Reports.test.tsx`, AC-12 | **Built** — PR/PO/GRN with ordered and posted received values; migration 0012 pending |
-| RPT-04 | Cost reports | 7 | `theoretical_consumption`, `consumption_variance` (0012) | `/reports` Cost and waste section | `Reports.test.tsx`, AC-12 | **Built** — theoretical cost and variance with documented assumptions; migration 0012 pending |
-| RPT-05 | Waste reports | 7 | `waste_report` (0012) | `/reports` Cost and waste section | `Reports.test.tsx`, AC-12 | **Built** — posted waste cost by reason; migration 0012 pending |
-| RPT-06 | Kitchen / KDS timing reports | 7 | `kitchen_performance` (0012) | `/reports` Kitchen performance section | `Reports.test.tsx`, AC-12 | **Built** — preparation/service minutes and user-defined delayed tickets; migration 0012 pending |
-| RPT-07 | Reservation reports | 7 | `reservation_daily` (0012) | `/reports` Reservations section | `Reports.test.tsx`, AC-12 | **Built** — date/outlet summary and covers, no guest history; migration 0012 pending |
-| RPT-08 | Management dashboard | 7 | Report views + `stock_reorder_status` (0012/0008) | `/dashboard` | `App.test.tsx`, AC-12 | **Built** — today's KPIs and top items; migration 0012 pending |
-| RPT-09 | Reports respect outlet scope and show filters | 7 | Report views with `outlet_id` / date columns | `/reports` shared From/To/Outlet filters | `Reports.test.tsx`, AC-12 | **Built** — shared filters; stock-linked reports labelled company-wide until the location↔outlet decision; migration 0012 pending |
+| RPT-01 | Sales reports | 7 | `sales_daily`, `sales_lines` (0012) | `/reports` Sales section | `Reports.test.tsx`, AC-12 | **Built** — daily/monthly/outlet/category/item/waiter plus sold-lines vs receipt-net reconciliation; migration 0012 applied and verified |
+| RPT-02 | Inventory reports | 7 | `inventory_report` (0012) over `stock_balances` | `/reports` Inventory section | `Reports.test.tsx`, AC-12 | **Built** — on hand, FIFO value, reorder flag, caller-chosen idle days; migration 0012 applied and verified |
+| RPT-03 | Purchasing reports | 7 | `purchase_request_report`, `purchase_order_report`, `grn_report` (0012) | `/reports` Purchasing section | `Reports.test.tsx`, AC-12 | **Built** — PR/PO/GRN with ordered and posted received values; migration 0012 applied and verified |
+| RPT-04 | Cost reports | 7 | `theoretical_consumption`, `consumption_variance` (0012) | `/reports` Cost and waste section | `Reports.test.tsx`, AC-12 | **Built** — theoretical cost and variance with documented assumptions; migration 0012 applied and verified |
+| RPT-05 | Waste reports | 7 | `waste_report` (0012) | `/reports` Cost and waste section | `Reports.test.tsx`, AC-12 | **Built** — posted waste cost by reason; migration 0012 applied and verified |
+| RPT-06 | Kitchen / KDS timing reports | 7 | `kitchen_performance` (0012) | `/reports` Kitchen performance section | `Reports.test.tsx`, AC-12 | **Built** — preparation/service minutes and user-defined delayed tickets; migration 0012 applied and verified |
+| RPT-07 | Reservation reports | 7 | `reservation_daily` (0012) | `/reports` Reservations section | `Reports.test.tsx`, AC-12 | **Built** — date/outlet summary and covers, no guest history; migration 0012 applied and verified |
+| RPT-08 | Management dashboard | 7 | Report views + `stock_reorder_status` (0012/0008) | `/dashboard` | `App.test.tsx`, AC-12 | **Built** — today's KPIs and top items; migration 0012 applied and verified |
+| RPT-09 | Reports respect outlet scope and show filters | 7 | Report views with `outlet_id` / date columns | `/reports` shared From/To/Outlet filters | `Reports.test.tsx`, AC-12 | **Built** — shared filters; stock-linked reports labelled company-wide until the location↔outlet decision; migration 0012 applied and verified |
 
 ---
 
@@ -403,10 +403,10 @@
 | AC-06 | Count variance calculated; approved adj reconciles ledger | 4 | **Implemented** — count variance, approval and posting built and unit-tested; migration 0008 applied and structure-verified; live UAT deferred by the owner |
 | AC-07 | Waste and production update inventory correctly | 4,5 | **Implemented** — approved waste and posted production both move stock through the FIFO ledger and are unit-tested; live UAT deferred by the owner |
 | AC-08 | Recipe costing and food-cost % verified | 5 | **Implemented** — `recipe_version_costs` computes cost per portion, gross profit and food cost %; panel tested; live UAT deferred |
-| AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6,7 | **Implemented** — recipe definitions and order close never write stock (REC-06, STK-05, ADR-008); the separate theoretical-consumption report is built in Phase 7 (migration 0012, pending application) |
+| AC-09 | Menu sales don't deduct stock; theoretical consumption separate | 5,6,7 | **Implemented** — recipe definitions and order close never write stock (REC-06, STK-05, ADR-008); the separate theoretical-consumption report is built in Phase 7 (migration 0012 applied and verified) |
 | AC-10 | Orders appear on KDS; status visible to other users over internet | 6 | **Implemented** — KDS columns, role-gated transitions and Realtime refetch built and unit-tested; the multi-user live run is deferred to final UAT |
 | AC-11 | Table/reservation/order/receipt workflows per permissions | 6 | **Implemented** — menus, tables, reservations, order lifecycle, closing and receipts built and unit-tested; live three-user run deferred to final UAT |
-| AC-12 | Reports/dashboard reconcile to test data; respect access scope | 7 | **Built — pending live verification after migration 0012** — eleven `security_invoker` views, `/reports` with sold-lines vs receipt-net-sales reconciliation, and the RPT-08 dashboard; AC-12 live reconciliation deferred to final UAT |
+| AC-12 | Reports/dashboard reconcile to test data; respect access scope | 7 | **Built and structure-verified — live reconciliation deferred to final UAT** — eleven `security_invoker` views (0012 applied, anon `42501`, no `404`/`42703`), `/reports` with sold-lines vs receipt-net-sales reconciliation, and the deployed RPT-08 dashboard |
 | AC-13 | Critical actions produce audit events | 2+ | **In Progress** — business, procurement, inventory, recipe and order changes are audited; login/logout events are not logged |
 | AC-14 | Concurrent edits don't overwrite; conflicts visible | 6 | **Implemented** — revision checks with SQLSTATE `40001`, row locks and one-open-order-per-table; the concurrent live run is deferred to final UAT |
 | AC-15 | App shows clear error on network failure | 1 | **In Progress** — offline banner tested; save-failure UX pending data layer |
