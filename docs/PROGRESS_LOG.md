@@ -746,6 +746,7 @@
 - Full suite - **310/310 tests across 31 suites** Pass
 - `npm run build` - Pass; `assets/index-T1LUiUPu.js` (883.45 kB, 200.72 kB gzip), `assets/index-CS1gqe4B.css` (27.57 kB). Chunk-size warning only.
 - Compiled CSS checked: obsidian canvas, charcoal surfaces, champagne text, gold border/focus/ring-offset tokens, dark native controls and the print override are present.
+- Deployment: commit `68b9a17` pushed; Cloudflare Pages serves `index-Ceul-6Jq.js` / `index-CS1gqe4B.css` with `theme-color=#09090B`. The live CSS contains the obsidian/champagne custom properties, shimmer rules, dark native controls and print override; the live favicon contains `#09090B`, `#D4AF37` and `#F3E5AB`.
 
 ### Outstanding
 - Manual visual QA of dark surfaces, semantic badges, form inputs/selects, focus rings, scrollbars, the offline banner and print preview.
