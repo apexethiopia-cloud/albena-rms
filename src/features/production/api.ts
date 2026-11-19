@@ -57,9 +57,16 @@ export async function listProductionOrders(): Promise<ProductionOrder[]> {
   return (data ?? []) as unknown as ProductionOrder[]
 }
 
+function inputPayload(input: NormalizedProduction) {
+  return input.inputs.map((line) => ({
+    item_id: line.itemId,
+    unit_id: line.unitId,
+    quantity: line.quantity,
+  }))
+}
+
 export async function createProductionOrder(input: NormalizedProduction): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_production_order', {
-    p_order_number: input.orderNumber,
     p_production_date: input.productionDate,
     p_location_id: input.locationId,
     p_output_item_id: input.outputItemId,
@@ -68,11 +75,7 @@ export async function createProductionOrder(input: NormalizedProduction): Promis
     p_expected_output_quantity: input.expectedOutputQuantity,
     p_responsible_name: input.responsibleName,
     p_notes: input.notes,
-    p_inputs: input.inputs.map((line) => ({
-      item_id: line.itemId,
-      unit_id: line.unitId,
-      quantity: line.quantity,
-    })),
+    p_inputs: inputPayload(input),
   })
 
   if (error) throw new Error(describeProductionDbError(error))
@@ -80,6 +83,34 @@ export async function createProductionOrder(input: NormalizedProduction): Promis
     throw new Error('The production order was saved but no reference was returned. Refresh the list.')
   }
   return data as string
+}
+
+export async function updateProductionOrder(
+  productionId: string,
+  input: NormalizedProduction,
+): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_production_order', {
+    p_production_id: productionId,
+    p_production_date: input.productionDate,
+    p_location_id: input.locationId,
+    p_output_item_id: input.outputItemId,
+    p_output_unit_id: input.outputUnitId,
+    p_output_quantity: input.outputQuantity,
+    p_expected_output_quantity: input.expectedOutputQuantity,
+    p_responsible_name: input.responsibleName,
+    p_notes: input.notes,
+    p_inputs: inputPayload(input),
+  })
+
+  if (error) throw new Error(describeProductionDbError(error))
+}
+
+export async function deleteProductionOrder(productionId: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_production_order', {
+    p_production_id: productionId,
+  })
+
+  if (error) throw new Error(describeProductionDbError(error))
 }
 
 export async function postProductionOrder(id: string): Promise<void> {

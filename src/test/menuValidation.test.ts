@@ -42,14 +42,22 @@ describe('validateMenuItem', () => {
     expect(result.value?.recipeId).toBe('recipe-1')
   })
 
-  it('rejects a blank code, name or category', () => {
+  it('accepts a blank code for automatic generation', () => {
+    const result = validateMenuItem(draft({ code: '   ' }), CATEGORIES)
+
+    expect(result.valid).toBe(true)
+    expect(result.errors.code).toBeUndefined()
+    expect(result.value?.code).toBe('')
+  })
+
+  it('rejects a blank name or category', () => {
     const result = validateMenuItem(
       draft({ code: '  ', name: '  ', categoryId: '' }),
       CATEGORIES,
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.code).toMatch(/menu code/i)
+    expect(result.errors.code).toBeUndefined()
     expect(result.errors.name).toMatch(/menu item name/i)
     expect(result.errors.categoryId).toMatch(/menu category/i)
   })

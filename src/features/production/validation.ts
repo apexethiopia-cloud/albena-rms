@@ -15,7 +15,6 @@ export type ProductionInputDraft = {
 }
 
 export type ProductionDraft = {
-  orderNumber: string
   productionDate: string
   locationId: string
   outputItemId: string
@@ -34,7 +33,6 @@ export type NormalizedProductionInput = {
 }
 
 export type NormalizedProduction = {
-  orderNumber: string
   productionDate: string
   locationId: string
   outputItemId: string
@@ -51,11 +49,6 @@ export function validateProduction(
   context: StockContext,
 ): Validation<NormalizedProduction> {
   const errors: Record<string, string> = {}
-
-  if (!input.orderNumber.trim()) errors.orderNumber = 'Enter a production number.'
-  else if (input.orderNumber.trim().length > 40) {
-    errors.orderNumber = 'Use 40 characters or fewer.'
-  }
 
   if (!input.productionDate) errors.productionDate = 'Choose the production date.'
   else if (!isIsoDate(input.productionDate)) errors.productionDate = 'Use a valid date.'
@@ -145,7 +138,6 @@ export function validateProduction(
     valid: true,
     errors,
     value: {
-      orderNumber: input.orderNumber.trim().toUpperCase(),
       productionDate: input.productionDate,
       locationId: input.locationId,
       outputItemId: input.outputItemId,
@@ -164,14 +156,14 @@ export function describeProductionDbError(error: DbErrorLike): string {
     if (/already posted/i.test(error.message)) {
       return 'That production order is already posted. Refresh and try again.'
     }
-    return 'That production number is already in use. Choose a different number.'
+    return 'That production order conflicts with an existing record. Refresh and try again.'
   }
   if (error.code === '23514' && /insufficient stock/i.test(error.message)) {
     return error.message
   }
   if (
     error.code === '23514' &&
-    /needs at least one input|needs a quantity greater than zero|can only appear once|choose an active|output quantity|expected output|unit|conversion|dimension/i.test(
+    /at least one input|quantity greater than zero|only appear once|choose an active|output quantity|expected output|only a draft|unit|conversion|dimension/i.test(
       error.message,
     )
   ) {

@@ -4,9 +4,11 @@ import {
   CheckCircle2,
   Info,
   Loader2,
+  Pencil,
   Plus,
   ReceiptText,
   RotateCw,
+  Trash2,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -25,9 +27,11 @@ import {
   approvePurchaseOrder,
   closePurchaseOrder,
   createPurchaseOrder,
+  deletePurchaseOrder,
   listPurchaseOrders,
   listPurchaseRequests,
   markPurchaseOrderOrdered,
+  updatePurchaseOrder,
   type PurchaseOrder,
   type PurchaseRequest,
 } from './api'
@@ -54,7 +58,6 @@ function emptyLine(key: number): PurchaseLineDraft {
 
 function initialForm(prId = ''): PurchaseOrderDraft {
   return {
-    poNumber: '',
     supplierId: '',
     prId,
     orderDate: toIsoDate(new Date()),
@@ -101,6 +104,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<PurchaseOrderDraft>(() => initialForm())
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -109,6 +113,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PurchaseOrder | null>(null)
   const lineSequence = useRef(1)
 
   const reload = useCallback(() => setReloadToken((token) => token + 1), [])
@@ -165,6 +170,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
     })
     setFieldErrors({})
     setFormError(null)
+    setEditingId(null)
     setNotice(`Creating a purchase order for ${seed.pr_number}. Enter the supplier and unit costs.`)
     setFormOpen(true)
     onSeedHandled?.()
@@ -215,10 +221,36 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
   )
 
   const openCount = orders.filter((order) => order.status !== 'closed').length
+  const editing = editingId ? orders.find((order) => order.id === editingId) ?? null : null
 
   const openCreate = () => {
     lineSequence.current = 1
+    setEditingId(null)
     setForm(initialForm())
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (order: PurchaseOrder) => {
+    const lines = order.purchase_order_lines.map((line, index) => ({
+      key: `po-edit-${index + 1}`,
+      itemId: line.item_id,
+      unitId: line.unit_id,
+      quantity: String(line.quantity),
+      unitCost: String(line.unit_cost),
+    }))
+    lineSequence.current = Math.max(1, lines.length)
+    setEditingId(order.id)
+    setForm({
+      supplierId: order.supplier_id,
+      prId: order.pr_id ?? '',
+      orderDate: order.order_date,
+      expectedDate: order.expected_date ?? '',
+      notes: order.notes ?? '',
+      lines: lines.length > 0 ? lines : [emptyLine(1)],
+    })
     setFieldErrors({})
     setFormError(null)
     setNotice(null)
@@ -227,6 +259,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
 
   const closeForm = () => {
     setFormOpen(false)
+    setEditingId(null)
     setFieldErrors({})
     setFormError(null)
   }
@@ -261,6 +294,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
   }
 
   const selectRequest = (prId: string) => {
+    if (editingId) return
     const request = prId ? requestById.get(prId) : null
     if (!request) {
       setForm((current) => ({ ...current, prId: '' }))
@@ -295,8 +329,13 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
     setNotice(null)
 
     try {
-      await createPurchaseOrder(result.value)
-      setNotice(`PO ${result.value.poNumber} saved as a draft. Approve it before ordering.`)
+      if (editingId) {
+        await updatePurchaseOrder(editingId, result.value)
+        setNotice(editing ? `PO ${editing.po_number} updated.` : 'Purchase order updated.')
+      } else {
+        await createPurchaseOrder(result.value)
+        setNotice('Purchase order saved as a draft. Approve it before ordering.')
+      }
       closeForm()
       reload()
     } catch (error) {
@@ -318,6 +357,25 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
     try {
       await action(order.id)
       setNotice(successMessage)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  const remove = async () => {
+    if (!deleteTarget) return
+
+    setPendingId(deleteTarget.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deletePurchaseOrder(deleteTarget.id)
+      setNotice(`PO ${deleteTarget.po_number} deleted.`)
+      setDeleteTarget(null)
       reload()
     } catch (error) {
       setActionError(toMessage(error))
@@ -415,11 +473,13 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id="po-form-heading" className="text-sm font-semibold text-slate-900">
-                New purchase order
+                {editing ? 'Edit purchase order' : 'New purchase order'}
               </h3>
               <p className="mt-1 text-xs text-slate-600">
-                Link an approved request to copy its lines, then enter the supplier and the agreed
-                unit costs. The order is a draft until it is approved.
+                {editing
+                  ? 'The order number and source request stay unchanged. Update the supplier, dates and unit costs.'
+                  : 'Number assigned automatically when saved. Link an approved request to copy its lines, then enter the supplier and the agreed unit costs.'}{' '}
+                The order is a draft until it is approved.
               </p>
             </div>
             <button
@@ -442,20 +502,6 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
           )}
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">PO number</span>
-              <input
-                type="text"
-                value={form.poNumber}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, poNumber: event.target.value }))
-                }
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                placeholder="PO-0001"
-              />
-              <FieldError message={fieldErrors.poNumber} />
-            </label>
-
             <label className="block text-sm">
               <span className="font-medium text-slate-700">Supplier</span>
               <select
@@ -480,7 +526,8 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
               <select
                 value={form.prId}
                 onChange={(event) => selectRequest(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                disabled={editingId !== null}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
               >
                 <option value="">No linked request</option>
                 {selectableRequests.map((request) => (
@@ -557,7 +604,7 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
                 className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                Save draft
+                {editing ? 'Save changes' : 'Save draft'}
               </button>
               <button
                 type="button"
@@ -569,6 +616,38 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
             </div>
           </div>
         </form>
+      )}
+
+      {deleteTarget && (
+        <div
+          role="alertdialog"
+          aria-labelledby="po-delete-heading"
+          className="rounded-xl border border-rose-200 bg-rose-50/60 p-5 shadow-sm"
+        >
+          <h3 id="po-delete-heading" className="text-sm font-semibold text-slate-900">
+            Delete {deleteTarget.po_number}?
+          </h3>
+          <p className="mt-1 text-xs text-slate-700">
+            This draft and its lines will be removed. This cannot be undone.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={remove}
+              disabled={pendingId !== null}
+              className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
+            >
+              Delete order
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-100"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -658,6 +737,26 @@ export function PurchaseOrdersPanel({ seed, onSeedHandled }: PurchaseOrdersPanel
                             >
                               Approve
                             </button>
+                          )}
+                          {canManage && order.status === 'draft' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(order)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-slate-100"
+                              >
+                                <Pencil className="h-3 w-3" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteTarget(order)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50"
+                              >
+                                <Trash2 className="h-3 w-3" aria-hidden="true" />
+                                Delete
+                              </button>
+                            </>
                           )}
                           {canManage && order.status === 'approved' && (
                             <button

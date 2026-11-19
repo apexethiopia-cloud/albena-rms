@@ -149,12 +149,13 @@ export function MenuPanel() {
     setNotice(null)
 
     try {
+      const label = result.value.code || 'Menu item'
       if (mode === 'edit' && editingId) {
         await updateMenuItem(editingId, result.value)
-        setNotice(`${result.value.code} was updated.`)
+        setNotice(`${label} was updated.`)
       } else {
         await createMenuItem(result.value)
-        setNotice(`${result.value.code} was added to the menu.`)
+        setNotice(`${label} was added to the menu.`)
       }
       closeForm()
       reload()
@@ -285,8 +286,13 @@ export function MenuPanel() {
                 aria-label="Menu code"
                 value={form.code}
                 onChange={(event) => setField('code')(event.target.value)}
+                placeholder="Auto-generated"
+                aria-describedby="menu-code-hint"
                 className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
               />
+              <span id="menu-code-hint" className="mt-1 block text-slate-500">
+                Leave blank to generate a code automatically.
+              </span>
               {fieldErrors.code && <span className="mt-1 block text-red-600">{fieldErrors.code}</span>}
             </label>
 

@@ -20,7 +20,6 @@ export type StockLineDraft = {
 }
 
 export type GrnDraft = {
-  grnNumber: string
   supplierId: string
   invoiceNumber: string
   receivedDate: string
@@ -32,7 +31,6 @@ export type GrnDraft = {
 }
 
 export type SivDraft = {
-  sivNumber: string
   issueDate: string
   sourceLocationId: string
   destinationLocationId: string
@@ -55,7 +53,6 @@ export type NormalizedSivLine = {
 }
 
 export type NormalizedGrn = {
-  grnNumber: string
   supplierId: string
   invoiceNumber: string
   receivedDate: string
@@ -66,7 +63,6 @@ export type NormalizedGrn = {
 }
 
 export type NormalizedSiv = {
-  sivNumber: string
   issueDate: string
   sourceLocationId: string
   destinationLocationId: string
@@ -111,7 +107,6 @@ export type AdjustmentLineDraft = {
 
 export type AdjustmentDraft = {
   kind: AdjustmentKind
-  adjustmentNumber: string
   adjustmentDate: string
   locationId: string
   reason: string
@@ -129,7 +124,6 @@ export type NormalizedAdjustmentLine = {
 
 export type NormalizedAdjustment = {
   kind: AdjustmentKind
-  adjustmentNumber: string
   adjustmentDate: string
   locationId: string
   reason: string
@@ -144,7 +138,6 @@ export type CountLineDraft = {
 }
 
 export type CountDraft = {
-  countNumber: string
   countDate: string
   locationId: string
   counterName: string
@@ -158,7 +151,6 @@ export type NormalizedCountLine = {
 }
 
 export type NormalizedCount = {
-  countNumber: string
   countDate: string
   locationId: string
   counterName: string
@@ -340,9 +332,6 @@ function validateLines(
 export function validateGrn(input: GrnDraft, context: StockContext): Validation<NormalizedGrn> {
   const errors: Record<string, string> = {}
 
-  if (!input.grnNumber.trim()) errors.grnNumber = 'Enter a GRN number.'
-  else if (input.grnNumber.trim().length > 40) errors.grnNumber = 'Use 40 characters or fewer.'
-
   if (!input.supplierId) errors.supplierId = 'Choose a supplier.'
   if (!input.invoiceNumber.trim()) errors.invoiceNumber = 'Enter the supplier invoice number.'
   else if (input.invoiceNumber.trim().length > 80) {
@@ -366,7 +355,6 @@ export function validateGrn(input: GrnDraft, context: StockContext): Validation<
     valid: true,
     errors,
     value: {
-      grnNumber: input.grnNumber.trim().toUpperCase(),
       supplierId: input.supplierId,
       invoiceNumber: input.invoiceNumber.trim(),
       receivedDate: input.receivedDate,
@@ -380,9 +368,6 @@ export function validateGrn(input: GrnDraft, context: StockContext): Validation<
 
 export function validateSiv(input: SivDraft, context: StockContext): Validation<NormalizedSiv> {
   const errors: Record<string, string> = {}
-
-  if (!input.sivNumber.trim()) errors.sivNumber = 'Enter a SIV number.'
-  else if (input.sivNumber.trim().length > 40) errors.sivNumber = 'Use 40 characters or fewer.'
 
   if (!input.issueDate) errors.issueDate = 'Choose the issue date.'
   else if (!isIsoDate(input.issueDate)) errors.issueDate = 'Use a valid date.'
@@ -407,7 +392,6 @@ export function validateSiv(input: SivDraft, context: StockContext): Validation<
     valid: true,
     errors,
     value: {
-      sivNumber: input.sivNumber.trim().toUpperCase(),
       issueDate: input.issueDate,
       sourceLocationId: input.sourceLocationId,
       destinationLocationId: input.destinationLocationId,
@@ -427,12 +411,6 @@ export function validateInventoryAdjustment(
 ): Validation<NormalizedAdjustment> {
   const errors: Record<string, string> = {}
   const reasons = input.kind === 'waste' ? WASTE_REASONS : ADJUSTMENT_REASONS
-
-  if (!input.adjustmentNumber.trim()) {
-    errors.adjustmentNumber = 'Enter a document number.'
-  } else if (input.adjustmentNumber.trim().length > 40) {
-    errors.adjustmentNumber = 'Use 40 characters or fewer.'
-  }
 
   if (!input.adjustmentDate) errors.adjustmentDate = 'Choose the document date.'
   else if (!isIsoDate(input.adjustmentDate)) errors.adjustmentDate = 'Use a valid date.'
@@ -500,7 +478,6 @@ export function validateInventoryAdjustment(
     errors,
     value: {
       kind: input.kind,
-      adjustmentNumber: input.adjustmentNumber.trim().toUpperCase(),
       adjustmentDate: input.adjustmentDate,
       locationId: input.locationId,
       reason: input.reason,
@@ -515,11 +492,6 @@ export function validateInventoryCount(
   context: Pick<StockContext, 'items'>,
 ): Validation<NormalizedCount> {
   const errors: Record<string, string> = {}
-
-  if (!input.countNumber.trim()) errors.countNumber = 'Enter a count number.'
-  else if (input.countNumber.trim().length > 40) {
-    errors.countNumber = 'Use 40 characters or fewer.'
-  }
 
   if (!input.countDate) errors.countDate = 'Choose the count date.'
   else if (!isIsoDate(input.countDate)) errors.countDate = 'Use a valid date.'
@@ -574,7 +546,6 @@ export function validateInventoryCount(
     valid: true,
     errors,
     value: {
-      countNumber: input.countNumber.trim().toUpperCase(),
       countDate: input.countDate,
       locationId: input.locationId,
       counterName: input.counterName.trim(),

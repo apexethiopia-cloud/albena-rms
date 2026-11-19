@@ -186,6 +186,34 @@ describe('Inventory — items', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/ONION created/i)
   })
 
+  it('creates an item with an auto-generated code when the code is blank', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText('Tomato, fresh')
+    await user.click(screen.getByRole('button', { name: /new item/i }))
+
+    const code = screen.getByLabelText('Code')
+    expect(code).toHaveValue('')
+    expect(code).toHaveAttribute('placeholder', 'Auto-generated')
+    expect(screen.getByText('Leave blank to generate a code automatically.')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Item name'), 'Onion, red')
+    await user.selectOptions(screen.getByLabelText('Base unit'), 'unit-g')
+    await user.click(screen.getByRole('button', { name: /create item/i }))
+
+    await waitFor(() => {
+      expect(api.createItem).toHaveBeenCalledWith({
+        code: '',
+        name: 'Onion, red',
+        categoryId: null,
+        baseUnitId: 'unit-g',
+        purchaseUnitId: null,
+        reorderLevel: 0,
+      })
+    })
+  })
+
   it('warns that a box factor is item-specific', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -227,8 +255,8 @@ describe('Inventory — items', () => {
     await user.type(screen.getByLabelText('Reorder level'), 'abc')
     await user.click(screen.getByRole('button', { name: /create item/i }))
 
-    expect(await screen.findByText('Code is required.')).toBeInTheDocument()
-    expect(screen.getByText('Item name is required.')).toBeInTheDocument()
+    expect(await screen.findByText('Item name is required.')).toBeInTheDocument()
+    expect(screen.queryByText('Code is required.')).toBeNull()
     expect(screen.getByText(/non-negative number/i)).toBeInTheDocument()
     expect(api.createItem).not.toHaveBeenCalled()
   })

@@ -108,12 +108,13 @@ export function OutletsPanel() {
     setFormError(null)
 
     try {
+      const label = result.normalized.code ? `Outlet ${result.normalized.code}` : 'Outlet'
       if (mode.kind === 'create') {
         await createOutlet(result.normalized)
-        setNotice(`Outlet ${result.normalized.code} created.`)
+        setNotice(`${label} created.`)
       } else {
         await updateOutlet(mode.outlet.id, result.normalized)
-        setNotice(`Outlet ${result.normalized.code} updated.`)
+        setNotice(`${label} updated.`)
       }
       closeForm()
       reload()
@@ -250,11 +251,11 @@ export function OutletsPanel() {
                   'mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase shadow-sm focus:border-brand-500',
                   fieldErrors.code ? 'border-red-400' : 'border-slate-300',
                 )}
-                placeholder="e.g. TERRACE"
+                placeholder="Auto-generated"
                 autoComplete="off"
               />
               <p id="outlet-code-hint" className="mt-1 text-xs text-slate-500">
-                2–12 characters: letters, digits, hyphen or underscore.
+                Leave blank to generate a code automatically.
               </p>
               <FieldError id="outlet-code-error" message={fieldErrors.code} />
             </div>

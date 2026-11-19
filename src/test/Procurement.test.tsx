@@ -8,9 +8,13 @@ const procurementApi = vi.hoisted(() => ({
   listPurchaseRequests: vi.fn(),
   listPurchaseOrders: vi.fn(),
   createPurchaseRequest: vi.fn(),
+  updatePurchaseRequest: vi.fn(),
+  deletePurchaseRequest: vi.fn(),
   submitPurchaseRequest: vi.fn(),
   decidePurchaseRequest: vi.fn(),
   createPurchaseOrder: vi.fn(),
+  updatePurchaseOrder: vi.fn(),
+  deletePurchaseOrder: vi.fn(),
   approvePurchaseOrder: vi.fn(),
   markPurchaseOrderOrdered: vi.fn(),
   closePurchaseOrder: vi.fn(),
@@ -178,9 +182,13 @@ beforeEach(() => {
   procurementApi.listPurchaseRequests.mockResolvedValue([])
   procurementApi.listPurchaseOrders.mockResolvedValue([])
   procurementApi.createPurchaseRequest.mockResolvedValue('pr-2')
+  procurementApi.updatePurchaseRequest.mockResolvedValue(undefined)
+  procurementApi.deletePurchaseRequest.mockResolvedValue(undefined)
   procurementApi.submitPurchaseRequest.mockResolvedValue(undefined)
   procurementApi.decidePurchaseRequest.mockResolvedValue(undefined)
   procurementApi.createPurchaseOrder.mockResolvedValue('po-2')
+  procurementApi.updatePurchaseOrder.mockResolvedValue(undefined)
+  procurementApi.deletePurchaseOrder.mockResolvedValue(undefined)
   procurementApi.approvePurchaseOrder.mockResolvedValue(undefined)
   procurementApi.markPurchaseOrderOrdered.mockResolvedValue(undefined)
   procurementApi.closePurchaseOrder.mockResolvedValue(undefined)
@@ -242,7 +250,10 @@ describe('Purchasing — purchase requests', () => {
     await within(section).findByText(/no purchase requests yet/i)
     await user.click(within(section).getByRole('button', { name: /new request/i }))
 
-    await user.type(screen.getByLabelText('Request number'), 'pr-0002')
+    expect(
+      within(section).getByText(/number assigned automatically when saved/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Request number')).toBeNull()
     await user.selectOptions(screen.getByLabelText('Item for request line 1'), 'i-tomato')
     await user.selectOptions(screen.getByLabelText('Unit for request line 1'), 'u-kg')
     await user.type(screen.getByLabelText('Quantity for request line 1'), '2')
@@ -250,15 +261,12 @@ describe('Purchasing — purchase requests', () => {
 
     await waitFor(() => {
       expect(procurementApi.createPurchaseRequest).toHaveBeenCalledWith({
-        prNumber: 'PR-0002',
         requestDate: expect.any(String),
         notes: null,
         lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2 }],
       })
     })
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /PR PR-0002 saved as a draft/i,
-    )
+    expect(await screen.findByRole('status')).toHaveTextContent(/saved as a draft/i)
   })
 
   it('blocks an incomplete request before calling the database', async () => {
@@ -271,8 +279,78 @@ describe('Purchasing — purchase requests', () => {
     await user.click(within(section).getByRole('button', { name: /save draft/i }))
 
     expect(procurementApi.createPurchaseRequest).not.toHaveBeenCalled()
-    expect(within(section).getByText(/enter a request number/i)).toBeInTheDocument()
     expect(within(section).getByText(/quantity greater than zero/i)).toBeInTheDocument()
+  })
+
+  it('edits a draft request through the update RPC', async () => {
+    procurementApi.listPurchaseRequests.mockResolvedValue([request()])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /purchase requests/i })
+    const row = await within(section).findByRole('row', { name: /PR-0001/ })
+    await user.click(within(row).getByRole('button', { name: 'Edit' }))
+
+    const form = await screen.findByRole('form', { name: /edit purchase request/i })
+    expect(within(form).getByLabelText('Request date')).toHaveValue('2026-11-18')
+    expect(within(form).getByLabelText('Quantity for request line 1')).toHaveValue(2)
+    await user.type(within(form).getByLabelText('Notes'), 'Editor notes')
+    await user.click(within(form).getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() => {
+      expect(procurementApi.updatePurchaseRequest).toHaveBeenCalledWith('pr-1', {
+        requestDate: '2026-11-18',
+        notes: 'Editor notes',
+        lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2 }],
+      })
+    })
+    expect(procurementApi.createPurchaseRequest).not.toHaveBeenCalled()
+    expect(await screen.findByRole('status')).toHaveTextContent(/PR PR-0001 updated/i)
+  })
+
+  it('deletes a draft request only after confirmation', async () => {
+    procurementApi.listPurchaseRequests.mockResolvedValue([request()])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /purchase requests/i })
+    const row = await within(section).findByRole('row', { name: /PR-0001/ })
+    const callsBeforeDelete = procurementApi.listPurchaseRequests.mock.calls.length
+    await user.click(within(row).getByRole('button', { name: 'Delete' }))
+
+    const dialog = await screen.findByRole('alertdialog', { name: /delete PR-0001/i })
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(procurementApi.deletePurchaseRequest).not.toHaveBeenCalled()
+
+    await user.click(within(row).getByRole('button', { name: 'Delete' }))
+    const confirm = await screen.findByRole('alertdialog', { name: /delete PR-0001/i })
+    await user.click(within(confirm).getByRole('button', { name: /delete request/i }))
+
+    await waitFor(() => {
+      expect(procurementApi.deletePurchaseRequest).toHaveBeenCalledWith('pr-1')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(/PR PR-0001 deleted/i)
+    await waitFor(() => {
+      expect(procurementApi.listPurchaseRequests.mock.calls.length).toBeGreaterThan(
+        callsBeforeDelete,
+      )
+    })
+  })
+
+  it('never offers edit or delete for requests past draft', async () => {
+    procurementApi.listPurchaseRequests.mockResolvedValue([
+      request({ id: 'pr-2', pr_number: 'PR-0002', status: 'submitted' }),
+      request({ id: 'pr-3', pr_number: 'PR-0003', status: 'approved' }),
+      request({ id: 'pr-4', pr_number: 'PR-0004', status: 'rejected' }),
+    ])
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /purchase requests/i })
+    for (const number of ['PR-0002', 'PR-0003', 'PR-0004']) {
+      const row = await within(section).findByRole('row', { name: new RegExp(number) })
+      expect(within(row).queryByRole('button', { name: 'Edit' })).toBeNull()
+      expect(within(row).queryByRole('button', { name: 'Delete' })).toBeNull()
+    }
   })
 
   it('submits a draft request for approval', async () => {
@@ -358,15 +436,17 @@ describe('Purchasing — purchase orders', () => {
 
     const form = await screen.findByRole('form', { name: /new purchase order/i })
     expect(screen.getByText(/creating a purchase order for PR-0001/i)).toBeInTheDocument()
+    expect(
+      within(form).getByText(/number assigned automatically when saved/i),
+    ).toBeInTheDocument()
+    expect(within(form).queryByLabelText('PO number')).toBeNull()
 
-    await user.type(within(form).getByLabelText('PO number'), 'po-0001')
     await user.selectOptions(within(form).getByLabelText('Supplier'), 's1')
     await user.type(within(form).getByLabelText('Unit cost for order line 1'), '120')
     await user.click(within(form).getByRole('button', { name: /save draft/i }))
 
     await waitFor(() => {
       expect(procurementApi.createPurchaseOrder).toHaveBeenCalledWith({
-        poNumber: 'PO-0001',
         supplierId: 's1',
         prId: 'pr-1',
         orderDate: expect.any(String),
@@ -375,9 +455,79 @@ describe('Purchasing — purchase orders', () => {
         lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2, unitCost: 120 }],
       })
     })
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /PO PO-0001 saved as a draft/i,
-    )
+    expect(await screen.findByRole('status')).toHaveTextContent(/saved as a draft/i)
+  })
+
+  it('edits a draft order through the update RPC', async () => {
+    procurementApi.listPurchaseRequests.mockResolvedValue([request({ status: 'approved' })])
+    procurementApi.listPurchaseOrders.mockResolvedValue([order()])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /purchase orders/i })
+    const row = await within(section).findByRole('row', { name: /PO-0001/ })
+    await user.click(within(row).getByRole('button', { name: 'Edit' }))
+
+    const form = await screen.findByRole('form', { name: /edit purchase order/i })
+    expect(within(form).getByLabelText('Supplier')).toHaveValue('s1')
+    expect(within(form).getByLabelText('Unit cost for order line 1')).toHaveValue(120)
+    expect(within(form).getByLabelText(/source request/i)).toBeDisabled()
+    await user.clear(within(form).getByLabelText('Unit cost for order line 1'))
+    await user.type(within(form).getByLabelText('Unit cost for order line 1'), '150')
+    await user.click(within(form).getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() => {
+      expect(procurementApi.updatePurchaseOrder).toHaveBeenCalledWith('po-1', {
+        supplierId: 's1',
+        prId: 'pr-1',
+        orderDate: '2026-11-18',
+        expectedDate: null,
+        notes: null,
+        lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2, unitCost: 150 }],
+      })
+    })
+    expect(procurementApi.createPurchaseOrder).not.toHaveBeenCalled()
+    expect(await screen.findByRole('status')).toHaveTextContent(/PO PO-0001 updated/i)
+  })
+
+  it('deletes a draft order only after confirmation', async () => {
+    procurementApi.listPurchaseOrders.mockResolvedValue([order()])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /purchase orders/i })
+    const row = await within(section).findByRole('row', { name: /PO-0001/ })
+    const callsBeforeDelete = procurementApi.listPurchaseOrders.mock.calls.length
+    await user.click(within(row).getByRole('button', { name: 'Delete' }))
+
+    const dialog = await screen.findByRole('alertdialog', { name: /delete PO-0001/i })
+    await user.click(within(dialog).getByRole('button', { name: /delete order/i }))
+
+    await waitFor(() => {
+      expect(procurementApi.deletePurchaseOrder).toHaveBeenCalledWith('po-1')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(/PO PO-0001 deleted/i)
+    await waitFor(() => {
+      expect(procurementApi.listPurchaseOrders.mock.calls.length).toBeGreaterThan(
+        callsBeforeDelete,
+      )
+    })
+  })
+
+  it('never offers edit or delete for orders past draft', async () => {
+    procurementApi.listPurchaseOrders.mockResolvedValue([
+      order({ id: 'po-2', po_number: 'PO-0002', status: 'approved' }),
+      order({ id: 'po-3', po_number: 'PO-0003', status: 'ordered' }),
+      order({ id: 'po-4', po_number: 'PO-0004', status: 'closed' }),
+    ])
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /purchase orders/i })
+    for (const number of ['PO-0002', 'PO-0003', 'PO-0004']) {
+      const row = await within(section).findByRole('row', { name: new RegExp(number) })
+      expect(within(row).queryByRole('button', { name: 'Edit' })).toBeNull()
+      expect(within(row).queryByRole('button', { name: 'Delete' })).toBeNull()
+    }
   })
 
   it('advances an order through approval, ordering and closing', async () => {

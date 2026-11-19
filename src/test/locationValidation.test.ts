@@ -9,11 +9,17 @@ describe('validateLocation', () => {
     expect(result.normalized).toEqual({ code: 'BAR', name: 'Bar Store' })
   })
 
-  it('requires a code and a name', () => {
+  it('accepts a blank code but still requires a name', () => {
+    const blankCode = validateLocation({ code: '   ', name: 'Bar Store' })
+
+    expect(blankCode.valid).toBe(true)
+    expect(blankCode.errors.code).toBeUndefined()
+    expect(blankCode.normalized).toEqual({ code: '', name: 'Bar Store' })
+
     const result = validateLocation({ code: '', name: '' })
 
     expect(result.valid).toBe(false)
-    expect(result.errors.code).toBeDefined()
+    expect(result.errors.code).toBeUndefined()
     expect(result.errors.name).toBeDefined()
   })
 

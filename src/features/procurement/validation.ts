@@ -17,14 +17,12 @@ export type PurchaseLineDraft = {
 }
 
 export type PurchaseRequestDraft = {
-  prNumber: string
   requestDate: string
   notes: string
   lines: PurchaseLineDraft[]
 }
 
 export type PurchaseOrderDraft = {
-  poNumber: string
   supplierId: string
   prId: string
   orderDate: string
@@ -41,14 +39,12 @@ export type NormalizedPurchaseLine = {
 }
 
 export type NormalizedPurchaseRequest = {
-  prNumber: string
   requestDate: string
   notes: string | null
   lines: Array<Omit<NormalizedPurchaseLine, 'unitCost'>>
 }
 
 export type NormalizedPurchaseOrder = {
-  poNumber: string
   supplierId: string
   prId: string | null
   orderDate: string
@@ -80,9 +76,6 @@ export function validatePurchaseRequest(
 ): Validation<NormalizedPurchaseRequest> {
   const errors: Record<string, string> = {}
 
-  if (!input.prNumber.trim()) errors.prNumber = 'Enter a request number.'
-  else if (input.prNumber.trim().length > 40) errors.prNumber = 'Use 40 characters or fewer.'
-
   if (!input.requestDate) errors.requestDate = 'Choose the request date.'
   else if (!isIsoDate(input.requestDate)) errors.requestDate = 'Use a valid date.'
 
@@ -99,7 +92,6 @@ export function validatePurchaseRequest(
     valid: true,
     errors,
     value: {
-      prNumber: input.prNumber.trim().toUpperCase(),
       requestDate: input.requestDate,
       notes: input.notes.trim() || null,
       lines: lines.normalized.map((line) => ({
@@ -116,9 +108,6 @@ export function validatePurchaseOrder(
   context: StockContext,
 ): Validation<NormalizedPurchaseOrder> {
   const errors: Record<string, string> = {}
-
-  if (!input.poNumber.trim()) errors.poNumber = 'Enter a purchase order number.'
-  else if (input.poNumber.trim().length > 40) errors.poNumber = 'Use 40 characters or fewer.'
 
   if (!input.supplierId) errors.supplierId = 'Choose a supplier.'
 
@@ -145,7 +134,6 @@ export function validatePurchaseOrder(
     valid: true,
     errors,
     value: {
-      poNumber: input.poNumber.trim().toUpperCase(),
       supplierId: input.supplierId,
       prId: input.prId || null,
       orderDate: input.orderDate,

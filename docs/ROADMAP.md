@@ -1,7 +1,7 @@
 # Albena RMS — Implementation Roadmap (SRS v3.0 Aligned)
 
 **Aligned with**: `docs/SRS_v3.0.md` Section 11, approved 2026-11-17
-**Last Updated**: 2026-11-17
+**Last Updated**: 2026-11-19 (POS, automatic numbering, draft CRUD and black/gold theme added across Phases 3–6; see the enhancement notes in each phase)
 
 ---
 
@@ -104,6 +104,8 @@ flowchart LR
 - Shared Postgres error mapping (`src/lib/errors.ts`), including a clear message when a table is missing because a migration has not been applied.
 - FE tests cover list, load failure, create, validation, edit, deactivate and read-only roles for outlets, suppliers, items, categories and locations; item tests cover base-unit creation and purchase-unit factor recording.
 
+**Enhancement (2026-11-19)**: outlet, location, supplier, item, menu-item and table code fields are optional in the UI. A BEFORE INSERT trigger assigns `OUT-00001`, `LOC-00001`, `SUP-00001`, `ITM-00001`, `MNU-00001` and `TBL-00001` when the field is left blank; user-entered codes are preserved (ADR-015). The app also adopted the black/gold brand theme (ADR-017).
+
 **Requirements addressed**: OUT-01..03, SUP-01..02, INV-01..05, USR-01..05, SEC-ROLE-05
 
 **Depends on**: owner applying migrations 0003 and 0004 before suppliers, items and locations can be used. OD-01, OD-02 and OD-05 are resolved (ADR-010).
@@ -149,6 +151,8 @@ flowchart LR
 
 **Requirements addressed**: PR-01..04, PO-01..04, GRN-01..05, SIV-01..05, STK-01..07, CNT-01..05, ADJ-01..03, WST-01..04, INV-04, INV-06
 
+**Enhancement (2026-11-19)**: PR/PO/GRN/SIV/count/adjustment/waste numbers are now allocated by the database (`PR-YYYYMMDD-NNNN`, `CNT-…`, `ADJ-…`, `WST-…`, etc.) through migration `20261119001300_auto_numbering.sql`; the number fields were removed from the forms. Migration `20261119001400_draft_crud.sql` adds role-gated edit and delete for draft PR/PO and draft/unposted inventory documents. Posted documents remain immutable (ADR-015, ADR-016).
+
 **Decisions**: OD-04 FIFO (ADR-009), OD-05 unit model (ADR-010) and inventory control (ADR-011) confirmed 2026-11-18. OD-06 approval thresholds remain undefined: postings are role-gated and record who acted; PR/PO and inventory-document approval is limited to System Administrator/General Manager, self-approval is not blocked, and no monetary thresholds exist.
 
 ---
@@ -181,6 +185,8 @@ flowchart LR
 **Exit Condition**: Costing and production calculations pass (AC-07, AC-08, AC-09). Build and unit tests are complete; AC-07/AC-08 live checks are deferred to final UAT and AC-09 remains partial until Phase 6.
 
 **Requirements addressed**: REC-01..07, PROD-01..04, COST-01..03
+
+**Enhancement (2026-11-19)**: production orders receive an automatic `PRD-YYYYMMDD-NNNN` number and recipes an automatic `RCP-00001` code (ADR-015). Draft production orders can be edited/deleted; recipe code and version content stay immutable, and the existing `update_recipe()` is now exposed for header metadata (ADR-016).
 
 **Decisions**: consumes FIFO layer costs (ADR-009) in base units (ADR-010); recipe versioning, costing and production posting recorded in ADR-012.
 
@@ -222,6 +228,8 @@ flowchart LR
 - Final UAT: AC-10 (KDS flow), AC-11 (order/table workflow), AC-14 (concurrent table/order handling) and AC-15 (reservations), deferred by the owner with the rest of UAT
 - KDS-04 prep-time reporting and the Phase 7 reservation/guest-history reports remain in Phase 7
 - Outlet scoping of stock/recipes still needs the `stock_locations` ↔ outlet decision; Phase 6 reads are role-based
+
+**Enhancement (2026-11-19)**: a role-gated `Quick POS` panel was added to `/operations` before the existing order form, with category chips, item cards, cart and running total. Cashiers may now take orders because `can_take_orders()` includes `cashier`; kitchen-status rights are unchanged (ADR-014). Outlet, location, supplier, item, menu-item and table codes are auto-generated on blank insert (`OUT-`, `LOC-`, `SUP-`, `ITM-`, `MNU-`, `TBL-`); manual codes are still accepted (ADR-015).
 
 **Exit Condition**: Three-user live workflows pass (AC-10, AC-11, AC-14, AC-15). Build and unit tests are complete; live runs are deferred to final UAT.
 

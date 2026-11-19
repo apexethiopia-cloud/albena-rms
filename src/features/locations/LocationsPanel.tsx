@@ -101,12 +101,15 @@ export function LocationsPanel() {
     setFormError(null)
 
     try {
+      const label = result.normalized.code
+        ? `Stock location ${result.normalized.code}`
+        : 'Stock location'
       if (mode.kind === 'create') {
         await createLocation(result.normalized)
-        setNotice(`Stock location ${result.normalized.code} created.`)
+        setNotice(`${label} created.`)
       } else {
         await updateLocation(mode.location.id, result.normalized)
-        setNotice(`Stock location ${result.normalized.code} updated.`)
+        setNotice(`${label} updated.`)
       }
       closeForm()
       reload()
@@ -246,11 +249,11 @@ export function LocationsPanel() {
                 aria-invalid={Boolean(fieldErrors.code)}
                 aria-describedby={fieldErrors.code ? 'location-code-error' : 'location-code-hint'}
                 className={inputClass(fieldErrors.code)}
-                placeholder="e.g. KITCHEN"
+                placeholder="Auto-generated"
                 autoComplete="off"
               />
               <p id="location-code-hint" className="mt-1 text-xs text-slate-500">
-                2–12 characters: letters, digits, hyphen or underscore.
+                Leave blank to generate a code automatically.
               </p>
               {fieldErrors.code && (
                 <p id="location-code-error" className="mt-1 text-xs text-red-700">

@@ -48,10 +48,16 @@ describe('validateSupplier', () => {
     expect(result.valid).toBe(true)
   })
 
-  it('requires a code and a name', () => {
+  it('accepts a blank code but still requires a name', () => {
+    const blankCode = validateSupplier({ ...VALID, code: '   ' })
+
+    expect(blankCode.valid).toBe(true)
+    expect(blankCode.errors.code).toBeUndefined()
+    expect(blankCode.normalized.code).toBe('')
+
     const result = validateSupplier({ ...VALID, code: '  ', name: '  ' })
 
-    expect(result.errors.code).toMatch(/required/i)
+    expect(result.errors.code).toBeUndefined()
     expect(result.errors.name).toMatch(/required/i)
   })
 

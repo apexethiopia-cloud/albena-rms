@@ -7,6 +7,8 @@ import { Purchasing } from '@/pages/Purchasing'
 const stockApi = vi.hoisted(() => ({
   listGrns: vi.fn(),
   createGrn: vi.fn(),
+  updateGrn: vi.fn(),
+  deleteGrn: vi.fn(),
   postGrn: vi.fn(),
   listPurchaseOrderReceipts: vi.fn(),
 }))
@@ -206,6 +208,8 @@ beforeEach(() => {
 
   stockApi.listGrns.mockResolvedValue([])
   stockApi.createGrn.mockResolvedValue('grn-1')
+  stockApi.updateGrn.mockResolvedValue(undefined)
+  stockApi.deleteGrn.mockResolvedValue(undefined)
   stockApi.postGrn.mockResolvedValue(undefined)
   stockApi.listPurchaseOrderReceipts.mockResolvedValue([])
 
@@ -258,6 +262,13 @@ describe('Purchasing - goods receiving', () => {
     expect(within(section).getByText('Draft')).toBeInTheDocument()
     expect(within(section).getByText('Posted')).toBeInTheDocument()
     expect(within(section).getByText(/2 documents .* 1 draft/i)).toBeInTheDocument()
+    expect(within(section).getByRole('button', { name: /edit grn grn-0001/i })).toBeInTheDocument()
+    expect(
+      within(section).queryByRole('button', { name: /edit grn grn-0002/i }),
+    ).toBeNull()
+    expect(
+      within(section).queryByRole('button', { name: /delete grn grn-0002/i }),
+    ).toBeNull()
   })
 
   it('creates a GRN draft with normalized header and line values', async () => {
@@ -268,7 +279,7 @@ describe('Purchasing - goods receiving', () => {
     await within(section).findByText(/no receiving notes yet/i)
     await user.click(within(section).getByRole('button', { name: /new grn/i }))
 
-    await user.type(screen.getByLabelText('GRN number'), 'grn-0001')
+    expect(within(section).getByText(/number assigned automatically when saved/i)).toBeInTheDocument()
     await user.selectOptions(screen.getByLabelText('Supplier'), 's1')
     await user.type(screen.getByLabelText('Supplier invoice'), 'INV-77')
     await user.selectOptions(screen.getByLabelText('Item for line 1'), 'i-tomato')
@@ -279,7 +290,6 @@ describe('Purchasing - goods receiving', () => {
 
     await waitFor(() => {
       expect(stockApi.createGrn).toHaveBeenCalledWith({
-        grnNumber: 'GRN-0001',
         supplierId: 's1',
         invoiceNumber: 'INV-77',
         receivedDate: expect.any(String),
@@ -291,7 +301,74 @@ describe('Purchasing - goods receiving', () => {
         ],
       })
     })
-    expect(await screen.findByRole('status')).toHaveTextContent(/GRN GRN-0001 saved as a draft/i)
+    expect(await screen.findByRole('status')).toHaveTextContent(/GRN saved as a draft/i)
+  })
+
+  it('prefills a draft GRN and updates it through the update RPC', async () => {
+    stockApi.listGrns.mockResolvedValue([DRAFT_GRN])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /goods receiving notes/i })
+    await user.click(await within(section).findByRole('button', { name: /edit grn grn-0001/i }))
+    expect(within(section).getByText('Edit goods receiving note')).toBeInTheDocument()
+    expect(screen.queryByLabelText('GRN number')).toBeNull()
+    expect(screen.getByLabelText('Supplier invoice')).toHaveValue('INV-77')
+    expect(screen.getByLabelText('Quantity for line 1')).toHaveValue('2')
+
+    await user.clear(screen.getByLabelText('Supplier invoice'))
+    await user.type(screen.getByLabelText('Supplier invoice'), 'INV-78')
+    await user.clear(screen.getByLabelText('Quantity for line 1'))
+    await user.type(screen.getByLabelText('Quantity for line 1'), '3')
+    await user.click(within(section).getByRole('button', { name: /save draft/i }))
+
+    await waitFor(() => {
+      expect(stockApi.updateGrn).toHaveBeenCalledWith('grn-1', {
+        supplierId: 's1',
+        invoiceNumber: 'INV-78',
+        receivedDate: '2026-11-18',
+        locationId: 'l-main',
+        notes: null,
+        poId: null,
+        lines: [
+          { itemId: 'i-tomato', unitId: 'u-kg', quantity: 3, unitCost: 120, poLineId: null },
+        ],
+      })
+    })
+    expect(stockApi.createGrn).not.toHaveBeenCalled()
+    expect(await screen.findByRole('status')).toHaveTextContent(/GRN draft updated/i)
+  })
+
+  it('keeps the purchase order link fixed when editing a linked GRN', async () => {
+    stockApi.listGrns.mockResolvedValue([{ ...DRAFT_GRN, po_id: 'po-1' }])
+    procurementApi.listPurchaseOrders.mockResolvedValue([PURCHASE_ORDER])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /goods receiving notes/i })
+    await user.click(await within(section).findByRole('button', { name: /edit grn grn-0001/i }))
+
+    const purchaseOrder = screen.getByLabelText('Purchase order (optional)') as HTMLSelectElement
+    expect(purchaseOrder.value).toBe('po-1')
+    expect(purchaseOrder).toBeDisabled()
+    expect(screen.getByLabelText('Supplier')).toBeDisabled()
+  })
+
+  it('deletes a draft GRN only after confirmation', async () => {
+    stockApi.listGrns.mockResolvedValue([DRAFT_GRN])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /goods receiving notes/i })
+    await user.click(await within(section).findByRole('button', { name: /delete grn grn-0001/i }))
+    expect(within(section).getByText('Delete this draft?')).toBeInTheDocument()
+    expect(stockApi.deleteGrn).not.toHaveBeenCalled()
+
+    await user.click(within(section).getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => {
+      expect(stockApi.deleteGrn).toHaveBeenCalledWith('grn-1')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(/GRN GRN-0001 deleted/i)
   })
 
   it('links a GRN to a purchase order and seeds its outstanding lines', async () => {
@@ -366,7 +443,6 @@ describe('Purchasing - goods receiving', () => {
     await user.click(within(section).getByRole('button', { name: /save draft/i }))
 
     expect(stockApi.createGrn).not.toHaveBeenCalled()
-    expect(await within(section).findByText(/enter a grn number/i)).toBeInTheDocument()
     expect(within(section).getByText(/choose a supplier/i)).toBeInTheDocument()
     expect(within(section).getByText(/choose an item/i)).toBeInTheDocument()
   })

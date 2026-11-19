@@ -10,11 +10,12 @@ describe('validateOutlet', () => {
     expect(result.normalized).toEqual({ code: 'TERRACE', name: 'Terrace Restaurant' })
   })
 
-  it('requires a code', () => {
-    const result = validateOutlet({ code: '', name: 'Terrace' })
+  it('accepts a blank code for automatic generation', () => {
+    const result = validateOutlet({ code: '   ', name: 'Terrace' })
 
-    expect(result.valid).toBe(false)
-    expect(result.errors.code).toMatch(/required/i)
+    expect(result.valid).toBe(true)
+    expect(result.errors.code).toBeUndefined()
+    expect(result.normalized).toEqual({ code: '', name: 'Terrace' })
   })
 
   it('rejects codes that are too short or contain spaces', () => {

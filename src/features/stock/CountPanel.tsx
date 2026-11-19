@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   Info,
   Loader2,
+  Pencil,
   Plus,
   RotateCw,
   Trash2,
@@ -19,10 +20,12 @@ import { listLocations, type StockLocation } from '@/features/locations/api'
 import {
   createInventoryCount,
   decideInventoryCount,
+  deleteInventoryCount,
   listInventoryCounts,
   listStockBalances,
   postInventoryCount,
   submitInventoryCount,
+  updateInventoryCount,
   type InventoryCount,
   type InventoryDocumentStatus,
   type Numberish,
@@ -61,7 +64,6 @@ function emptyLine(key: number): CountLineDraft {
 
 function initialForm(locationId: string, counterName: string): CountDraft {
   return {
-    countNumber: '',
     countDate: toIsoDate(new Date()),
     locationId,
     counterName,
@@ -95,6 +97,7 @@ export function CountPanel() {
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<CountDraft>(() => initialForm('', ''))
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -103,6 +106,7 @@ export function CountPanel() {
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [confirmPostId, setConfirmPostId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [decidingId, setDecidingId] = useState<string | null>(null)
   const [decisionComment, setDecisionComment] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
@@ -166,7 +170,28 @@ export function CountPanel() {
 
   const openCreate = () => {
     lineSequence.current = 1
+    setEditingId(null)
     setForm(initialForm(activeLocations[0]?.id ?? '', user?.fullName ?? ''))
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (count: InventoryCount) => {
+    lineSequence.current = Math.max(count.inventory_count_lines.length, 1)
+    setEditingId(count.id)
+    setForm({
+      countDate: count.count_date,
+      locationId: count.location_id,
+      counterName: count.counter_name,
+      notes: count.notes ?? '',
+      lines: count.inventory_count_lines.map((line, index) => ({
+        key: `count-edit-${index + 1}`,
+        itemId: line.item_id,
+        physicalQuantity: String(line.physical_quantity),
+      })),
+    })
     setFieldErrors({})
     setFormError(null)
     setNotice(null)
@@ -175,11 +200,12 @@ export function CountPanel() {
 
   const closeForm = () => {
     setFormOpen(false)
+    setEditingId(null)
     setFieldErrors({})
     setFormError(null)
   }
 
-  const setField = (key: 'countNumber' | 'countDate' | 'locationId' | 'counterName' | 'notes') =>
+  const setField = (key: 'countDate' | 'locationId' | 'counterName' | 'notes') =>
     (value: string) => {
       setForm((current) => ({ ...current, [key]: value }))
     }
@@ -220,16 +246,40 @@ export function CountPanel() {
     setNotice(null)
 
     try {
-      await createInventoryCount(result.value)
-      setNotice(
-        `Count ${result.value.countNumber} saved as a draft. Submit it for review, then post the approved variance.`,
-      )
+      if (editingId) {
+        await updateInventoryCount(editingId, result.value)
+        setNotice(
+          'Count draft updated. Submit it for review, then post the approved variance.',
+        )
+      } else {
+        await createInventoryCount(result.value)
+        setNotice(
+          'Count saved as a draft. Submit it for review, then post the approved variance.',
+        )
+      }
       closeForm()
       reload()
     } catch (error) {
       setFormError(toMessage(error))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const remove = async (count: InventoryCount) => {
+    setPendingId(count.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deleteInventoryCount(count.id)
+      setNotice(`Count ${count.count_number} deleted.`)
+      setConfirmDeleteId(null)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setPendingId(null)
     }
   }
 
@@ -242,6 +292,7 @@ export function CountPanel() {
       await action()
       setNotice(message)
       setConfirmPostId(null)
+      setConfirmDeleteId(null)
       setDecidingId(null)
       setDecisionComment('')
       reload()
@@ -335,7 +386,7 @@ export function CountPanel() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id="count-form-heading" className="text-sm font-semibold text-slate-900">
-                New count sheet
+                {editingId ? 'Edit count sheet' : 'New count sheet'}
               </h3>
               <p className="mt-1 text-xs text-slate-600">
                 The system quantity is captured when the sheet is saved and stays with the record
@@ -363,24 +414,10 @@ export function CountPanel() {
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label htmlFor="count-number" className="block text-sm font-medium text-slate-700">
-                Count number
-              </label>
-              <input
-                id="count-number"
-                value={form.countNumber}
-                onChange={(event) => setField('countNumber')(event.target.value)}
-                aria-invalid={Boolean(fieldErrors.countNumber)}
-                className={cn(
-                  'mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase shadow-sm focus:border-brand-500',
-                  fieldErrors.countNumber ? 'border-red-400' : 'border-slate-300',
-                )}
-                placeholder="e.g. CNT-0001"
-                autoComplete="off"
-              />
-              {fieldErrors.countNumber && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.countNumber}</p>
-              )}
+              <p className="block text-sm font-medium text-slate-700">Count number</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Number assigned automatically when saved.
+              </p>
             </div>
 
             <div>
@@ -702,20 +739,69 @@ export function CountPanel() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       {count.status === 'draft' && canManage && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void runAction(
-                              count.id,
-                              () => submitInventoryCount(count.id),
-                              `Count ${count.count_number} submitted for review.`,
-                            )
-                          }
-                          disabled={busy}
-                          className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-                        >
-                          Submit for review
-                        </button>
+                        <>
+                          {confirmDeleteId === count.id ? (
+                            <>
+                              <span className="text-xs text-slate-600">Delete this draft?</span>
+                              <button
+                                type="button"
+                                onClick={() => void remove(count)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                              >
+                                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                                Confirm delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                disabled={busy}
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(count)}
+                                aria-label={`Edit count ${count.count_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDeleteId(count.id)
+                                  setConfirmPostId(null)
+                                  setDecidingId(null)
+                                }}
+                                aria-label={`Delete count ${count.count_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                Delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void runAction(
+                                    count.id,
+                                    () => submitInventoryCount(count.id),
+                                    `Count ${count.count_number} submitted for review.`,
+                                  )
+                                }
+                                disabled={busy}
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Submit for review
+                              </button>
+                            </>
+                          )}
+                        </>
                       )}
                       {count.status === 'submitted' && canApprove && (
                         <button

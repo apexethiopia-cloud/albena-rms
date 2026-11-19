@@ -44,7 +44,15 @@ describe('validateTable', () => {
     })
   })
 
-  it('requires an active outlet, code and name', () => {
+  it('accepts a blank code for automatic generation', () => {
+    const result = validateTable(tableDraft({ code: '   ' }), OUTLETS)
+
+    expect(result.valid).toBe(true)
+    expect(result.errors.code).toBeUndefined()
+    expect(result.value?.code).toBe('')
+  })
+
+  it('requires an active outlet and name', () => {
     const result = validateTable(
       tableDraft({ outletId: 'outlet-gone', code: ' ', name: ' ' }),
       OUTLETS,
@@ -52,7 +60,7 @@ describe('validateTable', () => {
 
     expect(result.valid).toBe(false)
     expect(result.errors.outletId).toMatch(/active outlet/i)
-    expect(result.errors.code).toMatch(/table code/i)
+    expect(result.errors.code).toBeUndefined()
     expect(result.errors.name).toMatch(/table name/i)
   })
 

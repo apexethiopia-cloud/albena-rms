@@ -9,14 +9,20 @@ const stockApi = vi.hoisted(() => ({
   listStockMovements: vi.fn(),
   listSivs: vi.fn(),
   createSiv: vi.fn(),
+  updateSiv: vi.fn(),
+  deleteSiv: vi.fn(),
   postSiv: vi.fn(),
   listInventoryAdjustments: vi.fn(),
   createInventoryAdjustment: vi.fn(),
+  updateInventoryAdjustment: vi.fn(),
+  deleteInventoryAdjustment: vi.fn(),
   submitInventoryAdjustment: vi.fn(),
   decideInventoryAdjustment: vi.fn(),
   postInventoryAdjustment: vi.fn(),
   listInventoryCounts: vi.fn(),
   createInventoryCount: vi.fn(),
+  updateInventoryCount: vi.fn(),
+  deleteInventoryCount: vi.fn(),
   submitInventoryCount: vi.fn(),
   decideInventoryCount: vi.fn(),
   postInventoryCount: vi.fn(),
@@ -130,7 +136,10 @@ const OK_ROW = {
   is_low: false,
 }
 
-function adjustmentDocument(status: 'submitted' | 'approved' | 'posted', id = 'adj-2') {
+function adjustmentDocument(
+  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'posted',
+  id = 'adj-2',
+) {
   return {
     id,
     adjustment_number: 'ADJ-0002',
@@ -142,10 +151,12 @@ function adjustmentDocument(status: 'submitted' | 'approved' | 'posted', id = 'a
     status,
     created_by: 'u1',
     created_at: '2026-11-18T10:00:00.000Z',
-    submitted_at: '2026-11-18T10:05:00.000Z',
-    decided_by: status === 'submitted' ? null : 'u9',
-    decided_by_name: status === 'submitted' ? null : 'General Manager',
-    decided_at: status === 'submitted' ? null : '2026-11-18T10:10:00.000Z',
+    submitted_at: status === 'draft' ? null : '2026-11-18T10:05:00.000Z',
+    decided_by: status === 'submitted' || status === 'draft' ? null : 'u9',
+    decided_by_name:
+      status === 'submitted' || status === 'draft' ? null : 'General Manager',
+    decided_at:
+      status === 'submitted' || status === 'draft' ? null : '2026-11-18T10:10:00.000Z',
     decision_comment: null,
     posted_by: status === 'posted' ? 'u1' : null,
     posted_at: status === 'posted' ? '2026-11-18T10:15:00.000Z' : null,
@@ -159,6 +170,45 @@ function adjustmentDocument(status: 'submitted' | 'approved' | 'posted', id = 'a
         quantity: 500,
         unit_cost: null,
         base_quantity: status === 'posted' ? 500 : null,
+        posted_cost: status === 'posted' ? 312.5 : null,
+        created_at: '2026-11-18T10:00:00.000Z',
+      },
+    ],
+  }
+}
+
+function countDocument(
+  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'posted',
+  id = 'count-2',
+) {
+  return {
+    id,
+    count_number: 'CNT-0002',
+    count_date: '2026-11-18',
+    location_id: 'l-main',
+    counter_name: 'Test Storekeeper',
+    notes: null,
+    status,
+    created_by: 'u1',
+    created_at: '2026-11-18T10:00:00.000Z',
+    submitted_at: status === 'draft' ? null : '2026-11-18T10:05:00.000Z',
+    decided_by: status === 'submitted' || status === 'draft' ? null : 'u9',
+    decided_by_name:
+      status === 'submitted' || status === 'draft' ? null : 'General Manager',
+    decided_at:
+      status === 'submitted' || status === 'draft' ? null : '2026-11-18T10:10:00.000Z',
+    decision_comment: null,
+    posted_by: status === 'posted' ? 'u1' : null,
+    posted_at: status === 'posted' ? '2026-11-18T10:15:00.000Z' : null,
+    inventory_count_lines: [
+      {
+        id: 'cl-1',
+        count_id: id,
+        item_id: 'i-tomato',
+        system_quantity: 2000,
+        physical_quantity: 1500,
+        variance_quantity: -500,
+        posted_quantity: status === 'posted' ? -500 : null,
         posted_cost: status === 'posted' ? 312.5 : null,
         created_at: '2026-11-18T10:00:00.000Z',
       },
@@ -198,14 +248,20 @@ beforeEach(() => {
   stockApi.listStockMovements.mockResolvedValue([])
   stockApi.listSivs.mockResolvedValue([])
   stockApi.createSiv.mockResolvedValue('siv-1')
+  stockApi.updateSiv.mockResolvedValue(undefined)
+  stockApi.deleteSiv.mockResolvedValue(undefined)
   stockApi.postSiv.mockResolvedValue(undefined)
   stockApi.listInventoryAdjustments.mockResolvedValue([])
   stockApi.createInventoryAdjustment.mockResolvedValue('adj-1')
+  stockApi.updateInventoryAdjustment.mockResolvedValue(undefined)
+  stockApi.deleteInventoryAdjustment.mockResolvedValue(undefined)
   stockApi.submitInventoryAdjustment.mockResolvedValue(undefined)
   stockApi.decideInventoryAdjustment.mockResolvedValue(undefined)
   stockApi.postInventoryAdjustment.mockResolvedValue(undefined)
   stockApi.listInventoryCounts.mockResolvedValue([])
   stockApi.createInventoryCount.mockResolvedValue('count-1')
+  stockApi.updateInventoryCount.mockResolvedValue(undefined)
+  stockApi.deleteInventoryCount.mockResolvedValue(undefined)
   stockApi.submitInventoryCount.mockResolvedValue(undefined)
   stockApi.decideInventoryCount.mockResolvedValue(undefined)
   stockApi.postInventoryCount.mockResolvedValue(undefined)
@@ -257,7 +313,9 @@ describe('Inventory — adjustments and waste', () => {
     const section = await screen.findByRole('region', { name: /^inventory adjustments$/i })
     await user.click(within(section).getByRole('button', { name: /new adjustment/i }))
 
-    await user.type(within(section).getByLabelText(/adjustment number/i), 'adj-0009')
+    expect(
+      within(section).getByText(/number assigned automatically when saved/i),
+    ).toBeInTheDocument()
     await user.selectOptions(within(section).getByLabelText('Location'), 'l-main')
     await user.selectOptions(within(section).getByLabelText(/item for adjustment line 1/i), 'i-tomato')
     await user.type(within(section).getByLabelText(/quantity for adjustment line 1/i), '500')
@@ -267,7 +325,6 @@ describe('Inventory — adjustments and waste', () => {
     await waitFor(() =>
       expect(stockApi.createInventoryAdjustment).toHaveBeenCalledWith({
         kind: 'adjustment',
-        adjustmentNumber: 'ADJ-0009',
         adjustmentDate: expect.any(String),
         locationId: 'l-main',
         reason: 'damage',
@@ -293,7 +350,9 @@ describe('Inventory — adjustments and waste', () => {
     const section = await screen.findByRole('region', { name: /^waste records$/i })
     await user.click(within(section).getByRole('button', { name: /new waste record/i }))
 
-    await user.type(within(section).getByLabelText(/waste number/i), 'wst-0004')
+    expect(
+      within(section).getByText(/number assigned automatically when saved/i),
+    ).toBeInTheDocument()
     await user.selectOptions(within(section).getByLabelText('Reason'), 'burnt_food')
     await user.selectOptions(within(section).getByLabelText(/item for waste record line 1/i), 'i-egg')
     await user.type(within(section).getByLabelText(/quantity for waste record line 1/i), '3')
@@ -306,7 +365,6 @@ describe('Inventory — adjustments and waste', () => {
       expect(stockApi.createInventoryAdjustment).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: 'waste',
-          adjustmentNumber: 'WST-0004',
           reason: 'burnt_food',
           lines: [
             {
@@ -320,6 +378,144 @@ describe('Inventory — adjustments and waste', () => {
         }),
       ),
     )
+  })
+
+  it('prefills a draft adjustment and updates it without changing its kind', async () => {
+    stockApi.listInventoryAdjustments.mockImplementation((kind: string) =>
+      Promise.resolve(kind === 'adjustment' ? [adjustmentDocument('draft')] : []),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^inventory adjustments$/i })
+    await user.click(
+      await within(section).findByRole('button', { name: /edit adjustment adj-0002/i }),
+    )
+    expect(within(section).getByText('Edit inventory adjustment')).toBeInTheDocument()
+    expect(within(section).queryByLabelText(/adjustment number/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Quantity for adjustment line 1')).toHaveValue('500')
+
+    await user.clear(screen.getByLabelText('Quantity for adjustment line 1'))
+    await user.type(screen.getByLabelText('Quantity for adjustment line 1'), '600')
+    await user.click(within(section).getByRole('button', { name: /save draft/i }))
+
+    await waitFor(() =>
+      expect(stockApi.updateInventoryAdjustment).toHaveBeenCalledWith('adj-2', {
+        kind: 'adjustment',
+        adjustmentDate: '2026-11-18',
+        locationId: 'l-main',
+        reason: 'damage',
+        notes: null,
+        lines: [
+          {
+            itemId: 'i-tomato',
+            unitId: 'u-g',
+            direction: 'out',
+            quantity: 600,
+            unitCost: null,
+          },
+        ],
+      }),
+    )
+    expect(stockApi.createInventoryAdjustment).not.toHaveBeenCalled()
+    expect(await within(section).findByText(/draft updated/i)).toBeInTheDocument()
+  })
+
+  it('keeps waste direction fixed when editing a waste draft', async () => {
+    stockApi.listInventoryAdjustments.mockImplementation((kind: string) =>
+      Promise.resolve(
+        kind === 'waste'
+          ? [
+              {
+                ...adjustmentDocument('draft', 'wst-2'),
+                adjustment_number: 'WST-0002',
+                kind: 'waste',
+                reason: 'burnt_food',
+              },
+            ]
+          : [],
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^waste records$/i })
+    await user.click(await within(section).findByRole('button', { name: /edit waste record wst-0002/i }))
+    expect(within(section).getByText('Edit waste record')).toBeInTheDocument()
+    expect(
+      within(section).queryByLabelText(/direction for adjustment line/i),
+    ).not.toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText('Quantity for waste record line 1'))
+    await user.type(screen.getByLabelText('Quantity for waste record line 1'), '4')
+    await user.click(within(section).getByRole('button', { name: /save draft/i }))
+
+    await waitFor(() =>
+      expect(stockApi.updateInventoryAdjustment).toHaveBeenCalledWith('wst-2', {
+        kind: 'waste',
+        adjustmentDate: '2026-11-18',
+        locationId: 'l-main',
+        reason: 'burnt_food',
+        notes: null,
+        lines: [
+          {
+            itemId: 'i-tomato',
+            unitId: 'u-g',
+            direction: 'out',
+            quantity: 4,
+            unitCost: null,
+          },
+        ],
+      }),
+    )
+  })
+
+  it('deletes a draft adjustment only after confirmation', async () => {
+    stockApi.listInventoryAdjustments.mockImplementation((kind: string) =>
+      Promise.resolve(kind === 'adjustment' ? [adjustmentDocument('draft')] : []),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^inventory adjustments$/i })
+    await user.click(
+      await within(section).findByRole('button', { name: /delete adjustment adj-0002/i }),
+    )
+    expect(within(section).getByText('Delete this draft?')).toBeInTheDocument()
+    expect(stockApi.deleteInventoryAdjustment).not.toHaveBeenCalled()
+
+    await user.click(within(section).getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => {
+      expect(stockApi.deleteInventoryAdjustment).toHaveBeenCalledWith('adj-2')
+    })
+    expect(await within(section).findByText(/ADJ-0002 deleted/i)).toBeInTheDocument()
+  })
+
+  it('hides edit and delete on adjustments that are no longer drafts', async () => {
+    const statuses = ['submitted', 'approved', 'rejected', 'posted'] as const
+    stockApi.listInventoryAdjustments.mockImplementation((kind: string) =>
+      Promise.resolve(
+        kind === 'adjustment'
+          ? statuses.map((status, index) => ({
+              ...adjustmentDocument(status, `adj-${status}`),
+              adjustment_number: `ADJ-000${index + 2}`,
+            }))
+          : [],
+      ),
+    )
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^inventory adjustments$/i })
+    expect(await within(section).findByText('ADJ-0005')).toBeInTheDocument()
+    for (let index = 2; index <= 5; index += 1) {
+      const number = `ADJ-000${index}`
+      expect(
+        within(section).queryByRole('button', { name: `Edit adjustment ${number}` }),
+      ).toBeNull()
+      expect(
+        within(section).queryByRole('button', { name: `Delete adjustment ${number}` }),
+      ).toBeNull()
+    }
   })
 
   it('lets a storekeeper submit but not approve, and a manager approve', async () => {
@@ -380,7 +576,9 @@ describe('Inventory — counts', () => {
     const section = await screen.findByRole('region', { name: /^inventory counts$/i })
     await user.click(within(section).getByRole('button', { name: /new count/i }))
 
-    await user.type(within(section).getByLabelText(/count number/i), 'cnt-0009')
+    expect(
+      within(section).getByText(/number assigned automatically when saved/i),
+    ).toBeInTheDocument()
     await user.selectOptions(within(section).getByLabelText('Location'), 'l-main')
     await user.selectOptions(within(section).getByLabelText(/item for count line 1/i), 'i-tomato')
 
@@ -395,13 +593,78 @@ describe('Inventory — counts', () => {
     await waitFor(() =>
       expect(stockApi.createInventoryCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          countNumber: 'CNT-0009',
           locationId: 'l-main',
           counterName: 'Test Storekeeper',
           lines: [{ itemId: 'i-tomato', physicalQuantity: 1500 }],
         }),
       ),
     )
+  })
+
+  it('prefills a draft count and re-snapshots the system quantity on update', async () => {
+    stockApi.listInventoryCounts.mockResolvedValue([countDocument('draft')])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^inventory counts$/i })
+    await user.click(await within(section).findByRole('button', { name: /edit count cnt-0002/i }))
+    expect(within(section).getByText('Edit count sheet')).toBeInTheDocument()
+    expect(within(section).queryByLabelText(/count number/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Physical quantity for count line 1')).toHaveValue('1500')
+    expect(within(section).getAllByText('2,000 g').length).toBeGreaterThan(0)
+
+    await user.clear(screen.getByLabelText('Physical quantity for count line 1'))
+    await user.type(screen.getByLabelText('Physical quantity for count line 1'), '1600')
+    await user.click(within(section).getByRole('button', { name: /save draft/i }))
+
+    await waitFor(() =>
+      expect(stockApi.updateInventoryCount).toHaveBeenCalledWith('count-2', {
+        countDate: '2026-11-18',
+        locationId: 'l-main',
+        counterName: 'Test Storekeeper',
+        notes: null,
+        lines: [{ itemId: 'i-tomato', physicalQuantity: 1600 }],
+      }),
+    )
+    const payload = JSON.stringify(stockApi.updateInventoryCount.mock.calls[0]?.[1])
+    expect(payload).not.toMatch(/system/i)
+    expect(stockApi.createInventoryCount).not.toHaveBeenCalled()
+  })
+
+  it('deletes a draft count only after confirmation', async () => {
+    stockApi.listInventoryCounts.mockResolvedValue([countDocument('draft')])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^inventory counts$/i })
+    await user.click(await within(section).findByRole('button', { name: /delete count cnt-0002/i }))
+    expect(within(section).getByText('Delete this draft?')).toBeInTheDocument()
+    expect(stockApi.deleteInventoryCount).not.toHaveBeenCalled()
+
+    await user.click(within(section).getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => {
+      expect(stockApi.deleteInventoryCount).toHaveBeenCalledWith('count-2')
+    })
+    expect(await within(section).findByText(/CNT-0002 deleted/i)).toBeInTheDocument()
+  })
+
+  it('hides edit and delete on counts that are no longer drafts', async () => {
+    const statuses = ['submitted', 'approved', 'rejected', 'posted'] as const
+    stockApi.listInventoryCounts.mockResolvedValue(
+      statuses.map((status, index) => ({
+        ...countDocument(status, `count-${status}`),
+        count_number: `CNT-000${index + 2}`,
+      })),
+    )
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^inventory counts$/i })
+    expect(await within(section).findByText('CNT-0005')).toBeInTheDocument()
+    for (let index = 2; index <= 5; index += 1) {
+      const number = `CNT-000${index}`
+      expect(within(section).queryByRole('button', { name: `Edit count ${number}` })).toBeNull()
+      expect(within(section).queryByRole('button', { name: `Delete count ${number}` })).toBeNull()
+    }
   })
 
   it('blocks creation for a role without inventory management', async () => {

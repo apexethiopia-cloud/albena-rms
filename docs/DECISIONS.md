@@ -1,6 +1,6 @@
 # Albena RMS — Architecture Decision Records (ADR)
 
-**Updated**: 2026-11-17 to reflect SRS v3.0 approval
+**Updated**: 2026-11-19 — SRS v3.0 approval plus ADR-014..017 (POS, numbering, draft CRUD, brand theme)
 
 ---
 
@@ -147,6 +147,59 @@
   - **KDS (KDS-01..05).** The kitchen display reads orders in sent/preparing/ready states and updates them through `set_order_status()`. `orders` and `order_lines` join the `supabase_realtime` publication so connected clients receive changes; each event triggers a refetch under RLS. Offline KDS remains out of scope.
   - **Roles**: menu and table layout = System Administrator/General Manager/Restaurant Manager; table status also Waiter/Cashier; reservations and order taking = those plus Waiter; kitchen status = System Administrator/General Manager/Restaurant Manager/Executive Chef/Kitchen Staff; close = System Administrator/General Manager/Restaurant Manager/Cashier; business settings = System Administrator/General Manager.
 - **Consequences**: Migration `20261118001000_restaurant_operations.sql` adds the tables, views, triggers, RLS and fifteen RPCs. Recipe costing can later join `menu_items.recipe_id`; theoretical consumption (REC-07, COST-01..03) still needs sales reporting in Phase 7. Outlet scoping of reads remains role-based because stock locations and outlets are still not linked and all test users hold every role.
+
+---
+
+## ADR-014: Quick POS and Cashier Order Creation
+- **Date**: 2026-11-19 | **Status**: Accepted
+- **SRS Reference**: ORD-01, ORD-06, SEC-ROLE-01..06, ADR-003, ADR-013
+- **Context**: The original order-entry screen is a single flat form with a menu-item dropdown. Cashiers could close orders but not create them, so a cashier taking a walk-in order had to find a waiter. The owner chose to add a POS-style screen alongside the existing form and to allow cashiers to create orders.
+- **Decision**:
+  - A `Quick POS` panel is mounted on `/operations` immediately before the existing `OrdersPanel`; the form is retained unchanged (no breaking replacement).
+  - The POS uses category chips, item cards with a quantity badge, a cart with quantity steppers, and a running total. It submits through the existing `create_order()` RPC after the same shared client validation used by the form.
+  - `can_take_orders()` now includes `cashier` in addition to System Administrator, General Manager, Restaurant Manager and Waiter. Authorisation remains in PostgreSQL; the UI role mirror is UX only (ADR-003).
+  - `can_update_kitchen_status()` is unchanged: a cashier can create and close an order but cannot advance it on the kitchen display.
+- **Consequences**: Cashiers can now create orders that start in `pending`; a user with kitchen-status rights must send them. No new RPC or business rule was introduced. Implemented by migration `20261119001300_auto_numbering.sql` and `src/features/orders/PosPanel.tsx`.
+
+---
+
+## ADR-015: Database-Authoritative Automatic Numbering
+- **Date**: 2026-11-19 | **Status**: Accepted
+- **SRS Reference**: PR-01, PO-01, GRN-01, SIV-01, CNT-01, ADJ-01, WST-01, PROD-01, REC-01, OUT-01, SUP-01, INV-01, MENU-01, TBL-01, DATA-02, ADR-003
+- **Context**: Only orders, receipts and reservations had automatic numbers; every other business document and every master-data code was typed by the user with reactive duplicate errors. The owner chose database-generated numbers for both documents and master codes.
+- **Decision**:
+  - Business documents use a company-wide, per-business-day sequence: `PR-YYYYMMDD-NNNN`, `PO-…`, `GRN-…`, `SIV-…`, `CNT-…`, `ADJ-…`, `WST-…`, `PRD-…`. The counter table `company_document_sequences` is keyed by `(doc_type, sequence_date)`, uses `business_today()` (OD-01), and allocates with an atomic `INSERT … ON CONFLICT DO UPDATE … RETURNING`. Prefixes are fixed server-side; callers cannot supply one.
+  - Master codes use a separate company-wide sequence: `OUT-00001`, `LOC-00001`, `SUP-00001`, `ITM-00001`, `MNU-00001`, `TBL-00001`, `RCP-00001` (and `CAT-00001` reserved). BEFORE INSERT triggers fill only a null/blank `code`; a non-blank user code is preserved and still validated. `item_categories` has no `code` column and is skipped.
+  - Both allocator functions have no direct `EXECUTE` grant to `anon` or `authenticated`; only the owning `SECURITY DEFINER` workflow RPCs and triggers call them. This prevents consuming a number without creating a document.
+  - The `create_*` RPC signatures no longer accept a number/code parameter. The frontend does not generate or suggest numbers.
+  - A failed creation rolls back its allocation. Posted numbers are never reused or renamed; updating or deleting a draft cannot change its number.
+- **Consequences**: Manual number fields and their duplicate-error mappings were removed from PR, PO, GRN, SIV, count, adjustment/waste, production and recipe forms; master-code fields became optional with an `Auto-generated` placeholder. Implemented by migration `20261119001300_auto_numbering.sql`. The existing outlet-scoped `document_sequences` for orders/receipts/reservations is unchanged.
+
+---
+
+## ADR-016: Draft-Only Document Editing and Deletion
+- **Date**: 2026-11-19 | **Status**: Accepted
+- **SRS Reference**: PR-02, PO-02, GRN-02, SIV-02, CNT-02, ADJ-02, WST-02, PROD-02, ADR-007, ADR-009, ADR-011, ADR-012, ADR-013
+- **Context**: All business documents were create-once and status-advance-only. There was no way to correct a typo in an unsaved-to-final draft short of creating a second document. The owner chose edit and delete for drafts/unposted documents only.
+- **Decision**:
+  - Role-gated `update_*` and `delete_*` RPCs are added for purchase requests, purchase orders, GRNs, SIVs, inventory counts, inventory adjustments/waste and production orders (migration `20261119001400_draft_crud.sql`).
+  - Edit gates: PR/PO/count/adjustment/waste/production require `status = 'draft'`; GRN/SIV require `posted_at is null`. All use the same `can_*` role helper as their create RPC and lock the header row (`FOR UPDATE`).
+  - Line replacement reuses the create RPC's validation. Immutable fields are not even parameters: document number, id, `pr_id` for POs, `po_id` for GRNs, `kind` for adjustments/waste, all decision/approval/posting metadata and status. Count lines get a fresh ledger `system_quantity` snapshot when edited.
+  - Delete removes lines then the header and is refused for any submitted, approved, posted, closed or receipt-linked document.
+  - Recipe content continues to follow ADR-012 — every content change is a new immutable version. Only header metadata (`name`, `menu_item_name`, `notes`) is editable through the existing `update_recipe()`; the UI now exposes that action. Published/archived versions stay immutable.
+  - No generic cancel, void or duplicate operation was added; no new status, approval threshold or separation-of-duties rule was invented (OD-06).
+- **Consequences**: Posted stock/financial documents, receipts, recipe versions and the append-only audit log remain immutable. Corrections to posted records still require a new traceable transaction (ADR-007/009).
+
+---
+
+## ADR-017: Black and Gold Brand Theme (Gold-Forward Light UI)
+- **Date**: 2026-11-19 | **Status**: Accepted
+- **Context**: The prototype used a green `brand` palette across 208 utility-class usages. The owner selected a Black and Gold brand with a gold-forward but light canvas.
+- **Decision**:
+  - Keep the existing `brand-50…900` token keys and remap them: pale gold surfaces (`50/100/200`), deep gold focus and accents (`500/700/800/900`), near-black primary (`600`). This re-themes all existing `brand-*` usages without touching feature components.
+  - `body` uses `bg-brand-50`; the active sidebar item and environment badge use `bg-brand-100 text-brand-900`; the logo tile and favicon use deep gold; `theme-color` is near-black.
+  - Semantic colours are unchanged: emerald = success/posted, red/rose = error/rejected, amber = warning/draft/pending, sky/indigo = informational workflow states. No dark-canvas pass was done; white cards and slate text remain.
+- **Consequences**: The change is confined to `tailwind.config.js`, `src/index.css`, `index.html`, `public/favicon.svg` and two AppShell classes. No new colour token or theme provider was introduced.
 
 ---
 

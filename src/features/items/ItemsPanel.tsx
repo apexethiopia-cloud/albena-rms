@@ -196,19 +196,20 @@ export function ItemsPanel() {
     setFormError(null)
 
     try {
+      const label = result.normalized.code ? `Item ${result.normalized.code}` : 'Item'
       let itemId: string | null = null
       if (mode.kind === 'create') {
         itemId = await createItem(result.normalized)
         if (needsConversion) {
           await createItemUnitConversion(itemId, purchaseUnitId, Number(factor))
         }
-        setNotice(`Item ${result.normalized.code} created.`)
+        setNotice(`${label} created.`)
       } else {
         await updateItem(mode.item.id, result.normalized)
         if (needsConversion) {
           await updateItemUnitConversion(mode.item.id, purchaseUnitId, Number(factor))
         }
-        setNotice(`Item ${result.normalized.code} updated.`)
+        setNotice(`${label} updated.`)
       }
       closeForm()
       reload()
@@ -347,11 +348,11 @@ export function ItemsPanel() {
                   'mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase shadow-sm focus:border-brand-500',
                   fieldErrors.code ? 'border-red-400' : 'border-slate-300',
                 )}
-                placeholder="e.g. TOMATO"
+                placeholder="Auto-generated"
                 autoComplete="off"
               />
               <p id="item-code-hint" className="mt-1 text-xs text-slate-500">
-                2–20 characters: letters, digits, hyphen or underscore.
+                Leave blank to generate a code automatically.
               </p>
               {fieldErrors.code && (
                 <p id="item-code-error" className="mt-1 text-xs text-red-700">

@@ -105,7 +105,6 @@ export async function listRecipeCosts(): Promise<RecipeCost[]> {
 
 export async function createRecipe(input: NormalizedRecipe): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_recipe', {
-    p_code: input.code,
     p_name: input.name,
     p_menu_item_name: input.menuItemName,
     p_notes: input.notes,

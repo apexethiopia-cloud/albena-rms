@@ -9,6 +9,8 @@ const stockApi = vi.hoisted(() => ({
   listStockMovements: vi.fn(),
   listSivs: vi.fn(),
   createSiv: vi.fn(),
+  updateSiv: vi.fn(),
+  deleteSiv: vi.fn(),
   postSiv: vi.fn(),
   listInventoryAdjustments: vi.fn(),
   createInventoryAdjustment: vi.fn(),
@@ -171,6 +173,8 @@ beforeEach(() => {
   stockApi.listStockMovements.mockResolvedValue([])
   stockApi.listSivs.mockResolvedValue([])
   stockApi.createSiv.mockResolvedValue('siv-1')
+  stockApi.updateSiv.mockResolvedValue(undefined)
+  stockApi.deleteSiv.mockResolvedValue(undefined)
   stockApi.postSiv.mockResolvedValue(undefined)
   stockApi.listInventoryAdjustments.mockResolvedValue([])
   stockApi.listInventoryCounts.mockResolvedValue([])
@@ -218,7 +222,7 @@ describe('Inventory — stock ledger', () => {
     await screen.findByRole('region', { name: /store issue vouchers/i })
     await user.click(screen.getByRole('button', { name: /new siv/i }))
 
-    await user.type(screen.getByLabelText('SIV number'), 'siv-0001')
+    expect(screen.getByText(/number assigned automatically when saved/i)).toBeInTheDocument()
     await user.selectOptions(screen.getByLabelText('Item for SIV line 1'), 'i-tomato')
     await user.clear(screen.getByLabelText('Quantity for SIV line 1'))
     await user.type(screen.getByLabelText('Quantity for SIV line 1'), '2')
@@ -226,7 +230,6 @@ describe('Inventory — stock ledger', () => {
 
     await waitFor(() => {
       expect(stockApi.createSiv).toHaveBeenCalledWith({
-        sivNumber: 'SIV-0001',
         issueDate: expect.any(String),
         sourceLocationId: 'l-main',
         destinationLocationId: 'l-kitchen',
@@ -234,6 +237,85 @@ describe('Inventory — stock ledger', () => {
         lines: [{ itemId: 'i-tomato', unitId: 'u-g', quantity: 2 }],
       })
     })
+  })
+
+  it('prefills a draft SIV and updates it through the update RPC', async () => {
+    stockApi.listSivs.mockResolvedValue([DRAFT_SIV])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /store issue vouchers/i })
+    await user.click(await within(section).findByRole('button', { name: /edit siv siv-0001/i }))
+    expect(within(section).getByText('Edit store issue voucher')).toBeInTheDocument()
+    expect(screen.queryByLabelText('SIV number')).toBeNull()
+    expect(screen.getByLabelText('Source location')).toHaveValue('l-main')
+    expect(screen.getByLabelText('Destination location')).toHaveValue('l-kitchen')
+    expect(screen.getByLabelText('Quantity for SIV line 1')).toHaveValue('2000')
+
+    await user.clear(screen.getByLabelText('Quantity for SIV line 1'))
+    await user.type(screen.getByLabelText('Quantity for SIV line 1'), '1000')
+    await user.click(within(section).getByRole('button', { name: /save draft/i }))
+
+    await waitFor(() => {
+      expect(stockApi.updateSiv).toHaveBeenCalledWith('siv-1', {
+        issueDate: '2026-11-18',
+        sourceLocationId: 'l-main',
+        destinationLocationId: 'l-kitchen',
+        notes: null,
+        lines: [{ itemId: 'i-tomato', unitId: 'u-g', quantity: 1000 }],
+      })
+    })
+    expect(stockApi.createSiv).not.toHaveBeenCalled()
+    expect(await screen.findByRole('status')).toHaveTextContent(/SIV draft updated/i)
+  })
+
+  it('keeps source and destination validation when editing a SIV', async () => {
+    stockApi.listSivs.mockResolvedValue([DRAFT_SIV])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /store issue vouchers/i })
+    await user.click(await within(section).findByRole('button', { name: /edit siv siv-0001/i }))
+    await user.selectOptions(screen.getByLabelText('Destination location'), 'l-main')
+    await user.click(within(section).getByRole('button', { name: /save draft/i }))
+
+    expect(stockApi.updateSiv).not.toHaveBeenCalled()
+    expect(within(section).getByText(/different/i)).toBeInTheDocument()
+  })
+
+  it('deletes a draft SIV only after confirmation', async () => {
+    stockApi.listSivs.mockResolvedValue([DRAFT_SIV])
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /store issue vouchers/i })
+    await user.click(await within(section).findByRole('button', { name: /delete siv siv-0001/i }))
+    expect(within(section).getByText('Delete this draft?')).toBeInTheDocument()
+    expect(stockApi.deleteSiv).not.toHaveBeenCalled()
+
+    await user.click(within(section).getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => {
+      expect(stockApi.deleteSiv).toHaveBeenCalledWith('siv-1')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(/SIV SIV-0001 deleted/i)
+  })
+
+  it('hides edit and delete actions on a posted SIV', async () => {
+    stockApi.listSivs.mockResolvedValue([
+      {
+        ...DRAFT_SIV,
+        id: 'siv-2',
+        siv_number: 'SIV-0002',
+        posted_by: 'u1',
+        posted_at: '2026-11-18T11:00:00.000Z',
+      },
+    ])
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /store issue vouchers/i })
+    expect(await within(section).findByText('SIV-0002')).toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /edit siv siv-0002/i })).toBeNull()
+    expect(within(section).queryByRole('button', { name: /delete siv siv-0002/i })).toBeNull()
   })
 
   it('posts a draft SIV only after a second confirmation', async () => {

@@ -42,10 +42,16 @@ describe('validateItem', () => {
     expect(result.normalized.purchaseUnitId).toBeNull()
   })
 
-  it('requires a code, a name and a base unit', () => {
+  it('accepts a blank code but still requires a name and base unit', () => {
+    const blankCode = validateItem({ ...VALID, code: '   ' })
+
+    expect(blankCode.valid).toBe(true)
+    expect(blankCode.errors.code).toBeUndefined()
+    expect(blankCode.normalized.code).toBe('')
+
     const result = validateItem({ ...VALID, code: ' ', name: '', baseUnitId: '' })
 
-    expect(result.errors.code).toMatch(/required/i)
+    expect(result.errors.code).toBeUndefined()
     expect(result.errors.name).toMatch(/required/i)
     expect(result.errors.baseUnitId).toMatch(/base unit/i)
   })

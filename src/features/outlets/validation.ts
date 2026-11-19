@@ -18,9 +18,8 @@ export function validateOutlet(input: OutletInput): ValidationResult {
   const code = input.code.trim().toUpperCase()
   const name = input.name.trim()
 
-  if (!code) {
-    errors.code = 'Code is required.'
-  } else if (!CODE_PATTERN.test(code)) {
+  // A blank code is valid: the database trigger generates the master code.
+  if (code && !CODE_PATTERN.test(code)) {
     errors.code = 'Use 2–12 characters: letters, digits, hyphen or underscore.'
   }
 

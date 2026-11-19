@@ -37,7 +37,6 @@ const CONTEXT: StockContext = {
 
 function request(overrides: Partial<PurchaseRequestDraft> = {}): PurchaseRequestDraft {
   return {
-    prNumber: 'pr-0001',
     requestDate: '2026-11-18',
     notes: '',
     lines: [{ key: 'a', itemId: 'i-tomato', unitId: 'u-kg', quantity: '2', unitCost: '' }],
@@ -47,7 +46,6 @@ function request(overrides: Partial<PurchaseRequestDraft> = {}): PurchaseRequest
 
 function order(overrides: Partial<PurchaseOrderDraft> = {}): PurchaseOrderDraft {
   return {
-    poNumber: 'po-0001',
     supplierId: 's1',
     prId: '',
     orderDate: '2026-11-18',
@@ -66,15 +64,16 @@ describe('purchase request validation', () => {
 
     expect(result.valid).toBe(true)
     if (!result.valid) return
-    expect(result.value.prNumber).toBe('PR-0001')
-    expect(result.value.notes).toBeNull()
-    expect(result.value.lines).toEqual([{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2 }])
+    expect(result.value).toEqual({
+      requestDate: '2026-11-18',
+      notes: null,
+      lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2 }],
+    })
   })
 
-  it('requires a number, a date and at least one usable line', () => {
+  it('requires a date and at least one usable line without a caller-supplied number', () => {
     const result = validatePurchaseRequest(
       request({
-        prNumber: '',
         requestDate: '',
         lines: [{ key: 'a', itemId: '', unitId: '', quantity: '', unitCost: '' }],
       }),
@@ -82,7 +81,6 @@ describe('purchase request validation', () => {
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.prNumber).toMatch(/request number/i)
     expect(result.errors.requestDate).toMatch(/request date/i)
     expect(result.errors['line-0-item']).toMatch(/choose an item/i)
     expect(result.errors['line-0-quantity']).toMatch(/quantity greater than zero/i)
@@ -113,11 +111,6 @@ describe('purchase request validation', () => {
     expect(result.value.lines[0].quantity).toBe(2)
   })
 
-  it('rejects an unsupported request number length', () => {
-    const result = validatePurchaseRequest(request({ prNumber: 'x'.repeat(41) }), CONTEXT)
-    expect(result.valid).toBe(false)
-    expect(result.errors.prNumber).toMatch(/40 characters/i)
-  })
 })
 
 describe('purchase order validation', () => {
@@ -126,12 +119,14 @@ describe('purchase order validation', () => {
 
     expect(result.valid).toBe(true)
     if (!result.valid) return
-    expect(result.value.poNumber).toBe('PO-0001')
-    expect(result.value.prId).toBe('pr-1')
-    expect(result.value.expectedDate).toBeNull()
-    expect(result.value.lines).toEqual([
-      { itemId: 'i-tomato', unitId: 'u-kg', quantity: 2, unitCost: 120 },
-    ])
+    expect(result.value).toEqual({
+      supplierId: 's1',
+      prId: 'pr-1',
+      orderDate: '2026-11-18',
+      expectedDate: null,
+      notes: null,
+      lines: [{ itemId: 'i-tomato', unitId: 'u-kg', quantity: 2, unitCost: 120 }],
+    })
   })
 
   it('requires a supplier and a positive unit cost', () => {

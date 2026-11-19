@@ -25,9 +25,10 @@ export function validateMenuItem(
   categoryIds: string[],
 ): Validation<NormalizedMenuItem> {
   const errors: Record<string, string> = {}
+  // A blank code is valid: the database trigger generates the master code.
+  const code = input.code.trim().toUpperCase()
 
-  if (!input.code.trim()) errors.code = 'Enter a menu code.'
-  else if (input.code.trim().length > 40) errors.code = 'Use 40 characters or fewer.'
+  if (code.length > 40) errors.code = 'Use 40 characters or fewer.'
 
   if (!input.name.trim()) errors.name = 'Enter a menu item name.'
   else if (input.name.trim().length > 120) errors.name = 'Use 120 characters or fewer.'
@@ -50,7 +51,7 @@ export function validateMenuItem(
     valid: true,
     errors,
     value: {
-      code: input.code.trim().toUpperCase(),
+      code,
       name: input.name.trim(),
       categoryId: input.categoryId,
       sellingPrice: price as number,

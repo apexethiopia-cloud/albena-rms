@@ -670,4 +670,34 @@
 
 
 
+## Session 26: 2026-11-19 - Quick POS, Automatic Numbering, Draft CRUD and Black/Gold Theme
+
+- **Phase**: enhancement across Phases 3–6, migrations 0013/0014 applied | **Completion**: **35.0%** credited (Phases 4–7 release at final UAT)
+- **Date**: 2026-11-19 14:00 UTC+3
+- **Model**: Big Pickle (OpenCode)
+
+### Actions Completed
+1. **Owner decisions captured** — add POS alongside the existing order form; allow cashiers to create orders; automatic numbering for documents *and* master codes; edit/delete drafts only; gold-forward light black/gold UI.
+2. **Migration 0013 authored and applied** - `20261119001300_auto_numbering.sql` adds `company_document_sequences` and `master_code_sequences` (RLS, no policies, no direct grants), internal-only `next_company_document_number()` / `next_master_code()` allocators, blank-only BEFORE INSERT code triggers on seven master tables, redefined `create_*` RPCs without number/code parameters, and `cashier` in `can_take_orders()`. Owner applied it on 2026-11-19.
+3. **Migration 0014 authored and applied** - `20261119001400_draft_crud.sql` adds fourteen role-gated `update_*`/`delete_*` RPCs for PR, PO, GRN, SIV, counts, adjustments/waste and production. Draft/unposted only; numbers, links, kinds, status and all posting metadata are immutable. `update_recipe()` grants were tightened. Owner applied it on 2026-11-19.
+4. **POS built** - `src/features/orders/PosPanel.tsx` with category chips, item cards and cart, mounted as "Quick POS" before `OrdersPanel` on `/operations`. Cashiers can create orders but not advance the KDS. `PosPanel.test.tsx` added.
+5. **Numbering and CRUD wired across the UI** - number inputs removed from PR/PO/GRN/SIV/count/adjustment/waste/production/recipe forms and replaced with an automatic-assignment note; master-code fields made optional with an `Auto-generated` placeholder; Edit/Delete actions added for draft/unposted documents; recipe header metadata now editable through the existing `update_recipe()`.
+6. **Theme applied** - the `brand` palette remapped to pale gold surfaces, deep-gold accents and near-black primary; `body`, AppShell logo/nav/badge, `theme-color` and favicon updated. Semantic emerald/red/amber/sky colours untouched.
+7. **Records updated** - ADR-014..017 added to `docs/DECISIONS.md`; `ROADMAP.md`, `REQUIREMENTS_TRACEABILITY.md` and this log updated.
+
+### Verification
+- PostgREST structural probe - 23 new/changed RPCs resolve with the exact new signatures and return HTTP 401 / `42501` to anon; both new sequence tables deny anon with `42501`; the internal allocators deny anon; four superseded number/code-bearing signatures return `404` / `PGRST202`. 29/29 checks passed.
+- `npm run typecheck` - Pass
+- `npm run lint` - Pass (zero warnings)
+- Full suite - **302/302 tests across 31 suites** Pass
+- `npm run build` - Pass; `assets/index-BQ3KHbbN.js` (880.80 kB, 200.11 kB gzip), `assets/index-BLPnoNOd.css` (26.62 kB). Chunk-size warning only. Bundle contains `Quick POS`, `Number assigned automatically when saved`, the new `update_*`/`delete_*` RPC names and the new create signatures.
+
+### Outstanding
+- **Agent**: commit and push all changes to `main`; confirm the Cloudflare bundle hash after deployment.
+- **Owner/agent**: authenticated smoke test of actual number/code allocation and draft edit/delete gates (requires one test-user email/password, or an owner live check in the app).
+- **Owner/agent**: final UAT for AC-06, AC-07, AC-08, AC-10, AC-11, AC-12, AC-14 and AC-15.
+- OD-06 thresholds/separation of duties and the stock-location to outlet mapping remain open; RLS negative-test SQL script (AC-02) still to add.
+
+
+
 

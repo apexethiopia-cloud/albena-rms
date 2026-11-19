@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Info,
   Loader2,
+  Pencil,
   Plus,
   RotateCw,
   Send,
@@ -25,9 +26,11 @@ import {
 import { listLocations, type StockLocation } from '@/features/locations/api'
 import {
   createSiv,
+  deleteSiv,
   listSivs,
   listStockBalances,
   postSiv,
+  updateSiv,
   type Numberish,
   type Siv,
   type StockBalance,
@@ -51,7 +54,6 @@ function emptyLine(key: number): StockLineDraft {
 
 function initialForm(sourceLocationId: string, destinationLocationId: string): SivDraft {
   return {
-    sivNumber: '',
     issueDate: toIsoDate(new Date()),
     sourceLocationId,
     destinationLocationId,
@@ -84,6 +86,7 @@ export function SivPanel() {
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<SivDraft>(() => initialForm('', ''))
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -92,6 +95,7 @@ export function SivPanel() {
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [confirmPostId, setConfirmPostId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const lineSequence = useRef(1)
 
@@ -174,6 +178,7 @@ export function SivPanel() {
 
   const openCreate = () => {
     lineSequence.current = 1
+    setEditingId(null)
     setForm(
       initialForm(activeLocations[0]?.id ?? '', activeLocations[1]?.id ?? activeLocations[0]?.id ?? ''),
     )
@@ -183,8 +188,31 @@ export function SivPanel() {
     setFormOpen(true)
   }
 
+  const openEdit = (document: Siv) => {
+    lineSequence.current = Math.max(document.siv_lines.length, 1)
+    setEditingId(document.id)
+    setForm({
+      issueDate: document.issue_date,
+      sourceLocationId: document.source_location_id,
+      destinationLocationId: document.destination_location_id,
+      notes: document.notes ?? '',
+      lines: document.siv_lines.map((line, index) => ({
+        key: `siv-edit-${index + 1}`,
+        itemId: line.item_id,
+        unitId: line.unit_id,
+        quantity: String(line.quantity),
+        unitCost: '',
+      })),
+    })
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setFormOpen(true)
+  }
+
   const closeForm = () => {
     setFormOpen(false)
+    setEditingId(null)
     setFieldErrors({})
     setFormError(null)
   }
@@ -234,14 +262,36 @@ export function SivPanel() {
     setNotice(null)
 
     try {
-      await createSiv(result.value)
-      setNotice(`SIV ${result.value.sivNumber} saved as a draft. Post it to move stock.`)
+      if (editingId) {
+        await updateSiv(editingId, result.value)
+        setNotice('SIV draft updated. Post it to move stock.')
+      } else {
+        await createSiv(result.value)
+        setNotice('SIV saved as a draft. Post it to move stock.')
+      }
       closeForm()
       reload()
     } catch (error) {
       setFormError(toMessage(error))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const remove = async (document: Siv) => {
+    setPendingId(document.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deleteSiv(document.id)
+      setNotice(`SIV ${document.siv_number} deleted.`)
+      setConfirmDeleteId(null)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setPendingId(null)
     }
   }
 
@@ -256,6 +306,7 @@ export function SivPanel() {
         `SIV ${document.siv_number} posted. FIFO cost moved from source to destination.`,
       )
       setConfirmPostId(null)
+      setConfirmDeleteId(null)
       reload()
     } catch (error) {
       setActionError(toMessage(error))
@@ -345,7 +396,7 @@ export function SivPanel() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id="siv-form-heading" className="text-sm font-semibold text-slate-900">
-                New store issue voucher
+                {editingId ? 'Edit store issue voucher' : 'New store issue voucher'}
               </h3>
               <p className="mt-1 text-xs text-slate-600">
                 Stock must already exist at the source. Posting is rejected if any line would make
@@ -373,24 +424,10 @@ export function SivPanel() {
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label htmlFor="siv-number" className="block text-sm font-medium text-slate-700">
-                SIV number
-              </label>
-              <input
-                id="siv-number"
-                value={form.sivNumber}
-                onChange={(event) => setField('sivNumber')(event.target.value)}
-                aria-invalid={Boolean(fieldErrors.sivNumber)}
-                className={cn(
-                  'mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase shadow-sm focus:border-brand-500',
-                  fieldErrors.sivNumber ? 'border-red-400' : 'border-slate-300',
-                )}
-                placeholder="e.g. SIV-0001"
-                autoComplete="off"
-              />
-              {fieldErrors.sivNumber && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.sivNumber}</p>
-              )}
+              <p className="block text-sm font-medium text-slate-700">SIV number</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Number assigned automatically when saved.
+              </p>
             </div>
 
             <div>
@@ -727,6 +764,52 @@ export function SivPanel() {
                       )}
                       {canPost && !isPosted && (
                         <>
+                          {confirmDeleteId === document.id ? (
+                            <>
+                              <span className="text-xs text-slate-600">Delete this draft?</span>
+                              <button
+                                type="button"
+                                onClick={() => void remove(document)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                              >
+                                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                                Confirm delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                disabled={busy}
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(document)}
+                                aria-label={`Edit SIV ${document.siv_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDeleteId(document.id)
+                                  setConfirmPostId(null)
+                                }}
+                                aria-label={`Delete SIV ${document.siv_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                Delete
+                              </button>
+                            </>
+                          )}
                           {confirmPostId === document.id ? (
                             <>
                               <button
@@ -750,7 +833,10 @@ export function SivPanel() {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => setConfirmPostId(document.id)}
+                              onClick={() => {
+                                setConfirmPostId(document.id)
+                                setConfirmDeleteId(null)
+                              }}
                               className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                             >
                               Post

@@ -1,7 +1,7 @@
 # Albena RMS — Requirements Traceability Matrix
 
 **Authoritative Source**: `docs/SRS_v3.0.md` (approved 2026-11-17)
-**Last Updated**: 2026-11-18
+**Last Updated**: 2026-11-19 — added Section 11 (POS, automatic numbering, draft CRUD, brand theme)
 
 > A requirement is NOT complete merely because code exists. Each row must have implementation evidence, a migration reference, a test case reference and a verified status before it can be marked Accepted.
 
@@ -414,6 +414,19 @@
 | AC-17 | No secrets in repo or browser-delivered code | 0 | **In Progress** |
 | AC-18 | Free-tier/no-card eligibility checked and recorded | 0 | Not Started |
 | AC-19 | Owner reviews open decisions and approves next phase scope | 0,8 | Not Started |
+
+---
+
+## Section 11 — 2026-11-19 Enhancements (POS, numbering, draft CRUD, theme)
+
+| Req ID | Enhancement | Migration | Implementation File(s) | Test Case | Status |
+|:---|:---|:---|:---|:---|:---:|
+| ORD-01, SEC-ROLE-01 | Quick POS panel with category chips, item cards, cart and running total, alongside the existing order form | `20261119001300_auto_numbering.sql` (cashier in `can_take_orders()`) | `src/features/orders/PosPanel.tsx`, `src/pages/Operations.tsx`, `src/features/orders/OrdersPanel.tsx` | `PosPanel.test.tsx`, `Operations.test.tsx` | **Implemented** — role-gated; submits through existing `create_order()`; no new RPC |
+| PR-01, PO-01, GRN-01, SIV-01, CNT-01, ADJ-01, WST-01, PROD-01 | Automatic document numbers `PR/PO/GRN/SIV/CNT/ADJ/WST/PRD-YYYYMMDD-NNNN` allocated atomically in the database; manual number fields removed | `20261119001300_auto_numbering.sql` | `src/features/procurement/**`, `src/features/stock/**`, `src/features/production/**` | `Procurement.test.tsx`, `Receiving.test.tsx`, `Stock.test.tsx`, `InventoryControl.test.tsx`, `Kitchen.test.tsx` | **Implemented** — pending owner application of 0013/0014 and PostgREST probe |
+| OUT-01, SUP-01, INV-01, MENU-01, TBL-01, REC-01 | Automatic master codes `OUT/LOC/SUP/ITM/MNU/TBL/RCP-00001` on blank insert; manual codes preserved | `20261119001300_auto_numbering.sql` | BEFORE INSERT triggers plus code fields in the six master panels and recipes | `Locations.test.tsx`, `Suppliers.test.tsx`, `Items.test.tsx`, `Operations.test.tsx`, validation suites | **Implemented** — manual-code paths still tested |
+| PR-02, PO-02, GRN-02, SIV-02, CNT-02, ADJ-02, WST-02, PROD-02 | Role-gated edit/delete for draft or unposted documents; posted/final records stay immutable | `20261119001400_draft_crud.sql` | `update_*`/`delete_*` RPC wrappers and Edit/Delete actions in the procurement, stock and production panels | `Procurement.test.tsx`, `Receiving.test.tsx`, `Stock.test.tsx`, `InventoryControl.test.tsx`, `Kitchen.test.tsx` | **Implemented** — pending owner application of 0014 |
+| REC-02, ADR-012 | Recipe header metadata editable via existing `update_recipe()`; versions and content stay immutable | — (0014 grants only) | `src/features/recipes/RecipesPanel.tsx`, `src/features/recipes/api.ts` | `Kitchen.test.tsx`, `recipesValidation.test.ts` | **Implemented** — no published/archived version edits |
+| ADR-017 | Black and gold brand theme with light surfaces and unchanged semantic colours | — | `tailwind.config.js`, `src/index.css`, `index.html`, `public/favicon.svg`, `src/components/layout/AppShell.tsx` | Visual check; no colour-class assertions | **Implemented** |
 
 ---
 

@@ -49,7 +49,6 @@ const CONTEXT: StockContext = {
 
 function grn(overrides: Partial<GrnDraft> = {}): GrnDraft {
   return {
-    grnNumber: ' grn-0001 ',
     supplierId: 'supplier-1',
     invoiceNumber: 'INV-77',
     receivedDate: '2026-11-18',
@@ -65,7 +64,6 @@ function grn(overrides: Partial<GrnDraft> = {}): GrnDraft {
 
 function siv(overrides: Partial<SivDraft> = {}): SivDraft {
   return {
-    sivNumber: 'siv-0001',
     issueDate: '2026-11-18',
     sourceLocationId: 'main-store',
     destinationLocationId: 'kitchen-store',
@@ -115,7 +113,7 @@ describe('GRN validation', () => {
 
     expect(result.valid).toBe(true)
     if (!result.valid) return
-    expect(result.value.grnNumber).toBe('GRN-0001')
+    expect(result.value).not.toHaveProperty('grnNumber')
     expect(result.value.notes).toBe('Delivery')
     expect(result.value.poId).toBeNull()
     expect(result.value.lines).toEqual([
@@ -164,7 +162,6 @@ describe('GRN validation', () => {
   it('rejects missing header fields and zero quantities', () => {
     const result = validateGrn(
       grn({
-        grnNumber: '',
         supplierId: '',
         invoiceNumber: '',
         receivedDate: '',
@@ -177,7 +174,6 @@ describe('GRN validation', () => {
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.grnNumber).toBeTruthy()
     expect(result.errors.supplierId).toBeTruthy()
     expect(result.errors.invoiceNumber).toBeTruthy()
     expect(result.errors.receivedDate).toBeTruthy()
@@ -205,7 +201,7 @@ describe('SIV validation', () => {
 
     expect(result.valid).toBe(true)
     if (!result.valid) return
-    expect(result.value.sivNumber).toBe('SIV-0001')
+    expect(result.value).not.toHaveProperty('sivNumber')
     expect(result.value.notes).toBeNull()
     expect(result.value.lines).toEqual([
       { itemId: 'tomato', unitId: 'kg', quantity: 2 },
@@ -228,7 +224,6 @@ describe('SIV validation', () => {
 function adjustment(overrides: Partial<AdjustmentDraft> = {}): AdjustmentDraft {
   return {
     kind: 'adjustment',
-    adjustmentNumber: ' adj-0001 ',
     adjustmentDate: '2026-11-18',
     locationId: 'location-1',
     reason: 'damage',
@@ -242,7 +237,6 @@ function adjustment(overrides: Partial<AdjustmentDraft> = {}): AdjustmentDraft {
 
 function count(overrides: Partial<CountDraft> = {}): CountDraft {
   return {
-    countNumber: ' cnt-0001 ',
     countDate: '2026-11-18',
     locationId: 'location-1',
     counterName: '  Selam ',
@@ -259,7 +253,7 @@ describe('Adjustment and waste validation', () => {
     expect(result.valid).toBe(true)
     if (!result.valid) return
     expect(result.value.kind).toBe('adjustment')
-    expect(result.value.adjustmentNumber).toBe('ADJ-0001')
+    expect(result.value).not.toHaveProperty('adjustmentNumber')
     expect(result.value.notes).toBe('Dropped crate')
     expect(result.value.lines).toEqual([
       { itemId: 'tomato', unitId: 'kg', direction: 'out', quantity: 1.5, unitCost: null },
@@ -329,7 +323,6 @@ describe('Adjustment and waste validation', () => {
   it('rejects a unit with no conversion and the missing header fields', () => {
     const result = validateInventoryAdjustment(
       adjustment({
-        adjustmentNumber: '',
         adjustmentDate: '',
         locationId: '',
         reason: 'not-a-reason',
@@ -341,7 +334,6 @@ describe('Adjustment and waste validation', () => {
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.adjustmentNumber).toBeTruthy()
     expect(result.errors.adjustmentDate).toBeTruthy()
     expect(result.errors.locationId).toBeTruthy()
     expect(result.errors.reason).toBeTruthy()
@@ -356,7 +348,7 @@ describe('Count validation', () => {
 
     expect(result.valid).toBe(true)
     if (!result.valid) return
-    expect(result.value.countNumber).toBe('CNT-0001')
+    expect(result.value).not.toHaveProperty('countNumber')
     expect(result.value.counterName).toBe('Selam')
     expect(result.value.notes).toBeNull()
     expect(result.value.lines).toEqual([{ itemId: 'tomato', physicalQuantity: 0 }])
@@ -393,10 +385,9 @@ describe('Count validation', () => {
     expect(result.errors['line-1-item']).toMatch(/only once/i)
   })
 
-  it('requires a count number, date, location, counter and a line', () => {
+  it('requires a count date, location, counter and a line', () => {
     const result = validateInventoryCount(
       count({
-        countNumber: '',
         countDate: '',
         locationId: '',
         counterName: '   ',
@@ -406,7 +397,6 @@ describe('Count validation', () => {
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.countNumber).toBeTruthy()
     expect(result.errors.countDate).toBeTruthy()
     expect(result.errors.locationId).toBeTruthy()
     expect(result.errors.counterName).toBeTruthy()

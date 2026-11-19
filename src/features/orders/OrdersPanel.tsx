@@ -103,7 +103,8 @@ export function OrdersPanel() {
     ? hasRole(user.roles, 'system_admin') ||
       hasRole(user.roles, 'general_manager') ||
       hasRole(user.roles, 'restaurant_manager') ||
-      hasRole(user.roles, 'waiter')
+      hasRole(user.roles, 'waiter') ||
+      hasRole(user.roles, 'cashier')
     : false
   const canCloseOrders = user
     ? hasRole(user.roles, 'system_admin') ||

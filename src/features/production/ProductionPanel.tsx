@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Factory,
   Loader2,
+  Pencil,
   Plus,
   RotateCw,
   Trash2,
@@ -23,8 +24,10 @@ import {
 import { listLocations, type StockLocation } from '@/features/locations/api'
 import {
   createProductionOrder,
+  deleteProductionOrder,
   listProductionOrders,
   postProductionOrder,
+  updateProductionOrder,
   type ProductionOrder,
 } from './api'
 import {
@@ -44,7 +47,6 @@ function emptyInput(key: number): ProductionInputDraft {
 
 function initialForm(locationId: string, responsibleName: string): ProductionDraft {
   return {
-    orderNumber: '',
     productionDate: toIsoDate(new Date()),
     locationId,
     outputItemId: '',
@@ -80,6 +82,7 @@ export function ProductionPanel() {
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null)
   const [form, setForm] = useState<ProductionDraft>(() => initialForm('', ''))
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -87,7 +90,9 @@ export function ProductionPanel() {
   const [notice, setNotice] = useState<string | null>(null)
 
   const [confirmPostId, setConfirmPostId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [postingId, setPostingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const inputSequence = useRef(1)
 
@@ -143,6 +148,7 @@ export function ProductionPanel() {
 
   const openCreate = () => {
     inputSequence.current = 1
+    setEditingOrderId(null)
     setForm(initialForm(activeLocations[0]?.id ?? '', user?.fullName ?? ''))
     setFieldErrors({})
     setFormError(null)
@@ -150,15 +156,48 @@ export function ProductionPanel() {
     setFormOpen(true)
   }
 
+  const openEdit = (order: ProductionOrder) => {
+    inputSequence.current = order.production_inputs.length
+    setEditingOrderId(order.id)
+    setForm({
+      productionDate: order.production_date,
+      locationId: order.location_id,
+      outputItemId: order.output_item_id,
+      outputUnitId: order.output_unit_id,
+      outputQuantity: String(number(order.output_quantity)),
+      expectedOutputQuantity:
+        order.expected_output_quantity == null
+          ? ''
+          : String(number(order.expected_output_quantity)),
+      responsibleName: order.responsible_name,
+      notes: order.notes ?? '',
+      inputs:
+        order.production_inputs.length > 0
+          ? order.production_inputs.map((line, index) => ({
+              key: `production-input-${index + 1}`,
+              itemId: line.item_id,
+              unitId: line.unit_id,
+              quantity: String(number(line.quantity)),
+            }))
+          : [emptyInput(1)],
+    })
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setConfirmPostId(null)
+    setConfirmDeleteId(null)
+    setFormOpen(true)
+  }
+
   const closeForm = () => {
     setFormOpen(false)
+    setEditingOrderId(null)
     setFieldErrors({})
     setFormError(null)
   }
 
   const setField = (
     key:
-      | 'orderNumber'
       | 'productionDate'
       | 'locationId'
       | 'outputItemId'
@@ -207,8 +246,13 @@ export function ProductionPanel() {
     setNotice(null)
 
     try {
-      await createProductionOrder(result.value)
-      setNotice(`Production order ${result.value.orderNumber} saved as a draft.`)
+      if (editingOrderId) {
+        await updateProductionOrder(editingOrderId, result.value)
+        setNotice('Production order updated.')
+      } else {
+        await createProductionOrder(result.value)
+        setNotice('Production order saved as a draft.')
+      }
       closeForm()
       reload()
     } catch (error) {
@@ -232,6 +276,23 @@ export function ProductionPanel() {
       setActionError(toMessage(error))
     } finally {
       setPostingId(null)
+    }
+  }
+
+  const handleDelete = async (order: ProductionOrder) => {
+    setDeletingId(order.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deleteProductionOrder(order.id)
+      setNotice(`Production order ${order.order_number} deleted.`)
+      setConfirmDeleteId(null)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -318,7 +379,9 @@ export function ProductionPanel() {
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">New production order</h3>
+            <h3 className="text-sm font-semibold text-slate-900">
+              {editingOrderId ? 'Edit production order' : 'New production order'}
+            </h3>
             <button
               type="button"
               onClick={closeForm}
@@ -329,20 +392,11 @@ export function ProductionPanel() {
             </button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-slate-600">
-              <span className="mb-1 block font-medium">Production number</span>
-              <input
-                aria-label="Production number"
-                value={form.orderNumber}
-                onChange={(event) => setField('orderNumber')(event.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-              />
-              {fieldErrors.orderNumber && (
-                <span className="mt-1 block text-red-600">{fieldErrors.orderNumber}</span>
-              )}
-            </label>
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            Number assigned automatically when saved.
+          </p>
 
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-slate-600">
               <span className="mb-1 block font-medium">Production date</span>
               <input
@@ -569,7 +623,7 @@ export function ProductionPanel() {
               className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Save draft
+              {editingOrderId ? 'Save changes' : 'Save draft'}
             </button>
             <button
               type="button"
@@ -700,14 +754,62 @@ export function ProductionPanel() {
                                 Cancel
                               </button>
                             </span>
+                          ) : confirmDeleteId === order.id ? (
+                            <span className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => void handleDelete(order)}
+                                disabled={deletingId === order.id}
+                                className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                              >
+                                {deletingId === order.id && (
+                                  <Loader2
+                                    className="h-3.5 w-3.5 animate-spin"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                                Confirm delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="rounded-md px-1.5 py-1 text-xs text-slate-600 hover:bg-slate-100"
+                              >
+                                Cancel
+                              </button>
+                            </span>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => setConfirmPostId(order.id)}
-                              className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                            >
-                              Post
-                            </button>
+                            <span className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDeleteId(null)
+                                  setConfirmPostId(order.id)
+                                }}
+                                className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                              >
+                                Post
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(order)}
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmPostId(null)
+                                  setConfirmDeleteId(order.id)
+                                }}
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-red-600"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                Delete
+                              </button>
+                            </span>
                           )
                         ) : (
                           <span className="text-xs text-slate-400">—</span>

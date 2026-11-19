@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   describeRecipeDbError,
   validateRecipe,
+  validateRecipeHeader,
   validateRecipeVersion,
   type RecipeDraft,
   type RecipeVersionDraft,
@@ -63,7 +64,6 @@ const CONTEXT: StockContext = {
 
 function recipe(overrides: Partial<RecipeDraft> = {}): RecipeDraft {
   return {
-    code: ' om-01 ',
     name: '  Omelette  ',
     menuItemName: '  Cheese omelette ',
     notes: '',
@@ -86,7 +86,6 @@ function version(overrides: Partial<RecipeVersionDraft> = {}): RecipeVersionDraf
 
 function production(overrides: Partial<ProductionDraft> = {}): ProductionDraft {
   return {
-    orderNumber: ' prod-0001 ',
     productionDate: '2026-11-18',
     locationId: 'l-main',
     outputItemId: 'egg',
@@ -106,7 +105,6 @@ describe('Recipe validation', () => {
 
     expect(result.valid).toBe(true)
     expect(result.value).toEqual({
-      code: 'OM-01',
       name: 'Omelette',
       menuItemName: 'Cheese omelette',
       notes: null,
@@ -116,14 +114,13 @@ describe('Recipe validation', () => {
     })
   })
 
-  it('requires a code, a name, a positive yield and a non-negative price', () => {
+  it('requires a name, a positive yield and a non-negative price', () => {
     const result = validateRecipe(
-      recipe({ code: '   ', name: '', yieldQuantity: '0', sellingPrice: '-1' }),
+      recipe({ name: '', yieldQuantity: '0', sellingPrice: '-1' }),
       CONTEXT,
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.code).toMatch(/recipe code/i)
     expect(result.errors.name).toMatch(/recipe name/i)
     expect(result.errors.yieldQuantity).toMatch(/portions/i)
     expect(result.errors.sellingPrice).toMatch(/zero or more/i)
@@ -177,7 +174,6 @@ describe('Recipe validation', () => {
   it('checks field lengths', () => {
     const result = validateRecipe(
       recipe({
-        code: 'X'.repeat(41),
         name: 'N'.repeat(121),
         menuItemName: 'M'.repeat(121),
         notes: 'O'.repeat(501),
@@ -185,10 +181,33 @@ describe('Recipe validation', () => {
       CONTEXT,
     )
 
-    expect(result.errors.code).toMatch(/40 characters/i)
     expect(result.errors.name).toMatch(/120 characters/i)
     expect(result.errors.menuItemName).toMatch(/120 characters/i)
     expect(result.errors.notes).toMatch(/500 characters/i)
+  })
+
+  it('validates the recipe header fields edited without creating a version', () => {
+    const result = validateRecipeHeader({
+      name: '  Updated omelette  ',
+      menuItemName: '  Cheese omelette ',
+      notes: '  Extra cheese  ',
+    })
+
+    expect(result.valid).toBe(true)
+    expect(result.value).toEqual({
+      name: 'Updated omelette',
+      menuItemName: 'Cheese omelette',
+      notes: 'Extra cheese',
+    })
+
+    const invalid = validateRecipeHeader({
+      name: '',
+      menuItemName: 'M'.repeat(121),
+      notes: 'O'.repeat(501),
+    })
+    expect(invalid.errors.name).toMatch(/recipe name/i)
+    expect(invalid.errors.menuItemName).toMatch(/120 characters/i)
+    expect(invalid.errors.notes).toMatch(/500 characters/i)
   })
 
   it('validates a new version independently of the recipe header', () => {
@@ -218,7 +237,6 @@ describe('Production validation', () => {
 
     expect(result.valid).toBe(true)
     expect(result.value).toEqual({
-      orderNumber: 'PROD-0001',
       productionDate: '2026-11-18',
       locationId: 'l-main',
       outputItemId: 'egg',
@@ -231,10 +249,9 @@ describe('Production validation', () => {
     })
   })
 
-  it('requires a number, a valid date, a location and a responsible user', () => {
+  it('requires a valid date, a location and a responsible user', () => {
     const result = validateProduction(
       production({
-        orderNumber: ' ',
         productionDate: '2026-02-30',
         locationId: '',
         responsibleName: '',
@@ -243,7 +260,6 @@ describe('Production validation', () => {
     )
 
     expect(result.valid).toBe(false)
-    expect(result.errors.orderNumber).toMatch(/production number/i)
     expect(result.errors.productionDate).toMatch(/valid date/i)
     expect(result.errors.locationId).toMatch(/stock location/i)
     expect(result.errors.responsibleName).toMatch(/responsible user/i)
@@ -314,7 +330,7 @@ describe('Production validation', () => {
 describe('Recipes and production database errors', () => {
   it('explains duplicate recipe codes and publish conflicts', () => {
     expect(describeRecipeDbError({ code: '23505', message: 'duplicate key' })).toMatch(
-      /recipe code is already in use/i,
+      /conflicts with an existing record/i,
     )
     expect(
       describeRecipeDbError({ code: '23514', message: 'Only a draft version can be published' }),
@@ -324,10 +340,10 @@ describe('Recipes and production database errors', () => {
     )
   })
 
-  it('explains duplicate, posted and shortage production errors', () => {
+  it('explains conflict, posted and shortage production errors', () => {
     expect(
       describeProductionDbError({ code: '23505', message: 'duplicate key value' }),
-    ).toMatch(/production number is already in use/i)
+    ).toMatch(/conflicts with an existing record/i)
     expect(
       describeProductionDbError({
         code: '23505',
@@ -343,6 +359,12 @@ describe('Recipes and production database errors', () => {
         message: 'A production order needs at least one input',
       }),
     ).toMatch(/at least one input/i)
+    expect(
+      describeProductionDbError({
+        code: '23514',
+        message: 'Only a draft production order can be edited',
+      }),
+    ).toMatch(/only a draft production order/i)
     expect(describeProductionDbError({ code: 'P0002', message: 'missing' })).toMatch(
       /no longer exists/i,
     )

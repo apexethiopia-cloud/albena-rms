@@ -20,12 +20,13 @@ export function validateTable(
   outletIds: string[],
 ): Validation<NormalizedTable> {
   const errors: Record<string, string> = {}
+  // A blank code is valid: the database trigger generates the master code.
+  const code = input.code.trim().toUpperCase()
 
   if (!input.outletId) errors.outletId = 'Choose the outlet.'
   else if (!outletIds.includes(input.outletId)) errors.outletId = 'Choose an active outlet.'
 
-  if (!input.code.trim()) errors.code = 'Enter a table code.'
-  else if (input.code.trim().length > 20) errors.code = 'Use 20 characters or fewer.'
+  if (code.length > 20) errors.code = 'Use 20 characters or fewer.'
 
   if (!input.name.trim()) errors.name = 'Enter a table name.'
   else if (input.name.trim().length > 60) errors.name = 'Use 60 characters or fewer.'
@@ -47,7 +48,7 @@ export function validateTable(
     errors,
     value: {
       outletId: input.outletId,
-      code: input.code.trim().toUpperCase(),
+      code,
       name: input.name.trim(),
       capacity,
     },

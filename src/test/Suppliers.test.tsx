@@ -142,6 +142,35 @@ describe('Purchasing — suppliers', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/DAIRY-CO created/i)
   })
 
+  it('creates a supplier with an auto-generated code when the code is blank', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText('Fresh Foods PLC')
+    await user.click(screen.getByRole('button', { name: /new supplier/i }))
+
+    const code = screen.getByLabelText('Code')
+    expect(code).toHaveValue('')
+    expect(code).toHaveAttribute('placeholder', 'Auto-generated')
+    expect(screen.getByText('Leave blank to generate a code automatically.')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Supplier name'), 'Dairy Co')
+    await user.click(screen.getByRole('button', { name: /create supplier/i }))
+
+    await waitFor(() => {
+      expect(api.createSupplier).toHaveBeenCalledWith({
+        code: '',
+        name: 'Dairy Co',
+        contactName: '',
+        phone: '',
+        email: '',
+        address: '',
+        taxNumber: '',
+        paymentTerms: '',
+      })
+    })
+  })
+
   it('blocks an invalid supplier before calling the database', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -151,8 +180,8 @@ describe('Purchasing — suppliers', () => {
     await user.type(screen.getByLabelText('Email'), 'nope')
     await user.click(screen.getByRole('button', { name: /create supplier/i }))
 
-    expect(await screen.findByText('Code is required.')).toBeInTheDocument()
-    expect(screen.getByText('Supplier name is required.')).toBeInTheDocument()
+    expect(await screen.findByText('Supplier name is required.')).toBeInTheDocument()
+    expect(screen.queryByText('Code is required.')).toBeNull()
     expect(screen.getByText(/valid email/i)).toBeInTheDocument()
     expect(api.createSupplier).not.toHaveBeenCalled()
   })

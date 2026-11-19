@@ -49,6 +49,7 @@ function Field({
   onChange,
   error,
   hint,
+  placeholder,
   type = 'text',
   wide = false,
   autoComplete = 'off',
@@ -59,6 +60,7 @@ function Field({
   onChange: (value: string) => void
   error?: string
   hint?: string
+  placeholder?: string
   type?: string
   wide?: boolean
   autoComplete?: string
@@ -75,6 +77,7 @@ function Field({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
         autoComplete={autoComplete}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
@@ -183,12 +186,13 @@ export function SuppliersPanel() {
     setFormError(null)
 
     try {
+      const label = result.normalized.code ? `Supplier ${result.normalized.code}` : 'Supplier'
       if (mode.kind === 'create') {
         await createSupplier(result.normalized)
-        setNotice(`Supplier ${result.normalized.code} created.`)
+        setNotice(`${label} created.`)
       } else {
         await updateSupplier(mode.supplier.id, result.normalized)
-        setNotice(`Supplier ${result.normalized.code} updated.`)
+        setNotice(`${label} updated.`)
       }
       closeForm()
       reload()
@@ -317,7 +321,8 @@ export function SuppliersPanel() {
               value={form.code}
               onChange={setField('code')}
               error={fieldErrors.code}
-              hint="2–12 characters: letters, digits, hyphen or underscore."
+              placeholder="Auto-generated"
+              hint="Leave blank to generate a code automatically."
             />
             <Field
               id="supplier-name"

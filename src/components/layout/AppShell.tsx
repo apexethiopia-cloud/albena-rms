@@ -39,7 +39,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-base font-bold text-white">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700 text-base font-bold text-white">
           A
         </div>
         <div className="leading-tight">
@@ -59,7 +59,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
                 isActive
-                  ? 'bg-brand-50 text-brand-700'
+                  ? 'bg-brand-100 text-brand-900'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
               )
             }
@@ -123,7 +123,7 @@ export function AppShell() {
           </p>
 
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 sm:inline">
+            <span className="hidden rounded-full bg-brand-100 px-2.5 py-1 text-xs font-medium text-brand-900 sm:inline">
               {env.appEnv}
             </span>
 

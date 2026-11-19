@@ -5,6 +5,7 @@ import {
   Info,
   Loader2,
   PackageCheck,
+  Pencil,
   Plus,
   RotateCw,
   Trash2,
@@ -26,9 +27,11 @@ import { listSuppliers, type Supplier } from '@/features/suppliers/api'
 import { listPurchaseOrders, type PurchaseOrder } from '@/features/procurement/api'
 import {
   createGrn,
+  deleteGrn,
   listGrns,
   listPurchaseOrderReceipts,
   postGrn,
+  updateGrn,
   type Grn,
   type Numberish,
   type PurchaseOrderReceipt,
@@ -60,7 +63,6 @@ const RECEIPT_STATUS_CLASSES: Record<string, string> = {
 
 function initialForm(locationId: string): GrnDraft {
   return {
-    grnNumber: '',
     supplierId: '',
     invoiceNumber: '',
     receivedDate: toIsoDate(new Date()),
@@ -98,6 +100,7 @@ export function GrnPanel() {
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<GrnDraft>(() => initialForm(''))
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -107,6 +110,7 @@ export function GrnPanel() {
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [confirmPostId, setConfirmPostId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const lineSequence = useRef(1)
 
@@ -260,7 +264,34 @@ export function GrnPanel() {
 
   const openCreate = () => {
     lineSequence.current = 1
+    setEditingId(null)
     setForm(initialForm(activeLocations[0]?.id ?? ''))
+    setFieldErrors({})
+    setFormError(null)
+    setFormNotice(null)
+    setNotice(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (document: Grn) => {
+    lineSequence.current = Math.max(document.grn_lines.length, 1)
+    setEditingId(document.id)
+    setForm({
+      supplierId: document.supplier_id,
+      invoiceNumber: document.invoice_number,
+      receivedDate: document.received_date,
+      locationId: document.location_id,
+      notes: document.notes ?? '',
+      poId: document.po_id ?? '',
+      lines: document.grn_lines.map((line, index) => ({
+        key: `grn-edit-${index + 1}`,
+        itemId: line.item_id,
+        unitId: line.unit_id,
+        quantity: String(line.quantity),
+        unitCost: String(line.unit_cost),
+        poLineId: line.po_line_id ?? undefined,
+      })),
+    })
     setFieldErrors({})
     setFormError(null)
     setFormNotice(null)
@@ -270,6 +301,7 @@ export function GrnPanel() {
 
   const closeForm = () => {
     setFormOpen(false)
+    setEditingId(null)
     setFieldErrors({})
     setFormError(null)
     setFormNotice(null)
@@ -320,14 +352,36 @@ export function GrnPanel() {
     setNotice(null)
 
     try {
-      await createGrn(result.value)
-      setNotice(`GRN ${result.value.grnNumber} saved as a draft. Post it to move stock.`)
+      if (editingId) {
+        await updateGrn(editingId, result.value)
+        setNotice('GRN draft updated. Post it to move stock.')
+      } else {
+        await createGrn(result.value)
+        setNotice('GRN saved as a draft. Post it to move stock.')
+      }
       closeForm()
       reload()
     } catch (error) {
       setFormError(toMessage(error))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const remove = async (document: Grn) => {
+    setPendingId(document.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deleteGrn(document.id)
+      setNotice(`GRN ${document.grn_number} deleted.`)
+      setConfirmDeleteId(null)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setPendingId(null)
     }
   }
 
@@ -340,6 +394,7 @@ export function GrnPanel() {
       await postGrn(document.id)
       setNotice(`GRN ${document.grn_number} posted. The stock ledger now contains its layers.`)
       setConfirmPostId(null)
+      setConfirmDeleteId(null)
       reload()
     } catch (error) {
       setActionError(toMessage(error))
@@ -434,7 +489,7 @@ export function GrnPanel() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id="grn-form-heading" className="text-sm font-semibold text-slate-900">
-                New goods receiving note
+                {editingId ? 'Edit goods receiving note' : 'New goods receiving note'}
               </h3>
               <p className="mt-1 text-xs text-slate-600">
                 Quantities are entered in the selected unit. The database converts them to the item
@@ -479,7 +534,8 @@ export function GrnPanel() {
                 id="grn-po"
                 value={form.poId}
                 onChange={(event) => selectPurchaseOrder(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 sm:max-w-md"
+                disabled={Boolean(editingId)}
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 disabled:bg-slate-100 disabled:text-slate-500 sm:max-w-md"
               >
                 <option value="">No purchase order — receive without a link</option>
                 {receivableOrders.map((order) => (
@@ -490,31 +546,17 @@ export function GrnPanel() {
                 ))}
               </select>
               <p className="mt-1 text-xs text-slate-500">
-                Approved and ordered purchase orders only. Selecting one fixes the supplier and
-                loads its outstanding lines; shortages and over-receipts are recorded for review
-                against the order.
+                {editingId
+                  ? 'The purchase order link is fixed when editing. Its supplier stays locked.'
+                  : 'Approved and ordered purchase orders only. Selecting one fixes the supplier and loads its outstanding lines; shortages and over-receipts are recorded for review against the order.'}
               </p>
             </div>
 
             <div>
-              <label htmlFor="grn-number" className="block text-sm font-medium text-slate-700">
-                GRN number
-              </label>
-              <input
-                id="grn-number"
-                value={form.grnNumber}
-                onChange={(event) => setField('grnNumber')(event.target.value)}
-                aria-invalid={Boolean(fieldErrors.grnNumber)}
-                className={cn(
-                  'mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase shadow-sm focus:border-brand-500',
-                  fieldErrors.grnNumber ? 'border-red-400' : 'border-slate-300',
-                )}
-                placeholder="e.g. GRN-0001"
-                autoComplete="off"
-              />
-              {fieldErrors.grnNumber && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.grnNumber}</p>
-              )}
+              <p className="block text-sm font-medium text-slate-700">GRN number</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Number assigned automatically when saved.
+              </p>
             </div>
 
             <div>
@@ -917,12 +959,58 @@ export function GrnPanel() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-slate-900">
                         {formatCurrency(total)}
                       </p>
                       {canPost && !isPosted && (
                         <>
+                          {confirmDeleteId === document.id ? (
+                            <>
+                              <span className="text-xs text-slate-600">Delete this draft?</span>
+                              <button
+                                type="button"
+                                onClick={() => void remove(document)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                              >
+                                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                                Confirm delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                disabled={busy}
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(document)}
+                                aria-label={`Edit GRN ${document.grn_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDeleteId(document.id)
+                                  setConfirmPostId(null)
+                                }}
+                                aria-label={`Delete GRN ${document.grn_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                Delete
+                              </button>
+                            </>
+                          )}
                           {confirmPostId === document.id ? (
                             <>
                               <button
@@ -946,7 +1034,10 @@ export function GrnPanel() {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => setConfirmPostId(document.id)}
+                              onClick={() => {
+                                setConfirmPostId(document.id)
+                                setConfirmDeleteId(null)
+                              }}
                               className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                             >
                               Post

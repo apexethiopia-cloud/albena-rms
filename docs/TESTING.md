@@ -92,3 +92,19 @@
 | Phase 6 | AC-10..11, AC-14..15 | 0 | 0 | 4 | 0% |
 | Phase 7 | AC-12 | 0 | 0 | 1 | 0% |
 | Phase 8 | AC-01..19 (full) | 0 | 0 | 19 | 0% |
+
+---
+
+## 7. 2026-11-19 Enhancement Regression Coverage
+
+| Area | Suites / key cases | Result |
+|:---|:---|:---|
+| Quick POS | `PosPanel.test.tsx` — role gating (cashier), category filtering, add-to-cart and total, quantity stepper, empty-form validation, successful `createOrder` | Pass |
+| Automatic document numbers | `Procurement.test.tsx`, `Receiving.test.tsx`, `Stock.test.tsx`, `InventoryControl.test.tsx`, `Kitchen.test.tsx` — create payloads contain no number field; server assigns the number | Pass |
+| Automatic master codes | `Locations.test.tsx`, `Suppliers.test.tsx`, `Items.test.tsx`, `Operations.test.tsx`, six validation suites — blank codes are valid and manual codes still validated | Pass |
+| Draft edit/delete | New cases in the procurement, receiving, stock, inventory-control and kitchen suites — prefill, update RPC, delete confirmation, immutable links/kinds, no actions on non-draft rows | Pass |
+| Recipe header edit | `Kitchen.test.tsx`, `recipesValidation.test.ts` — header update only; code and versions immutable | Pass |
+| Server-side structure | PostgREST probe of 23 RPCs, 2 sequence tables and 4 superseded signatures — anon `401`/`42501`, old signatures `404`/`PGRST202` | 29/29 Pass |
+| Full local suite | `npm test -- --run` | **302/302 across 31 suites** |
+
+Live allocation, trigger-generated codes and draft-gate enforcement still require an authenticated smoke test; the anonymous probe confirms only object existence and privilege boundaries.

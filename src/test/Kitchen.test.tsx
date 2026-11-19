@@ -16,6 +16,8 @@ const recipesApi = vi.hoisted(() => ({
 const productionApi = vi.hoisted(() => ({
   listProductionOrders: vi.fn(),
   createProductionOrder: vi.fn(),
+  updateProductionOrder: vi.fn(),
+  deleteProductionOrder: vi.fn(),
   postProductionOrder: vi.fn(),
 }))
 
@@ -280,6 +282,8 @@ beforeEach(() => {
 
   productionApi.listProductionOrders.mockResolvedValue([DRAFT_ORDER, POSTED_ORDER])
   productionApi.createProductionOrder.mockResolvedValue('p-new')
+  productionApi.updateProductionOrder.mockResolvedValue(undefined)
+  productionApi.deleteProductionOrder.mockResolvedValue(undefined)
   productionApi.postProductionOrder.mockResolvedValue(undefined)
 
   itemsApi.listItems.mockResolvedValue(ITEMS)
@@ -311,7 +315,8 @@ describe('Kitchen — recipes and costing', () => {
     const section = await screen.findByRole('region', { name: /^recipes$/i })
     await user.click(within(section).getByRole('button', { name: /new recipe/i }))
 
-    await user.type(within(section).getByLabelText(/recipe code/i), 'om-01')
+    expect(within(section).getByText(/code assigned automatically/i)).toBeInTheDocument()
+    expect(within(section).queryByLabelText(/recipe code/i)).not.toBeInTheDocument()
     await user.type(within(section).getByLabelText(/recipe name/i), 'Cheese omelette')
     await user.type(within(section).getByLabelText(/selling price/i), '180')
     await user.selectOptions(
@@ -325,7 +330,6 @@ describe('Kitchen — recipes and costing', () => {
 
     await waitFor(() =>
       expect(recipesApi.createRecipe).toHaveBeenCalledWith({
-        code: 'OM-01',
         name: 'Cheese omelette',
         menuItemName: null,
         notes: null,
@@ -335,6 +339,33 @@ describe('Kitchen — recipes and costing', () => {
       }),
     )
     expect(await within(section).findByText(/saved as a draft version/i)).toBeInTheDocument()
+  })
+
+  it('edits recipe header details without changing the code or versions', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^recipes$/i })
+    await user.click(within(section).getByRole('button', { name: /^edit$/i }))
+
+    const nameInput = within(section).getByLabelText(/recipe name/i)
+    expect(nameInput).toHaveValue('Cheese omelette')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'Updated omelette')
+    await user.clear(within(section).getByLabelText(/recipe notes/i))
+    await user.type(within(section).getByLabelText(/recipe notes/i), 'Extra cheese')
+
+    await user.click(within(section).getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() =>
+      expect(recipesApi.updateRecipe).toHaveBeenCalledWith('r-omelette', {
+        name: 'Updated omelette',
+        menuItemName: 'Cheese omelette',
+        notes: 'Extra cheese',
+      }),
+    )
+    expect(await within(section).findByText(/details updated/i)).toBeInTheDocument()
+    expect(recipesApi.createRecipeVersion).not.toHaveBeenCalled()
   })
 
   it('publishes a draft version and archives the previous one in the database', async () => {
@@ -357,6 +388,7 @@ describe('Kitchen — recipes and costing', () => {
     const section = await screen.findByRole('region', { name: /^recipes$/i })
 
     expect(within(section).queryByRole('button', { name: /new recipe/i })).not.toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument()
     expect(within(section).queryByRole('button', { name: /publish/i })).not.toBeInTheDocument()
     expect(within(section).getByText(/read-only: recipes and versions/i)).toBeInTheDocument()
   })
@@ -370,7 +402,8 @@ describe('Kitchen — production', () => {
     const section = await screen.findByRole('region', { name: /^production$/i })
     await user.click(within(section).getByRole('button', { name: /new production/i }))
 
-    await user.type(within(section).getByLabelText(/production number/i), 'prod-0002')
+    expect(within(section).getByText(/number assigned automatically/i)).toBeInTheDocument()
+    expect(within(section).queryByLabelText(/production number/i)).not.toBeInTheDocument()
     await user.selectOptions(within(section).getByLabelText(/output item/i), 'i-omelette')
     await user.type(within(section).getByLabelText(/output quantity/i), '12')
     await user.selectOptions(within(section).getByLabelText(/output unit/i), 'u-piece')
@@ -382,7 +415,6 @@ describe('Kitchen — production', () => {
 
     await waitFor(() =>
       expect(productionApi.createProductionOrder).toHaveBeenCalledWith({
-        orderNumber: 'PROD-0002',
         productionDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         locationId: 'l-main',
         outputItemId: 'i-omelette',
@@ -395,6 +427,58 @@ describe('Kitchen — production', () => {
       }),
     )
     expect(await within(section).findByText(/saved as a draft/i)).toBeInTheDocument()
+  })
+
+  it('prefills and updates a draft production order', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^production$/i })
+    const draftRow = (await within(section).findByText('PROD-0001')).closest('tr')
+    expect(draftRow).not.toBeNull()
+
+    await user.click(within(draftRow as HTMLElement).getByRole('button', { name: /^edit$/i }))
+
+    expect(
+      within(section).getByRole('heading', { name: 'Edit production order' }),
+    ).toBeInTheDocument()
+    const quantityInput = within(section).getByLabelText(/output quantity/i)
+    expect(quantityInput).toHaveValue('12')
+    await user.clear(quantityInput)
+    await user.type(quantityInput, '15')
+    await user.click(within(section).getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() =>
+      expect(productionApi.updateProductionOrder).toHaveBeenCalledWith('p-1', {
+        productionDate: '2026-11-18',
+        locationId: 'l-main',
+        outputItemId: 'i-omelette',
+        outputUnitId: 'u-piece',
+        outputQuantity: 15,
+        expectedOutputQuantity: 12,
+        responsibleName: 'Chef Selam',
+        notes: null,
+        inputs: [{ itemId: 'i-tomato', unitId: 'u-g', quantity: 1000 }],
+      }),
+    )
+    expect(productionApi.createProductionOrder).not.toHaveBeenCalled()
+  })
+
+  it('deletes a draft production order after confirmation', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const section = await screen.findByRole('region', { name: /^production$/i })
+    const draftRow = (await within(section).findByText('PROD-0001')).closest('tr')
+    expect(draftRow).not.toBeNull()
+
+    await user.click(within(draftRow as HTMLElement).getByRole('button', { name: /^delete$/i }))
+    await user.click(
+      within(draftRow as HTMLElement).getByRole('button', { name: /confirm delete/i }),
+    )
+
+    await waitFor(() => expect(productionApi.deleteProductionOrder).toHaveBeenCalledWith('p-1'))
+    expect(await within(section).findByText(/deleted/i)).toBeInTheDocument()
   })
 
   it('posts a draft after confirmation and shows the computed yield', async () => {
@@ -428,6 +512,12 @@ describe('Kitchen — production', () => {
     expect(
       within(postedRow as HTMLElement).queryByRole('button', { name: /^post$/i }),
     ).not.toBeInTheDocument()
+    expect(
+      within(postedRow as HTMLElement).queryByRole('button', { name: /^edit$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(postedRow as HTMLElement).queryByRole('button', { name: /^delete$/i }),
+    ).not.toBeInTheDocument()
 
     const toggle = within(section).getByRole('button', { name: /^post$/i })
     await user.click(toggle)
@@ -443,6 +533,8 @@ describe('Kitchen — production', () => {
       within(section).queryByRole('button', { name: /new production/i }),
     ).not.toBeInTheDocument()
     expect(within(section).queryByRole('button', { name: /^post$/i })).not.toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument()
     expect(within(section).getByText(/read-only: production is recorded/i)).toBeInTheDocument()
   })
 })

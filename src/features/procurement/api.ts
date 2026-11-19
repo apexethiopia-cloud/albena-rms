@@ -89,18 +89,30 @@ export async function listPurchaseRequests(): Promise<PurchaseRequest[]> {
   return (data ?? []) as unknown as PurchaseRequest[]
 }
 
+function requestLines(input: NormalizedPurchaseRequest) {
+  return input.lines.map((line) => ({
+    item_id: line.itemId,
+    unit_id: line.unitId,
+    quantity: line.quantity,
+  }))
+}
+
+function orderLines(input: NormalizedPurchaseOrder) {
+  return input.lines.map((line) => ({
+    item_id: line.itemId,
+    unit_id: line.unitId,
+    quantity: line.quantity,
+    unit_cost: line.unitCost,
+  }))
+}
+
 export async function createPurchaseRequest(
   input: NormalizedPurchaseRequest,
 ): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_purchase_request', {
-    p_pr_number: input.prNumber,
     p_request_date: input.requestDate,
     p_notes: input.notes,
-    p_lines: input.lines.map((line) => ({
-      item_id: line.itemId,
-      unit_id: line.unitId,
-      quantity: line.quantity,
-    })),
+    p_lines: requestLines(input),
   })
 
   if (error) throw new Error(describeProcurementDbError(error))
@@ -108,6 +120,25 @@ export async function createPurchaseRequest(
     throw new Error('The request was saved but no reference was returned. Refresh the list.')
   }
   return data as string
+}
+
+export async function updatePurchaseRequest(
+  id: string,
+  input: NormalizedPurchaseRequest,
+): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_purchase_request', {
+    p_pr_id: id,
+    p_request_date: input.requestDate,
+    p_notes: input.notes,
+    p_lines: requestLines(input),
+  })
+
+  if (error) throw new Error(describeProcurementDbError(error))
+}
+
+export async function deletePurchaseRequest(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_purchase_request', { p_pr_id: id })
+  if (error) throw new Error(describeProcurementDbError(error))
 }
 
 export async function submitPurchaseRequest(id: string): Promise<void> {
@@ -141,18 +172,12 @@ export async function listPurchaseOrders(): Promise<PurchaseOrder[]> {
 
 export async function createPurchaseOrder(input: NormalizedPurchaseOrder): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_purchase_order', {
-    p_po_number: input.poNumber,
     p_supplier_id: input.supplierId,
     p_pr_id: input.prId,
     p_order_date: input.orderDate,
     p_expected_date: input.expectedDate,
     p_notes: input.notes,
-    p_lines: input.lines.map((line) => ({
-      item_id: line.itemId,
-      unit_id: line.unitId,
-      quantity: line.quantity,
-      unit_cost: line.unitCost,
-    })),
+    p_lines: orderLines(input),
   })
 
   if (error) throw new Error(describeProcurementDbError(error))
@@ -162,6 +187,27 @@ export async function createPurchaseOrder(input: NormalizedPurchaseOrder): Promi
     )
   }
   return data as string
+}
+
+export async function updatePurchaseOrder(
+  id: string,
+  input: NormalizedPurchaseOrder,
+): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_purchase_order', {
+    p_po_id: id,
+    p_supplier_id: input.supplierId,
+    p_order_date: input.orderDate,
+    p_expected_date: input.expectedDate,
+    p_notes: input.notes,
+    p_lines: orderLines(input),
+  })
+
+  if (error) throw new Error(describeProcurementDbError(error))
+}
+
+export async function deletePurchaseOrder(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_purchase_order', { p_po_id: id })
+  if (error) throw new Error(describeProcurementDbError(error))
 }
 
 export async function approvePurchaseOrder(id: string): Promise<void> {

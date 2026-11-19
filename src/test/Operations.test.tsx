@@ -362,6 +362,67 @@ describe('Operations - menus, tables, reservations, orders and kitchen', () => {
     expect(within(reservations).getByText('19:30')).toBeInTheDocument()
   })
 
+  it('creates a menu item with an auto-generated code when the code is blank', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const menu = await screen.findByRole('region', { name: /^menu$/i })
+    await user.click(within(menu).getByRole('button', { name: /new menu item/i }))
+
+    const code = within(menu).getByLabelText('Menu code')
+    expect(code).toHaveValue('')
+    expect(code).toHaveAttribute('placeholder', 'Auto-generated')
+    expect(
+      within(menu).getByText('Leave blank to generate a code automatically.'),
+    ).toBeInTheDocument()
+
+    await user.type(within(menu).getByLabelText('Menu name'), 'Avocado toast')
+    await user.type(
+      within(menu).getByLabelText('Selling price (ETB, VAT included)'),
+      '120',
+    )
+    await user.click(within(menu).getByRole('button', { name: /save menu item/i }))
+
+    await waitFor(() =>
+      expect(menuApi.createMenuItem).toHaveBeenCalledWith({
+        code: '',
+        name: 'Avocado toast',
+        categoryId: 'cat-main',
+        sellingPrice: 120,
+        recipeId: null,
+      }),
+    )
+  })
+
+  it('creates a table with an auto-generated code when the code is blank', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const tables = await screen.findByRole('region', { name: /^tables$/i })
+    await user.click(within(tables).getByRole('button', { name: /new table/i }))
+
+    const code = within(tables).getByLabelText('Table code')
+    expect(code).toHaveValue('')
+    expect(code).toHaveAttribute('placeholder', 'Auto-generated')
+    expect(
+      within(tables).getByText('Leave blank to generate a code automatically.'),
+    ).toBeInTheDocument()
+
+    await user.type(within(tables).getByLabelText('Table name'), 'Bar table')
+    await user.clear(within(tables).getByLabelText('Seats'))
+    await user.type(within(tables).getByLabelText('Seats'), '4')
+    await user.click(within(tables).getByRole('button', { name: /save table/i }))
+
+    await waitFor(() =>
+      expect(tablesApi.createTable).toHaveBeenCalledWith({
+        outletId: 'outlet-main',
+        code: '',
+        name: 'Bar table',
+        capacity: 4,
+      }),
+    )
+  })
+
   it('warns when a slot has more reservations than active tables', async () => {
     renderPage()
 

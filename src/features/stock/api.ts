@@ -227,27 +227,49 @@ export async function listGrns(): Promise<Grn[]> {
   return (data ?? []) as unknown as Grn[]
 }
 
+function grnLines(input: NormalizedGrn) {
+  return input.lines.map((line) => ({
+    item_id: line.itemId,
+    unit_id: line.unitId,
+    quantity: line.quantity,
+    unit_cost: line.unitCost,
+    po_line_id: line.poLineId,
+  }))
+}
+
 export async function createGrn(input: NormalizedGrn): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_grn', {
-    p_grn_number: input.grnNumber,
     p_supplier_id: input.supplierId,
     p_invoice_number: input.invoiceNumber,
     p_received_date: input.receivedDate,
     p_location_id: input.locationId,
     p_notes: input.notes,
     p_po_id: input.poId,
-    p_lines: input.lines.map((line) => ({
-      item_id: line.itemId,
-      unit_id: line.unitId,
-      quantity: line.quantity,
-      unit_cost: line.unitCost,
-      po_line_id: line.poLineId,
-    })),
+    p_lines: grnLines(input),
   })
 
   if (error) throw new Error(describeStockDbError(error))
   if (!data) throw new Error('The GRN was saved but no reference was returned. Refresh the list.')
   return data as string
+}
+
+export async function updateGrn(id: string, input: NormalizedGrn): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_grn', {
+    p_grn_id: id,
+    p_supplier_id: input.supplierId,
+    p_invoice_number: input.invoiceNumber,
+    p_received_date: input.receivedDate,
+    p_location_id: input.locationId,
+    p_notes: input.notes,
+    p_lines: grnLines(input),
+  })
+
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function deleteGrn(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_grn', { p_grn_id: id })
+  if (error) throw new Error(describeStockDbError(error))
 }
 
 export async function listPurchaseOrderReceipts(): Promise<PurchaseOrderReceipt[]> {
@@ -280,23 +302,44 @@ export async function listSivs(): Promise<Siv[]> {
   return (data ?? []) as unknown as Siv[]
 }
 
+function sivLines(input: NormalizedSiv) {
+  return input.lines.map((line) => ({
+    item_id: line.itemId,
+    unit_id: line.unitId,
+    quantity: line.quantity,
+  }))
+}
+
 export async function createSiv(input: NormalizedSiv): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_siv', {
-    p_siv_number: input.sivNumber,
     p_issue_date: input.issueDate,
     p_source_location_id: input.sourceLocationId,
     p_destination_location_id: input.destinationLocationId,
     p_notes: input.notes,
-    p_lines: input.lines.map((line) => ({
-      item_id: line.itemId,
-      unit_id: line.unitId,
-      quantity: line.quantity,
-    })),
+    p_lines: sivLines(input),
   })
 
   if (error) throw new Error(describeStockDbError(error))
   if (!data) throw new Error('The SIV was saved but no reference was returned. Refresh the list.')
   return data as string
+}
+
+export async function updateSiv(id: string, input: NormalizedSiv): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_siv', {
+    p_siv_id: id,
+    p_issue_date: input.issueDate,
+    p_source_location_id: input.sourceLocationId,
+    p_destination_location_id: input.destinationLocationId,
+    p_notes: input.notes,
+    p_lines: sivLines(input),
+  })
+
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function deleteSiv(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_siv', { p_siv_id: id })
+  if (error) throw new Error(describeStockDbError(error))
 }
 
 export async function postSiv(id: string): Promise<void> {
@@ -363,23 +406,26 @@ export async function listInventoryAdjustments(
   return (data ?? []) as unknown as InventoryAdjustment[]
 }
 
+function adjustmentLines(input: NormalizedAdjustment) {
+  return input.lines.map((line) => ({
+    item_id: line.itemId,
+    unit_id: line.unitId,
+    direction: line.direction,
+    quantity: line.quantity,
+    unit_cost: line.unitCost,
+  }))
+}
+
 export async function createInventoryAdjustment(
   input: NormalizedAdjustment,
 ): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_inventory_adjustment', {
     p_kind: input.kind,
-    p_adjustment_number: input.adjustmentNumber,
     p_adjustment_date: input.adjustmentDate,
     p_location_id: input.locationId,
     p_reason: input.reason,
     p_notes: input.notes,
-    p_lines: input.lines.map((line) => ({
-      item_id: line.itemId,
-      unit_id: line.unitId,
-      direction: line.direction,
-      quantity: line.quantity,
-      unit_cost: line.unitCost,
-    })),
+    p_lines: adjustmentLines(input),
   })
 
   if (error) throw new Error(describeStockDbError(error))
@@ -387,6 +433,29 @@ export async function createInventoryAdjustment(
     throw new Error('The document was saved but no reference was returned. Refresh the list.')
   }
   return data as string
+}
+
+export async function updateInventoryAdjustment(
+  id: string,
+  input: NormalizedAdjustment,
+): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_inventory_adjustment', {
+    p_adjustment_id: id,
+    p_adjustment_date: input.adjustmentDate,
+    p_location_id: input.locationId,
+    p_reason: input.reason,
+    p_notes: input.notes,
+    p_lines: adjustmentLines(input),
+  })
+
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function deleteInventoryAdjustment(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_inventory_adjustment', {
+    p_adjustment_id: id,
+  })
+  if (error) throw new Error(describeStockDbError(error))
 }
 
 export async function submitInventoryAdjustment(id: string): Promise<void> {
@@ -426,17 +495,20 @@ export async function listInventoryCounts(): Promise<InventoryCount[]> {
   return (data ?? []) as unknown as InventoryCount[]
 }
 
+function countLines(input: NormalizedCount) {
+  return input.lines.map((line) => ({
+    item_id: line.itemId,
+    physical_quantity: line.physicalQuantity,
+  }))
+}
+
 export async function createInventoryCount(input: NormalizedCount): Promise<string> {
   const { data, error } = await requireSupabase().rpc('create_inventory_count', {
-    p_count_number: input.countNumber,
     p_count_date: input.countDate,
     p_location_id: input.locationId,
     p_counter_name: input.counterName,
     p_notes: input.notes,
-    p_lines: input.lines.map((line) => ({
-      item_id: line.itemId,
-      physical_quantity: line.physicalQuantity,
-    })),
+    p_lines: countLines(input),
   })
 
   if (error) throw new Error(describeStockDbError(error))
@@ -444,6 +516,24 @@ export async function createInventoryCount(input: NormalizedCount): Promise<stri
     throw new Error('The count was saved but no reference was returned. Refresh the list.')
   }
   return data as string
+}
+
+export async function updateInventoryCount(id: string, input: NormalizedCount): Promise<void> {
+  const { error } = await requireSupabase().rpc('update_inventory_count', {
+    p_count_id: id,
+    p_count_date: input.countDate,
+    p_location_id: input.locationId,
+    p_counter_name: input.counterName,
+    p_notes: input.notes,
+    p_lines: countLines(input),
+  })
+
+  if (error) throw new Error(describeStockDbError(error))
+}
+
+export async function deleteInventoryCount(id: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_inventory_count', { p_count_id: id })
+  if (error) throw new Error(describeStockDbError(error))
 }
 
 export async function submitInventoryCount(id: string): Promise<void> {

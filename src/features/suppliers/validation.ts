@@ -46,9 +46,8 @@ export function validateSupplier(input: SupplierInput): SupplierValidation {
     paymentTerms: input.paymentTerms.trim(),
   }
 
-  if (!normalized.code) {
-    errors.code = 'Code is required.'
-  } else if (!CODE_PATTERN.test(normalized.code)) {
+  // A blank code is valid: the database trigger generates the master code.
+  if (normalized.code && !CODE_PATTERN.test(normalized.code)) {
     errors.code = 'Use 2–12 characters: letters, digits, hyphen or underscore.'
   }
 

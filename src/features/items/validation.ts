@@ -33,9 +33,8 @@ export function validateItem(input: ItemInput): ItemValidation {
   const name = input.name.trim()
   const reorderLevel = input.reorderLevel.trim()
 
-  if (!code) {
-    errors.code = 'Code is required.'
-  } else if (!CODE_PATTERN.test(code)) {
+  // A blank code is valid: the database trigger generates the master code.
+  if (code && !CODE_PATTERN.test(code)) {
     errors.code = 'Use 2–20 characters: letters, digits, hyphen or underscore.'
   }
 

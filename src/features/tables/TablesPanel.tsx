@@ -185,12 +185,13 @@ export function TablesPanel() {
     setNotice(null)
 
     try {
+      const label = result.value.code || 'Table'
       if (mode === 'edit' && editingId) {
         await updateTable(editingId, result.value)
-        setNotice(`${result.value.code} was updated.`)
+        setNotice(`${label} was updated.`)
       } else {
         await createTable(result.value)
-        setNotice(`${result.value.code} was added to the layout.`)
+        setNotice(`${label} was added to the layout.`)
       }
       closeForm()
       reload()
@@ -376,8 +377,13 @@ export function TablesPanel() {
                 aria-label="Table code"
                 value={form.code}
                 onChange={(event) => setField('code')(event.target.value)}
+                placeholder="Auto-generated"
+                aria-describedby="table-code-hint"
                 className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
               />
+              <span id="table-code-hint" className="mt-1 block text-slate-500">
+                Leave blank to generate a code automatically.
+              </span>
               {fieldErrors.code && (
                 <span className="mt-1 block text-red-600">{fieldErrors.code}</span>
               )}

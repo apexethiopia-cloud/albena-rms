@@ -15,7 +15,6 @@ export type RecipeLineDraft = {
 }
 
 export type RecipeDraft = {
-  code: string
   name: string
   menuItemName: string
   notes: string
@@ -38,7 +37,6 @@ export type NormalizedRecipeLine = {
 }
 
 export type NormalizedRecipe = {
-  code: string
   name: string
   menuItemName: string | null
   notes: string | null
@@ -52,6 +50,40 @@ export type NormalizedRecipeVersion = {
   yieldQuantity: number
   sellingPrice: number
   lines: NormalizedRecipeLine[]
+}
+
+export type RecipeHeaderDraft = {
+  name: string
+  menuItemName: string
+  notes: string
+}
+
+type NormalizedRecipeHeader = RecipeHeaderDraft
+
+/** Validates the editable recipe header fields; the code and versions stay immutable. */
+export function validateRecipeHeader(input: RecipeHeaderDraft): Validation<NormalizedRecipeHeader> {
+  const errors: Record<string, string> = {}
+
+  if (!input.name.trim()) errors.name = 'Enter a recipe name.'
+  else if (input.name.trim().length > 120) errors.name = 'Use 120 characters or fewer.'
+  if (input.menuItemName.trim().length > 120) {
+    errors.menuItemName = 'Use 120 characters or fewer.'
+  }
+  if (input.notes.trim().length > 500) errors.notes = 'Use 500 characters or fewer.'
+
+  if (Object.keys(errors).length > 0) {
+    return { valid: false, value: null, errors }
+  }
+
+  return {
+    valid: true,
+    errors,
+    value: {
+      name: input.name.trim(),
+      menuItemName: input.menuItemName.trim(),
+      notes: input.notes.trim(),
+    },
+  }
 }
 
 function normalizeLines(
@@ -124,9 +156,6 @@ export function validateRecipe(
 ): Validation<NormalizedRecipe> {
   const errors: Record<string, string> = {}
 
-  if (!input.code.trim()) errors.code = 'Enter a recipe code.'
-  else if (input.code.trim().length > 40) errors.code = 'Use 40 characters or fewer.'
-
   if (!input.name.trim()) errors.name = 'Enter a recipe name.'
   else if (input.name.trim().length > 120) errors.name = 'Use 120 characters or fewer.'
 
@@ -146,7 +175,6 @@ export function validateRecipe(
     valid: true,
     errors,
     value: {
-      code: input.code.trim().toUpperCase(),
       name: input.name.trim(),
       menuItemName: input.menuItemName.trim() || null,
       notes: input.notes.trim() || null,
@@ -186,7 +214,7 @@ export function validateRecipeVersion(
 
 export function describeRecipeDbError(error: DbErrorLike): string {
   if (error.code === '23505') {
-    return 'That recipe code is already in use. Choose a different code.'
+    return 'That recipe conflicts with an existing record. Refresh and try again.'
   }
   if (error.code === '23514' && /only a draft version can be published/i.test(error.message)) {
     return error.message

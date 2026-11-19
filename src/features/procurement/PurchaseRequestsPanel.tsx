@@ -5,8 +5,10 @@ import {
   ClipboardList,
   Info,
   Loader2,
+  Pencil,
   Plus,
   RotateCw,
+  Trash2,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -23,8 +25,10 @@ import {
 import {
   createPurchaseRequest,
   decidePurchaseRequest,
+  deletePurchaseRequest,
   listPurchaseRequests,
   submitPurchaseRequest,
+  updatePurchaseRequest,
   type PurchaseRequest,
 } from './api'
 import {
@@ -50,7 +54,6 @@ function emptyLine(key: number): PurchaseLineDraft {
 
 function initialForm(): PurchaseRequestDraft {
   return {
-    prNumber: '',
     requestDate: toIsoDate(new Date()),
     notes: '',
     lines: [emptyLine(1)],
@@ -91,6 +94,7 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<PurchaseRequestDraft>(() => initialForm())
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -100,6 +104,7 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [decision, setDecision] = useState<{ id: string; comment: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PurchaseRequest | null>(null)
   const lineSequence = useRef(1)
 
   const reload = useCallback(() => setReloadToken((token) => token + 1), [])
@@ -150,10 +155,35 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
   const deciding = decision
     ? requests.find((request) => request.id === decision.id) ?? null
     : null
+  const editing = editingId
+    ? requests.find((request) => request.id === editingId) ?? null
+    : null
 
   const openCreate = () => {
     lineSequence.current = 1
+    setEditingId(null)
     setForm(initialForm())
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (request: PurchaseRequest) => {
+    const lines = request.purchase_request_lines.map((line, index) => ({
+      key: `pr-edit-${index + 1}`,
+      itemId: line.item_id,
+      unitId: line.unit_id,
+      quantity: String(line.quantity),
+      unitCost: '',
+    }))
+    lineSequence.current = Math.max(1, lines.length)
+    setEditingId(request.id)
+    setForm({
+      requestDate: request.request_date,
+      notes: request.notes ?? '',
+      lines: lines.length > 0 ? lines : [emptyLine(1)],
+    })
     setFieldErrors({})
     setFormError(null)
     setNotice(null)
@@ -162,6 +192,7 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
 
   const closeForm = () => {
     setFormOpen(false)
+    setEditingId(null)
     setFieldErrors({})
     setFormError(null)
   }
@@ -207,8 +238,13 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
     setNotice(null)
 
     try {
-      await createPurchaseRequest(result.value)
-      setNotice(`PR ${result.value.prNumber} saved as a draft. Submit it for approval.`)
+      if (editingId) {
+        await updatePurchaseRequest(editingId, result.value)
+        setNotice(editing ? `PR ${editing.pr_number} updated.` : 'Purchase request updated.')
+      } else {
+        await createPurchaseRequest(result.value)
+        setNotice('Purchase request saved as a draft. Submit it for approval.')
+      }
       closeForm()
       reload()
     } catch (error) {
@@ -249,6 +285,25 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
           : `PR ${deciding.pr_number} rejected.`,
       )
       setDecision(null)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  const remove = async () => {
+    if (!deleteTarget) return
+
+    setPendingId(deleteTarget.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deletePurchaseRequest(deleteTarget.id)
+      setNotice(`PR ${deleteTarget.pr_number} deleted.`)
+      setDeleteTarget(null)
       reload()
     } catch (error) {
       setActionError(toMessage(error))
@@ -340,11 +395,13 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id="pr-form-heading" className="text-sm font-semibold text-slate-900">
-                New purchase request
+                {editing ? 'Edit purchase request' : 'New purchase request'}
               </h3>
               <p className="mt-1 text-xs text-slate-600">
-                Quantities are entered in the selected unit. The database checks the unit against
-                the item base unit when the draft is saved.
+                {editing
+                  ? 'The request number stays unchanged. Quantities are entered in the selected unit.'
+                  : 'Number assigned automatically when saved. Quantities are entered in the selected unit.'}{' '}
+                The database checks the unit against the item base unit when the draft is saved.
               </p>
             </div>
             <button
@@ -367,20 +424,6 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
           )}
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">Request number</span>
-              <input
-                type="text"
-                value={form.prNumber}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, prNumber: event.target.value }))
-                }
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                placeholder="PR-0001"
-              />
-              <FieldError message={fieldErrors.prNumber} />
-            </label>
-
             <label className="block text-sm">
               <span className="font-medium text-slate-700">Request date</span>
               <input
@@ -427,7 +470,7 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
               className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Save draft
+              {editing ? 'Save changes' : 'Save draft'}
             </button>
             <button
               type="button"
@@ -501,6 +544,38 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
               type="button"
               onClick={() => setDecision(null)}
               className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-amber-100"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div
+          role="alertdialog"
+          aria-labelledby="pr-delete-heading"
+          className="rounded-xl border border-rose-200 bg-rose-50/60 p-5 shadow-sm"
+        >
+          <h3 id="pr-delete-heading" className="text-sm font-semibold text-slate-900">
+            Delete {deleteTarget.pr_number}?
+          </h3>
+          <p className="mt-1 text-xs text-slate-700">
+            This draft and its lines will be removed. This cannot be undone.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={remove}
+              disabled={pendingId !== null}
+              className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
+            >
+              Delete request
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-100"
             >
               Cancel
             </button>
@@ -592,14 +667,32 @@ export function PurchaseRequestsPanel({ onCreatePo }: PurchaseRequestsPanelProps
                       <td className="px-2 py-2">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {canManage && request.status === 'draft' && (
-                            <button
-                              type="button"
-                              onClick={() => submit(request)}
-                              disabled={pendingId !== null}
-                              className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
-                            >
-                              Submit
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => submit(request)}
+                                disabled={pendingId !== null}
+                                className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+                              >
+                                Submit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(request)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-slate-100"
+                              >
+                                <Pencil className="h-3 w-3" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteTarget(request)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50"
+                              >
+                                <Trash2 className="h-3 w-3" aria-hidden="true" />
+                                Delete
+                              </button>
+                            </>
                           )}
                           {canApprove && request.status === 'submitted' && (
                             <>

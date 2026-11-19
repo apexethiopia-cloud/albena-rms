@@ -130,8 +130,8 @@ describe('Settings — outlets', () => {
     await user.click(screen.getByRole('button', { name: /new outlet/i }))
     await user.click(screen.getByRole('button', { name: /create outlet/i }))
 
-    expect(await screen.findByText('Code is required.')).toBeInTheDocument()
-    expect(screen.getByText('Name is required.')).toBeInTheDocument()
+    expect(await screen.findByText('Name is required.')).toBeInTheDocument()
+    expect(screen.queryByText('Code is required.')).not.toBeInTheDocument()
     expect(api.createOutlet).not.toHaveBeenCalled()
   })
 

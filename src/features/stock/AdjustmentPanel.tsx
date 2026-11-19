@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Info,
   Loader2,
+  Pencil,
   Plus,
   RotateCw,
   Scale,
@@ -28,10 +29,12 @@ import { listLocations, type StockLocation } from '@/features/locations/api'
 import {
   createInventoryAdjustment,
   decideInventoryAdjustment,
+  deleteInventoryAdjustment,
   listInventoryAdjustments,
   listStockBalances,
   postInventoryAdjustment,
   submitInventoryAdjustment,
+  updateInventoryAdjustment,
   type InventoryAdjustment,
   type InventoryDocumentStatus,
   type Numberish,
@@ -77,7 +80,6 @@ function emptyLine(key: number, direction: 'in' | 'out'): AdjustmentLineDraft {
 function initialForm(kind: AdjustmentKind, locationId: string): AdjustmentDraft {
   return {
     kind,
-    adjustmentNumber: '',
     adjustmentDate: toIsoDate(new Date()),
     locationId,
     reason: kind === 'waste' ? WASTE_REASONS[0].value : ADJUSTMENT_REASONS[0].value,
@@ -127,6 +129,7 @@ function AdjustmentSection({ kind }: SectionProps) {
   const [reloadToken, setReloadToken] = useState(0)
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<AdjustmentDraft>(() => initialForm(kind, ''))
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -135,6 +138,7 @@ function AdjustmentSection({ kind }: SectionProps) {
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [confirmPostId, setConfirmPostId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [decidingId, setDecidingId] = useState<string | null>(null)
   const [decisionComment, setDecisionComment] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
@@ -219,7 +223,32 @@ function AdjustmentSection({ kind }: SectionProps) {
 
   const openCreate = () => {
     lineSequence.current = 1
+    setEditingId(null)
     setForm(initialForm(kind, activeLocations[0]?.id ?? ''))
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (document: InventoryAdjustment) => {
+    lineSequence.current = Math.max(document.inventory_adjustment_lines.length, 1)
+    setEditingId(document.id)
+    setForm({
+      kind,
+      adjustmentDate: document.adjustment_date,
+      locationId: document.location_id,
+      reason: document.reason,
+      notes: document.notes ?? '',
+      lines: document.inventory_adjustment_lines.map((line, index) => ({
+        key: `adjustment-edit-${index + 1}`,
+        itemId: line.item_id,
+        unitId: line.unit_id,
+        direction: line.direction,
+        quantity: String(line.quantity),
+        unitCost: line.unit_cost === null ? '' : String(line.unit_cost),
+      })),
+    })
     setFieldErrors({})
     setFormError(null)
     setNotice(null)
@@ -228,11 +257,12 @@ function AdjustmentSection({ kind }: SectionProps) {
 
   const closeForm = () => {
     setFormOpen(false)
+    setEditingId(null)
     setFieldErrors({})
     setFormError(null)
   }
 
-  const setField = (key: 'adjustmentNumber' | 'adjustmentDate' | 'locationId' | 'reason' | 'notes') =>
+  const setField = (key: 'adjustmentDate' | 'locationId' | 'reason' | 'notes') =>
     (value: string) => {
       setForm((current) => ({ ...current, [key]: value }))
     }
@@ -278,16 +308,36 @@ function AdjustmentSection({ kind }: SectionProps) {
     setNotice(null)
 
     try {
-      await createInventoryAdjustment(result.value)
-      setNotice(
-        `${result.value.adjustmentNumber} saved as a draft. Submit it for approval, then post it to move stock.`,
-      )
+      if (editingId) {
+        await updateInventoryAdjustment(editingId, result.value)
+        setNotice(`${isWaste ? 'Waste record' : 'Adjustment'} draft updated. Submit it for approval, then post it to move stock.`)
+      } else {
+        await createInventoryAdjustment(result.value)
+        setNotice(`${isWaste ? 'Waste record' : 'Adjustment'} saved as a draft. Submit it for approval, then post it to move stock.`)
+      }
       closeForm()
       reload()
     } catch (error) {
       setFormError(toMessage(error))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const remove = async (document: InventoryAdjustment) => {
+    setPendingId(document.id)
+    setActionError(null)
+    setNotice(null)
+
+    try {
+      await deleteInventoryAdjustment(document.id)
+      setNotice(`${document.adjustment_number} deleted.`)
+      setConfirmDeleteId(null)
+      reload()
+    } catch (error) {
+      setActionError(toMessage(error))
+    } finally {
+      setPendingId(null)
     }
   }
 
@@ -300,6 +350,7 @@ function AdjustmentSection({ kind }: SectionProps) {
       await action()
       setNotice(message)
       setConfirmPostId(null)
+      setConfirmDeleteId(null)
       setDecidingId(null)
       setDecisionComment('')
       reload()
@@ -401,7 +452,13 @@ function AdjustmentSection({ kind }: SectionProps) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id={`${kind}-form-heading`} className="text-sm font-semibold text-slate-900">
-                {isWaste ? 'New waste record' : 'New inventory adjustment'}
+                {editingId
+                  ? isWaste
+                    ? 'Edit waste record'
+                    : 'Edit inventory adjustment'
+                  : isWaste
+                    ? 'New waste record'
+                    : 'New inventory adjustment'}
               </h3>
               <p className="mt-1 text-xs text-slate-600">
                 Saving creates a draft. The document needs approval before it can be posted.
@@ -428,27 +485,10 @@ function AdjustmentSection({ kind }: SectionProps) {
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label
-                htmlFor={`${kind}-number`}
-                className="block text-sm font-medium text-slate-700"
-              >
-                {numberLabel}
-              </label>
-              <input
-                id={`${kind}-number`}
-                value={form.adjustmentNumber}
-                onChange={(event) => setField('adjustmentNumber')(event.target.value)}
-                aria-invalid={Boolean(fieldErrors.adjustmentNumber)}
-                className={cn(
-                  'mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase shadow-sm focus:border-brand-500',
-                  fieldErrors.adjustmentNumber ? 'border-red-400' : 'border-slate-300',
-                )}
-                placeholder={isWaste ? 'e.g. WST-0001' : 'e.g. ADJ-0001'}
-                autoComplete="off"
-              />
-              {fieldErrors.adjustmentNumber && (
-                <p className="mt-1 text-xs text-red-700">{fieldErrors.adjustmentNumber}</p>
-              )}
+              <p className="block text-sm font-medium text-slate-700">{numberLabel}</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Number assigned automatically when saved.
+              </p>
             </div>
 
             <div>
@@ -848,20 +888,69 @@ function AdjustmentSection({ kind }: SectionProps) {
                         </p>
                       )}
                       {document.status === 'draft' && canManage && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void runAction(
-                              document.id,
-                              () => submitInventoryAdjustment(document.id),
-                              `${document.adjustment_number} submitted for approval.`,
-                            )
-                          }
-                          disabled={busy}
-                          className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-                        >
-                          Submit for approval
-                        </button>
+                        <>
+                          {confirmDeleteId === document.id ? (
+                            <>
+                              <span className="text-xs text-slate-600">Delete this draft?</span>
+                              <button
+                                type="button"
+                                onClick={() => void remove(document)}
+                                disabled={busy}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                              >
+                                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                                Confirm delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                disabled={busy}
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(document)}
+                                aria-label={`Edit ${noun} ${document.adjustment_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                              >
+                                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDeleteId(document.id)
+                                  setConfirmPostId(null)
+                                  setDecidingId(null)
+                                }}
+                                aria-label={`Delete ${noun} ${document.adjustment_number}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                Delete
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void runAction(
+                                    document.id,
+                                    () => submitInventoryAdjustment(document.id),
+                                    `${document.adjustment_number} submitted for approval.`,
+                                  )
+                                }
+                                disabled={busy}
+                                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Submit for approval
+                              </button>
+                            </>
+                          )}
+                        </>
                       )}
                       {document.status === 'submitted' && canApprove && (
                         <button

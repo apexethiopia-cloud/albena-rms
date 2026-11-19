@@ -4,6 +4,7 @@ import {
   BookOpen,
   CheckCircle2,
   Loader2,
+  Pencil,
   Plus,
   RotateCw,
   Trash2,
@@ -26,6 +27,7 @@ import {
   listRecipeCosts,
   listRecipes,
   publishRecipeVersion,
+  updateRecipe,
   type Recipe,
   type RecipeCost,
   type RecipeVersion,
@@ -33,6 +35,7 @@ import {
 } from './api'
 import {
   validateRecipe,
+  validateRecipeHeader,
   validateRecipeVersion,
   type RecipeDraft,
   type RecipeLineDraft,
@@ -62,7 +65,6 @@ function emptyLine(key: number): RecipeLineDraft {
 
 function initialForm(): RecipeDraft {
   return {
-    code: '',
     name: '',
     menuItemName: '',
     notes: '',
@@ -94,8 +96,14 @@ export function RecipesPanel() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
 
-  const [mode, setMode] = useState<'closed' | 'create' | 'version'>('closed')
+  const [mode, setMode] = useState<'closed' | 'create' | 'version' | 'edit'>('closed')
   const [versionRecipe, setVersionRecipe] = useState<Recipe | null>(null)
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null)
+  const [headerForm, setHeaderForm] = useState({
+    name: '',
+    menuItemName: '',
+    notes: '',
+  })
   const [form, setForm] = useState<RecipeDraft>(() => initialForm())
   const [versionForm, setVersionForm] = useState<RecipeVersionDraft>({
     notes: '',
@@ -160,6 +168,7 @@ export function RecipesPanel() {
   const closeForm = () => {
     setMode('closed')
     setVersionRecipe(null)
+    setEditingRecipe(null)
     setFieldErrors({})
     setFormError(null)
   }
@@ -171,6 +180,19 @@ export function RecipesPanel() {
     setFormError(null)
     setNotice(null)
     setMode('create')
+  }
+
+  const openEdit = (recipe: Recipe) => {
+    setEditingRecipe(recipe)
+    setHeaderForm({
+      name: recipe.name,
+      menuItemName: recipe.menu_item_name ?? '',
+      notes: recipe.notes ?? '',
+    })
+    setFieldErrors({})
+    setFormError(null)
+    setNotice(null)
+    setMode('edit')
   }
 
   const openVersion = (recipe: Recipe) => {
@@ -198,9 +220,13 @@ export function RecipesPanel() {
   }
 
   const setField = (
-    key: 'code' | 'name' | 'menuItemName' | 'notes' | 'yieldQuantity' | 'sellingPrice',
+    key: 'name' | 'menuItemName' | 'notes' | 'yieldQuantity' | 'sellingPrice',
   ) => (value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  const setHeaderField = (key: 'name' | 'menuItemName' | 'notes') => (value: string) => {
+    setHeaderForm((current) => ({ ...current, [key]: value }))
   }
 
   const setLine = (index: number, patch: Partial<RecipeLineDraft>) => {
@@ -264,7 +290,31 @@ export function RecipesPanel() {
 
     try {
       await createRecipe(result.value)
-      setNotice(`Recipe ${result.value.code} saved as a draft version.`)
+      setNotice('Recipe saved as a draft version.')
+      closeForm()
+      reload()
+    } catch (error) {
+      setFormError(toMessage(error))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!editingRecipe) return
+
+    const result = validateRecipeHeader(headerForm)
+    setFieldErrors(result.errors)
+    if (!result.valid) return
+
+    setSaving(true)
+    setFormError(null)
+    setNotice(null)
+
+    try {
+      await updateRecipe(editingRecipe.id, result.value)
+      setNotice(`Recipe ${editingRecipe.code} details updated.`)
       closeForm()
       reload()
     } catch (error) {
@@ -474,18 +524,11 @@ export function RecipesPanel() {
             </button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-slate-600">
-              <span className="mb-1 block font-medium">Recipe code</span>
-              <input
-                aria-label="Recipe code"
-                value={form.code}
-                onChange={(event) => setField('code')(event.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-              />
-              {fieldErrors.code && <span className="mt-1 block text-red-600">{fieldErrors.code}</span>}
-            </label>
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            Code assigned automatically when saved.
+          </p>
 
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-slate-600">
               <span className="mb-1 block font-medium">Recipe name</span>
               <input
@@ -584,6 +627,98 @@ export function RecipesPanel() {
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Save draft
+            </button>
+            <button
+              type="button"
+              onClick={closeForm}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {mode === 'edit' && editingRecipe && (
+        <form
+          onSubmit={handleEdit}
+          className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Edit recipe {editingRecipe.code}
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-500">
+                The recipe code and its versions cannot be changed. Edit ingredients or yield by
+                creating a new version.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={closeForm}
+              aria-label="Close recipe form"
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs text-slate-600">
+              <span className="mb-1 block font-medium">Recipe name</span>
+              <input
+                aria-label="Recipe name"
+                value={headerForm.name}
+                onChange={(event) => setHeaderField('name')(event.target.value)}
+                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              />
+              {fieldErrors.name && (
+                <span className="mt-1 block text-red-600">{fieldErrors.name}</span>
+              )}
+            </label>
+
+            <label className="text-xs text-slate-600">
+              <span className="mb-1 block font-medium">Menu item (optional)</span>
+              <input
+                aria-label="Menu item"
+                value={headerForm.menuItemName}
+                onChange={(event) => setHeaderField('menuItemName')(event.target.value)}
+                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              />
+              {fieldErrors.menuItemName && (
+                <span className="mt-1 block text-red-600">{fieldErrors.menuItemName}</span>
+              )}
+            </label>
+
+            <label className="text-xs text-slate-600 sm:col-span-2">
+              <span className="mb-1 block font-medium">Notes (optional)</span>
+              <input
+                aria-label="Recipe notes"
+                value={headerForm.notes}
+                onChange={(event) => setHeaderField('notes')(event.target.value)}
+                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              />
+              {fieldErrors.notes && (
+                <span className="mt-1 block text-red-600">{fieldErrors.notes}</span>
+              )}
+            </label>
+          </div>
+
+          {formError && (
+            <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {formError}
+            </p>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              Save changes
             </button>
             <button
               type="button"
@@ -759,14 +894,24 @@ export function RecipesPanel() {
                   {recipe.notes && <p className="mt-1 text-xs text-slate-500">{recipe.notes}</p>}
                 </div>
                 {canManage && (
-                  <button
-                    type="button"
-                    onClick={() => openVersion(recipe)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                    New version
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(recipe)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openVersion(recipe)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                      New version
+                    </button>
+                  </div>
                 )}
               </div>
 
